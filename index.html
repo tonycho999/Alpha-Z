@@ -9,84 +9,52 @@
 <body>
 
     <div id="main-menu" class="screen active">
-        <header>
+        <header class="main-header">
+            <div class="logo-area">
+                <span class="logo-tile">A</span>
+                <span class="logo-tile">Z</span>
+            </div>
             <h1>ALPHA-Z</h1>
-            <p class="subtitle">Combine Letters, Solve the Word</p>
+            <div class="user-status">
+                <div class="level-info">
+                    <span class="lv-text">LEVEL 12</span>
+                    <div class="exp-bar"><div class="exp-fill" style="width: 70%;"></div></div>
+                </div>
+            </div>
         </header>
 
-        <div class="menu-content">
-            <button class="btn-start" onclick="showScreen('game-screen')">
-                <span class="level-tag">LV. 12</span>
-                <span class="btn-text">게임 시작</span>
+        <main class="menu-grid">
+            <button class="card btn-play" onclick="showScreen('game-screen')">
+                <div class="icon">▶</div>
+                <div class="label">GAME START</div>
+                <div class="sub-label">최고 점수: 25,400</div>
             </button>
 
-            <button class="btn-challenge-z" onclick="showScreen('game-screen')">
-                CHALLENGE Z
+            <button class="card btn-z" onclick="showScreen('game-screen')">
+                <div class="icon-z">Z</div>
+                <div class="label">CHALLENGE Z</div>
             </button>
 
-            <div class="sub-menu-grid">
-                <button onclick="openModal('profile-modal')">프로필</button>
-                <button onclick="openModal('shop-modal')">상점</button>
-                <button onclick="openModal('leaderboard-modal')">리더보드</button>
-                <button onclick="openModal('hall-modal')">명예의 전당</button>
+            <div class="sub-cards">
+                <button class="card mini" onclick="openModal('profile')">
+                    <span>👤</span>
+                    <p>프로필</p>
+                </button>
+                <button class="card mini" onclick="openModal('shop')">
+                    <span>🛒</span>
+                    <p>상점</p>
+                </button>
+                <button class="card mini" onclick="openModal('rank')">
+                    <span>🏆</span>
+                    <p>랭킹</p>
+                </button>
+                <button class="card mini" onclick="openModal('hall')">
+                    <span>👑</span>
+                    <p>명예전당</p>
+                </button>
             </div>
-        </div>
+        </main>
     </div>
 
-    <div id="game-screen" class="screen">
-        <div class="game-header">
-            <button class="btn-back" onclick="showScreen('main-menu')">←</button>
-            <div class="target-word">목표: <span>ACE</span></div>
-            <div class="score">SCORE: 1250</div>
-        </div>
-        
-        <div class="game-board">
-            <div class="grid-placeholder">BOARD AREA</div>
-        </div>
-    </div>
-
-    <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="close-btn" onclick="closeModal()">×</button>
-            <h2 id="modal-title">메뉴 제목</h2>
-            <div id="modal-body">
-                </div>
-        </div>
-    </div>
-
-    <script>
-        // 화면 전환 함수
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-        }
-
-        // 팝업 열기 함수
-        function openModal(type) {
-            const overlay = document.getElementById('modal-overlay');
-            const title = document.getElementById('modal-title');
-            const body = document.getElementById('modal-body');
-
-            if(type === 'profile-modal') {
-                title.innerText = "플레이어 프로필";
-                body.innerHTML = "<p>닉네임: AlphaPlayer</p><p>최고 점수: 50,000</p>";
-            } else if(type === 'shop-modal') {
-                title.innerText = "아이템 상점";
-                body.innerHTML = "<p>준비 중입니다...</p>";
-            } else if(type === 'leaderboard-modal') {
-                title.innerText = "리더보드";
-                body.innerHTML = "<ol><li>User1 - 99,999</li><li>User2 - 88,000</li></ol>";
-            } else if(type === 'hall-modal') {
-                title.innerText = "명예의 전당 (Z)";
-                body.innerHTML = "<p>도전 Z를 정복한 영웅들!</p>";
-            }
-
-            overlay.classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('modal-overlay').classList.remove('active');
-        }
-    </script>
-</body>
+    </body>
 </html>
