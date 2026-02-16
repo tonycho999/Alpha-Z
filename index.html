@@ -2,135 +2,46 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Alpha Z: Touch Edition</title>
-    <style>
-        body { background: #1a1a2e; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; touch-action: none; }
-        .header { text-align: center; margin-bottom: 10px; }
-        .header h1 { margin: 0; color: #e94560; font-size: 32px; }
-        #game-container { background: #16213e; padding: 10px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .grid { display: grid; grid-template-columns: repeat(5, 60px); grid-template-rows: repeat(5, 60px); gap: 8px; }
-        .tile { width: 60px; height: 60px; background: #0f3460; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; transition: 0.1s; }
-        .tile[data-val="A"] { background: #e74c3c; } .tile[data-val="B"] { background: #e67e22; }
-        .tile[data-val="C"] { background: #f1c40f; color: #333; } .tile[data-val="D"] { background: #2ecc71; }
-        /* 터치용 컨트롤러 */
-        .controls { display: grid; grid-template-columns: repeat(3, 60px); gap: 10px; margin-top: 20px; }
-        .btn { width: 60px; height: 60px; background: #e94560; border: none; border-radius: 50%; color: white; font-weight: bold; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn:active { transform: scale(0.9); background: #ff5e78; }
-        .empty { }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Library - Word Puzzle</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="game-container">
+        <header id="game-header">
+            <h1 class="game-title">MAGIC LIBRARY</h1>
+        </header>
 
-<div class="header">
-    <h1>ALPHA Z</h1>
-    <div id="max-display">최고 단계: A</div>
-</div>
+        <main id="game-canvas-area">
+            <div id="map-overlay">
+                </div>
+        </main>
 
-<div id="game-container">
-    <div class="grid" id="grid"></div>
-</div>
+        <nav id="ui-layer">
+            <div class="ui-left">
+                <button class="icon-btn" id="info-btn">
+                    <img src="img/ui/info.png" alt="Information">
+                </button>
+            </div>
+            <div class="ui-right">
+                <button class="icon-btn" id="settings-btn">
+                    <img src="img/ui/gear.png" alt="Settings">
+                </button>
+            </div>
+        </nav>
 
-<div class="controls">
-    <div class="empty"></div>
-    <button class="btn" onclick="move(0)">▲</button>
-    <div class="empty"></div>
-    <button class="btn" onclick="move(3)">◀</button>
-    <button class="btn" onclick="move(2)">▼</button>
-    <button class="btn" onclick="move(1)">▶</button>
-</div>
+        <div id="modal" class="hidden">
+            <div class="modal-content">
+                <button id="close-modal"><img src="img/ui/x_mark.png" alt="Close"></button>
+                <div id="modal-body">
+                    </div>
+                <button id="confirm-modal"><img src="img/ui/check.png" alt="Confirm"></button>
+            </div>
+        </div>
+    </div>
 
-<p style="font-size: 12px; color: #888; margin-top: 15px;">화면을 밀거나(Swipe) 버튼을 누르세요!</p>
-
-<script>
-    const size = 5;
-    let board = Array(size).fill().map(() => Array(size).fill(""));
-    let maxChar = 'A';
-
-    function init() {
-        const gridElement = document.getElementById('grid');
-        gridElement.innerHTML = '';
-        for (let i = 0; i < size * size; i++) {
-            const div = document.createElement('div');
-            div.classList.add('tile');
-            div.id = `tile-${Math.floor(i/size)}-${i%size}`;
-            gridElement.appendChild(div);
-        }
-        spawn(); spawn(); render();
-    }
-
-    function getSpawnChar() {
-        let r = Math.random();
-        if (maxChar >= 'M') return r < 0.5 ? 'A' : (r < 0.9 ? 'B' : 'C');
-        if (maxChar >= 'L') return r < 0.7 ? 'A' : 'B';
-        if (maxChar >= 'J') return r < 0.8 ? 'A' : 'B';
-        return 'A';
-    }
-
-    function spawn() {
-        let empties = [];
-        for(let r=0; r<size; r++) for(let c=0; c<size; c++) if(!board[r][c]) empties.push({r,c});
-        if (empties.length > 0) {
-            let {r, c} = empties[Math.floor(Math.random() * empties.length)];
-            board[r][c] = getSpawnChar();
-        }
-    }
-
-    function render() {
-        for(let r=0; r<size; r++) {
-            for(let c=0; c<size; c++) {
-                const tile = document.getElementById(`tile-${r}-${c}`);
-                tile.innerText = board[r][c];
-                tile.setAttribute('data-val', board[r][c]);
-            }
-        }
-        document.getElementById('max-display').innerText = `최고 단계: ${maxChar}`;
-    }
-
-    function move(dir) {
-        let moved = false;
-        let prev = JSON.stringify(board);
-        for (let i = 0; i < size; i++) {
-            let line = [];
-            for (let j = 0; j < size; j++) {
-                let r = (dir % 2 === 0) ? j : i;
-                let c = (dir % 2 === 0) ? i : j;
-                if (dir === 2) r = size - 1 - j;
-                if (dir === 1) c = size - 1 - j;
-                if (board[r][c]) line.push(board[r][c]);
-            }
-            let newLine = [];
-            for (let j = 0; j < line.length; j++) {
-                if (line[j] === line[j+1]) {
-                    let next = String.fromCharCode(line[j].charCodeAt(0) + 1);
-                    newLine.push(next);
-                    if (next > maxChar) maxChar = next;
-                    j++;
-                } else { newLine.push(line[j]); }
-            }
-            while (newLine.length < size) newLine.push("");
-            for (let j = 0; j < size; j++) {
-                let r = (dir % 2 === 0) ? j : i;
-                let c = (dir % 2 === 0) ? i : j;
-                if (dir === 2) r = size - 1 - j;
-                if (dir === 1) c = size - 1 - j;
-                board[r][c] = newLine[j];
-            }
-        }
-        if (prev !== JSON.stringify(board)) { spawn(); render(); }
-    }
-
-    // 터치(스와이프) 감지 로직
-    let touchX = 0, touchY = 0;
-    document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; });
-    document.addEventListener('touchend', e => {
-        let dx = e.changedTouches[0].clientX - touchX;
-        let dy = e.changedTouches[0].clientY - touchY;
-        if (Math.abs(dx) > Math.abs(dy)) { if (Math.abs(dx) > 30) move(dx > 0 ? 1 : 3); }
-        else { if (Math.abs(dy) > 30) move(dy > 0 ? 2 : 0); }
-    });
-
-    init();
-</script>
+    <script src="js/data.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
