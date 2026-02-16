@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Z: The Word Library</title>
+    <title>Alpha-Z: Magical Library</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,81 +15,77 @@
                 <span class="logo-tile">Z</span>
             </div>
             <h1>ALPHA-Z</h1>
-            <div class="level-status">
-                <span class="lv-label">LEVEL 12</span>
-                <div class="exp-bar"><div class="exp-fill" style="width: 65%;"></div></div>
+            <div class="user-info">
+                <span class="lv-text">📜 LEVEL 12 ARCHIVE</span>
+                <div class="exp-bar"><div class="exp-fill" style="width: 70%;"></div></div>
             </div>
         </header>
 
-        <section class="level-selector">
-            <p class="section-title">LIBRARY ARCADE</p>
-            <div class="bookshelf-container">
+        <section class="library-section">
+            <div class="shelf-label">HISTORY & CHAPTERS</div>
+            
+            <div class="bookshelf-wrapper">
                 <div class="bookshelf">
-                    <div class="book completed" onclick="alert('10레벨 재도전!')"><div class="book-cover">10</div></div>
-                    <div class="book completed" onclick="alert('11레벨 재도전!')"><div class="book-cover">11</div></div>
-                    <div class="book active" onclick="showScreen('game-screen')">
-                        <div class="book-cover">12</div>
-                        <div class="glow-effect"></div>
+                    <div class="book completed color-red">
+                        <div class="pages-left"><span>10</span></div>
+                        <div class="pages-right"><span>✓</span></div>
                     </div>
-                    <div class="book locked"><div class="book-cover">13</div></div>
-                    <div class="book locked"><div class="book-cover">14</div></div>
-                    <div class="book locked"><div class="book-cover">15</div></div>
+                    
+                    <div class="book completed color-green">
+                        <div class="pages-left"><span>11</span></div>
+                        <div class="pages-right"><span>✓</span></div>
+                    </div>
+
+                    <div class="book active color-blue" onclick="showScreen('game-screen')">
+                        <div class="book-cover">
+                            <span class="lv-num">12</span>
+                            <div class="playing-tag">PLAY</div>
+                        </div>
+                        <div class="glow"></div>
+                    </div>
+
+                    <div class="book locked color-brown"><div class="book-cover"><span>13</span></div></div>
+                    <div class="book locked color-brown"><div class="book-cover"><span>14</span></div></div>
+                    <div class="book locked color-brown"><div class="book-cover"><span>15</span></div></div>
+                    <div class="book locked color-brown"><div class="book-cover"><span>16</span></div></div>
                 </div>
+                <div class="shelf-wood"></div>
             </div>
         </section>
 
-        <div class="action-grid">
-            <button class="btn-card btn-z" onclick="showScreen('game-screen')">
-                <div class="icon-z">Z</div>
-                <span>CHALLENGE Z (5x5)</span>
+        <div class="action-area">
+            <button class="btn-challenge-z" onclick="showScreen('game-screen')">
+                <span class="z-icon">Z</span> CHALLENGE Z (5x5)
             </button>
-        </div>
 
-        <nav class="sub-menu">
-            <div class="mini-card" onclick="openModal('프로필', '플레이어: AlphaKing<br>최고점수: 45,200')">
-                <span>👤</span><p>프로필</p>
+            <div class="bottom-nav">
+                <div class="nav-item" onclick="openModal('프로필')">👤<span>프로필</span></div>
+                <div class="nav-item" onclick="openModal('상점')">🛒<span>상점</span></div>
+                <div class="nav-item" onclick="openModal('리더보드')">🏆<span>랭킹</span></div>
+                <div class="nav-item" onclick="openModal('명예의 전당')">👑<span>명예전당</span></div>
             </div>
-            <div class="mini-card" onclick="openModal('상점', '다양한 아이템을 구매하세요!')">
-                <span>🛒</span><p>상점</p>
-            </div>
-            <div class="mini-card" onclick="openModal('리더보드', '1위: UserXXX<br>2위: Alpha-Z')">
-                <span>🏆</span><p>랭킹</p>
-            </div>
-            <div class="mini-card" onclick="openModal('명예의 전당', '도전 Z를 정복한 거장들')">
-                <span>👑</span><p>명예전당</p>
-            </div>
-        </nav>
+        </div>
     </div>
 
     <div id="game-screen" class="screen">
         <div class="game-header">
-            <button class="btn-icon" onclick="showScreen('main-menu')">←</button>
-            <div class="target-box">
-                <div class="label-mini">TARGET WORD</div>
-                <div class="target-word">ACE</div>
-            </div>
-            <div class="score-box">
-                <div class="label-mini">SCORE</div>
-                <div class="score-val">1,250</div>
-            </div>
+            <button class="back-btn" onclick="showScreen('main-menu')">↩</button>
+            <div class="target-display">TARGET: <span>ACE</span></div>
+            <div class="score-display">1,250</div>
         </div>
-        
-        <div class="grid-container grid-4x4">
-            <div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div>
-            <div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div>
-            <div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div>
-            <div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div>
+        <div class="board-4x4">
+            <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
+            <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
+            <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
+            <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
         </div>
-        
-        <p class="game-tip">화면을 스와이프하여 알파벳을 합치세요!</p>
     </div>
 
     <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <button class="close-btn" onclick="closeModal()">×</button>
-            <h2 id="modal-title">제목</h2>
-            <hr>
-            <div id="modal-body">내용</div>
+            <h2 id="modal-title"></h2>
+            <div id="modal-body"></div>
+            <button class="modal-close" onclick="closeModal()">닫기</button>
         </div>
     </div>
 
@@ -98,13 +94,11 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
-
-        function openModal(title, body) {
+        function openModal(title) {
             document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-body').innerHTML = body;
+            document.getElementById('modal-body').innerText = title + " 메뉴는 준비 중입니다.";
             document.getElementById('modal-overlay').classList.add('active');
         }
-
         function closeModal() {
             document.getElementById('modal-overlay').classList.remove('active');
         }
