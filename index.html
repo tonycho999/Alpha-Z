@@ -3,66 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alpha-Z: Magic Library</title>
+    <title>Alpha-Z: The Infinite Library</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
-        <div id="bg-overlay"></div>
-
-        <header id="ui-top">
-            <div class="ui-left">
-                <button class="icon-btn challenge-z" id="btn-challenge-z">
-                    <img src="img/ui/btn_challenge_z.png" alt="도전 Z">
-                </button>
-            </div>
-            <h1 class="game-title">Alpha-Z</h1>
-            <div class="ui-right">
-                <button class="icon-btn" id="btn-info"><img src="img/ui/info.png" alt="정보"></button>
-                <button class="icon-btn" id="btn-settings"><img src="img/ui/gear.png" alt="설정"></button>
-            </div>
+        <header class="top-ui">
+            <div class="stat-item"><span class="icon">⚡</span> 5/5</div>
+            <div class="stat-item"><span class="icon">💰</span> 1,250</div>
+            <div class="settings-btn">⚙️</div>
         </header>
 
-        <main id="map-view" class="view-active">
-            <div id="level-nodes-container">
-                <div class="level-node current" style="top: 70%; left: 50%;">
-                    <img src="img/node_current.png" alt="Level 1">
-                    <span class="level-num">1</span>
+        <main id="map-viewport">
+            <div class="map-scroll-content">
+                <div class="level-node completed" style="bottom: 100px; left: 50%;">1<div class="stars">★★★</div></div>
+                <div class="level-node current" style="bottom: 300px; left: 30%;">2<div class="stars">☆☆☆</div></div>
+                <div class="level-node locked" style="bottom: 500px; left: 70%;">3</div>
+                <div class="level-node locked" style="bottom: 700px; left: 40%;">4</div>
                 </div>
-            </div>
         </main>
 
-        <section id="game-view" class="view-hidden">
-            <div class="score-container">
-                <div id="current-score">Score: 0</div>
-                <div id="target-tile">Target: B</div>
-            </div>
-            
-            <div id="puzzle-board">
-                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
-                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
-                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
-                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
-                
-                <div id="tile-container"></div>
-            </div>
-
-            <button id="btn-back-to-map" class="text-btn">지도 돌아가기</button>
-        </section>
-
-        <div id="modal-overlay" class="hidden">
-            <div class="modal-content">
-                <div id="modal-body"></div>
-                <div class="modal-footer">
-                    <button id="modal-cancel"><img src="img/ui/x_mark.png" alt="취소"></button>
-                    <button id="modal-confirm"><img src="img/ui/check.png" alt="확인"></button>
-                </div>
-            </div>
-        </div>
+        <nav class="bottom-nav">
+            <button class="nav-item">🏠</button>
+            <button class="nav-item active">🗺️</button>
+            <button class="nav-item">🛒</button>
+            <button class="nav-item main-play">PLAY</button>
+        </nav>
     </div>
-
-    <script src="js/data.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/app.js"></script>
 </body>
 </html>
