@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Z: The Word Puzzle</title>
+    <title>Alpha-Z: The Word Library</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,46 +15,99 @@
                 <span class="logo-tile">Z</span>
             </div>
             <h1>ALPHA-Z</h1>
-            <div class="user-status">
-                <div class="level-info">
-                    <span class="lv-text">LEVEL 12</span>
-                    <div class="exp-bar"><div class="exp-fill" style="width: 70%;"></div></div>
-                </div>
+            <div class="level-status">
+                <span class="lv-label">LEVEL 12</span>
+                <div class="exp-bar"><div class="exp-fill" style="width: 65%;"></div></div>
             </div>
         </header>
 
-        <main class="menu-grid">
-            <button class="card btn-play" onclick="showScreen('game-screen')">
-                <div class="icon">▶</div>
-                <div class="label">GAME START</div>
-                <div class="sub-label">최고 점수: 25,400</div>
-            </button>
-
-            <button class="card btn-z" onclick="showScreen('game-screen')">
-                <div class="icon-z">Z</div>
-                <div class="label">CHALLENGE Z</div>
-            </button>
-
-            <div class="sub-cards">
-                <button class="card mini" onclick="openModal('profile')">
-                    <span>👤</span>
-                    <p>프로필</p>
-                </button>
-                <button class="card mini" onclick="openModal('shop')">
-                    <span>🛒</span>
-                    <p>상점</p>
-                </button>
-                <button class="card mini" onclick="openModal('rank')">
-                    <span>🏆</span>
-                    <p>랭킹</p>
-                </button>
-                <button class="card mini" onclick="openModal('hall')">
-                    <span>👑</span>
-                    <p>명예전당</p>
-                </button>
+        <section class="level-selector">
+            <p class="section-title">LIBRARY ARCADE</p>
+            <div class="bookshelf-container">
+                <div class="bookshelf">
+                    <div class="book completed" onclick="alert('10레벨 재도전!')"><div class="book-cover">10</div></div>
+                    <div class="book completed" onclick="alert('11레벨 재도전!')"><div class="book-cover">11</div></div>
+                    <div class="book active" onclick="showScreen('game-screen')">
+                        <div class="book-cover">12</div>
+                        <div class="glow-effect"></div>
+                    </div>
+                    <div class="book locked"><div class="book-cover">13</div></div>
+                    <div class="book locked"><div class="book-cover">14</div></div>
+                    <div class="book locked"><div class="book-cover">15</div></div>
+                </div>
             </div>
-        </main>
+        </section>
+
+        <div class="action-grid">
+            <button class="btn-card btn-z" onclick="showScreen('game-screen')">
+                <div class="icon-z">Z</div>
+                <span>CHALLENGE Z (5x5)</span>
+            </button>
+        </div>
+
+        <nav class="sub-menu">
+            <div class="mini-card" onclick="openModal('프로필', '플레이어: AlphaKing<br>최고점수: 45,200')">
+                <span>👤</span><p>프로필</p>
+            </div>
+            <div class="mini-card" onclick="openModal('상점', '다양한 아이템을 구매하세요!')">
+                <span>🛒</span><p>상점</p>
+            </div>
+            <div class="mini-card" onclick="openModal('리더보드', '1위: UserXXX<br>2위: Alpha-Z')">
+                <span>🏆</span><p>랭킹</p>
+            </div>
+            <div class="mini-card" onclick="openModal('명예의 전당', '도전 Z를 정복한 거장들')">
+                <span>👑</span><p>명예전당</p>
+            </div>
+        </nav>
     </div>
 
-    </body>
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <button class="btn-icon" onclick="showScreen('main-menu')">←</button>
+            <div class="target-box">
+                <div class="label-mini">TARGET WORD</div>
+                <div class="target-word">ACE</div>
+            </div>
+            <div class="score-box">
+                <div class="label-mini">SCORE</div>
+                <div class="score-val">1,250</div>
+            </div>
+        </div>
+        
+        <div class="grid-container grid-4x4">
+            <div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div>
+            <div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div>
+            <div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div>
+            <div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div><div class="tile-empty"></div>
+        </div>
+        
+        <p class="game-tip">화면을 스와이프하여 알파벳을 합치세요!</p>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeModal()">×</button>
+            <h2 id="modal-title">제목</h2>
+            <hr>
+            <div id="modal-body">내용</div>
+        </div>
+    </div>
+
+    <script>
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function openModal(title, body) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = body;
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+        }
+    </script>
+</body>
 </html>
