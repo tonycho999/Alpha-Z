@@ -2,40 +2,61 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magic Library - Word Puzzle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alpha-Z: Magic Library</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
-        <header id="game-header">
-            <h1 class="game-title">MAGIC LIBRARY</h1>
+        <div id="bg-overlay"></div>
+
+        <header id="ui-top">
+            <div class="ui-left">
+                <button class="icon-btn challenge-z" id="btn-challenge-z">
+                    <img src="img/ui/btn_challenge_z.png" alt="도전 Z">
+                </button>
+            </div>
+            <h1 class="game-title">Alpha-Z</h1>
+            <div class="ui-right">
+                <button class="icon-btn" id="btn-info"><img src="img/ui/info.png" alt="정보"></button>
+                <button class="icon-btn" id="btn-settings"><img src="img/ui/gear.png" alt="설정"></button>
+            </div>
         </header>
 
-        <main id="game-canvas-area">
-            <div id="map-overlay">
+        <main id="map-view" class="view-active">
+            <div id="level-nodes-container">
+                <div class="level-node current" style="top: 70%; left: 50%;">
+                    <img src="img/node_current.png" alt="Level 1">
+                    <span class="level-num">1</span>
                 </div>
+            </div>
         </main>
 
-        <nav id="ui-layer">
-            <div class="ui-left">
-                <button class="icon-btn" id="info-btn">
-                    <img src="img/ui/info.png" alt="Information">
-                </button>
+        <section id="game-view" class="view-hidden">
+            <div class="score-container">
+                <div id="current-score">Score: 0</div>
+                <div id="target-tile">Target: B</div>
             </div>
-            <div class="ui-right">
-                <button class="icon-btn" id="settings-btn">
-                    <img src="img/ui/gear.png" alt="Settings">
-                </button>
+            
+            <div id="puzzle-board">
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                
+                <div id="tile-container"></div>
             </div>
-        </nav>
 
-        <div id="modal" class="hidden">
+            <button id="btn-back-to-map" class="text-btn">지도 돌아가기</button>
+        </section>
+
+        <div id="modal-overlay" class="hidden">
             <div class="modal-content">
-                <button id="close-modal"><img src="img/ui/x_mark.png" alt="Close"></button>
-                <div id="modal-body">
-                    </div>
-                <button id="confirm-modal"><img src="img/ui/check.png" alt="Confirm"></button>
+                <div id="modal-body"></div>
+                <div class="modal-footer">
+                    <button id="modal-cancel"><img src="img/ui/x_mark.png" alt="취소"></button>
+                    <button id="modal-confirm"><img src="img/ui/check.png" alt="확인"></button>
+                </div>
             </div>
         </div>
     </div>
