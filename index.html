@@ -2,33 +2,32 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alpha-Z: The Infinite Library</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha-Z: The Word Puzzle</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
-        <header class="top-ui">
-            <div class="stat-item"><span class="icon">⚡</span> 5/5</div>
-            <div class="stat-item"><span class="icon">💰</span> 1,250</div>
-            <div class="settings-btn">⚙️</div>
+
+    <div class="deco-letter deco-a">A</div>
+    <div class="deco-letter deco-z">Z</div>
+    <div class="deco-letter deco-b">B</div>
+
+    <div class="menu-container">
+        <header>
+            <h1>ALPHA-Z</h1>
+            <p class="subtitle">Combine Letters, Solve the Word</p>
         </header>
 
-        <main id="map-viewport">
-            <div class="map-scroll-content">
-                <div class="level-node completed" style="bottom: 100px; left: 50%;">1<div class="stars">★★★</div></div>
-                <div class="level-node current" style="bottom: 300px; left: 30%;">2<div class="stars">☆☆☆</div></div>
-                <div class="level-node locked" style="bottom: 500px; left: 70%;">3</div>
-                <div class="level-node locked" style="bottom: 700px; left: 40%;">4</div>
-                </div>
-        </main>
-
-        <nav class="bottom-nav">
-            <button class="nav-item">🏠</button>
-            <button class="nav-item active">🗺️</button>
-            <button class="nav-item">🛒</button>
-            <button class="nav-item main-play">PLAY</button>
+        <nav class="button-group">
+            <button class="btn-main" onclick="alert('4x4 Alpha Mode 시작!')">Alpha Mode (4x4)</button>
+            <button class="btn-challenge" onclick="alert('5x5 Challenge Z 시작!')">Challenge Z (5x5)</button>
+            <button class="btn-help">How to Play</button>
         </nav>
+
+        <footer class="footer">
+            © 2026 Alpha-Z Studio
+        </footer>
     </div>
+
 </body>
 </html>
