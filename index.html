@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Alphabet Z Challenge</title>
+    <style>
+        body { background: #2c3e50; color: white; font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        #game-container { background: #34495e; padding: 15px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .grid { display: grid; grid-template-columns: repeat(5, 70px); grid-template-rows: repeat(5, 70px); gap: 10px; }
+        .tile { width: 70px; height: 70px; background: #4e6a85; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: bold; color: #fff; transition: all 0.1s ease; }
+        .tile[data-val="A"] { background: #e74c3c; } .tile[data-val="B"] { background: #e67e22; }
+        .tile[data-val="C"] { background: #f1c40f; } .tile[data-val="D"] { background: #2ecc71; }
+        .tile[data-val="E"] { background: #1abc9c; } .tile[data-val="F"] { background: #3498db; }
+        .tile[data-val="G"] { background: #9b59b6; } .tile[data-val="H"] { background: #34495e; border: 2px solid #9b59b6; }
+        .info { margin-bottom: 20px; text-align: center; }
+        .status { font-size: 18px; color: #ecf0f1; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="info">
+    <h1>알파벳 도전 Z (5x5)</h1>
+    <div id="score">최고 알파벳: A</div>
+    <div class="status" id="spawn-info">생성 범위: A 100%</div>
+</div>
+
+<div id="game-container">
+    <div class="grid" id="grid"></div>
+</div>
+
+<p>화살표 키로 움직이세요!</p>
+
+<script>
+    const size = 5;
+    let board = Array(size).fill().map(() => Array(size).fill(""));
+    let maxChar = 'A';
+
+    function init() {
+        const gridElement = document.getElementById('grid');
+        gridElement.innerHTML = '';
+        for (let i = 0; i < size * size; i++) {
+            const div = document.createElement('div');
+            div.classList.add('tile');
+            div.id = `tile-${Math.floor(i/size)}-${i%size}`;
+            gridElement.appendChild(div);
+        }
+        spawn(); spawn();
+        render();
+    }
+
+    function getSpawnChar() {
+        // 사용자 정의 확률 로직
+        if (maxChar >= 'M') { // M 이상이면 A,B,C 혼합 (A 50%, B 40%, C 10%)
+            let r = Math.random();
+            if (r < 0.5) return 'A';
+            if (r < 0.9) return 'B';
+            return 'C';
+        } else if (maxChar >= 'L') { // L 이상이면 A 70%, B 30%
+            return Math.random() < 0.7 ? 'A' : 'B';
+        } else if (maxChar >= 'J') { // J 이상이면 A 80%, B 20%
+            return Math.random() < 0.8 ? 'A' : 'B';
+        }
+        
+        // 생성 중단 로직 (L:A중단, N:B중단...)
+        let startCode = 65; // 'A'
+        if (maxChar >= 'L') startCode = 66; // B부터
+        if (maxChar >= 'N') startCode = 67; // C부터
+        if (maxChar >= 'P') startCode = 68; // D부터
+        
+        return 'A'; // 기본은 A
+    }
+
+    function spawn() {
+        let empties = [];
+        for(let r=0; r<size; r++) for(let c=0; c<size; c++) if(!board[r][c]) empties.push({r,c});
+        if (empties.length > 0) {
+            let {r, c} = empties[Math.floor(Math.random() * empties.length)];
+            board[r][c] = getSpawnChar();
+        }
+    }
+
+    function render() {
+        for(let r=0; r<size; r++) {
+            for(let c=0; c<size; c++) {
+                const tile = document.getElementById(`tile-${r}-${c}`);
+                tile.innerText = board[r][c];
+                tile.setAttribute('data-val', board[r][c]);
+                // 색상 동적 변경 (Z에 가까울수록 밝게)
+                if(board[r][c]) {
+                    let bright = (board[r][c].charCodeAt(0) - 65) * 10;
+                    tile.style.filter = `brightness(${100 + bright}%)`;
+                }
+            }
+        }
+        document.getElementById('score').innerText = `최고 알파벳: ${maxChar}`;
+        updateSpawnInfo();
+    }
+
+    function updateSpawnInfo() {
+        let info = "생성: A 100%";
+        if (maxChar >= 'M') info = "생성: A(50%) B(40%) C(10%)";
+        else if (maxChar >= 'L') info = "생성: A(70%) B(30%) / A 중단 임박";
+        document.getElementById('spawn-info').innerText = info;
+    }
+
+    function move(dir) {
+        let moved = false;
+        // 0: up, 1: right, 2: down, 3: left
+        for (let i = 0; i < size; i++) {
+            let line = [];
+            for (let j = 0; j < size; j++) {
+                let r = dir % 2 === 0 ? j : i;
+                let c = dir % 2 === 0 ? i : j;
+                if (dir === 2) r = size - 1 - j;
+                if (dir === 1) c = size - 1 - j;
+                if (board[r][c]) line.push(board[r][c]);
+            }
+
+            let newLine = [];
+            for (let j = 0; j < line.length; j++) {
+                if (line[j] === line[j+1]) {
+                    let nextChar = String.fromCharCode(line[j].charCodeAt(0) + 1);
+                    newLine.push(nextChar);
+                    if (nextChar > maxChar) maxChar = nextChar;
+                    j++;
+                    moved = true;
+                } else {
+                    newLine.push(line[j]);
+                }
+            }
+            while (newLine.length < size) newLine.push("");
+
+            for (let j = 0; j < size; j++) {
+                let r = dir % 2 === 0 ? j : i;
+                let c = dir % 2 === 0 ? i : j;
+                if (dir === 2) r = size - 1 - j;
+                if (dir === 1) c = size - 1 - j;
+                if (board[r][c] !== newLine[j]) moved = true;
+                board[r][c] = newLine[j];
+            }
+        }
+        if (moved) { spawn(); render(); checkGameOver(); }
+    }
+
+    function checkGameOver() {
+        // 간단한 게임오버 체크 로직 생략 (공간 없으면 끝)
+    }
+
+    window.addEventListener('keydown', e => {
+        if (e.key === 'ArrowUp') move(0);
+        if (e.key === 'ArrowRight') move(1);
+        if (e.key === 'ArrowDown') move(2);
+        if (e.key === 'ArrowLeft') move(3);
+    });
+
+    init();
+</script>
+</body>
+</html>
