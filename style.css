@@ -1,139 +1,90 @@
 :root {
-    --bg-color: #0f172a;
-    --card-bg: #1e293b;
-    --accent-color: #38bdf8;
-    --z-color: #f59e0b;
-    --text-main: #f8fafc;
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --bg-dark: #0a0a12;
+    --tile-bg: rgba(255, 255, 255, 0.05);
+    --neon-blue: #00d2ff;
+    --neon-purple: #9d50bb;
+    --neon-gold: #fccb90;
+    --text-white: #ffffff;
 }
 
 body {
-    margin: 0;
-    font-family: 'Pretendard', system-ui;
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    overflow: hidden;
+    background: var(--bg-dark);
+    background-image: radial-gradient(circle at center, #1a1a2e 0%, #0a0a12 100%);
+    color: var(--text-white);
+    font-family: 'Pretendard', sans-serif;
+    margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh;
 }
 
-/* 화면 관리 */
-.screen {
-    display: none;
-    width: 100%;
-    max-width: 400px;
-    height: 100%;
+/* 헤더 디자인: 로고 타일링 */
+.main-header { text-align: center; margin-bottom: 30px; }
+.logo-area { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+.logo-tile {
+    width: 45px; height: 45px; background: var(--neon-blue); color: #000;
+    font-weight: 900; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; box-shadow: 0 0 15px var(--neon-blue);
+}
+
+h1 { font-size: 2.2rem; letter-spacing: 8px; margin: 10px 0; text-shadow: 0 0 10px rgba(0, 210, 255, 0.5); }
+
+/* 레벨 바 디자인 */
+.level-info { width: 200px; margin: 0 auto; }
+.lv-text { font-size: 0.8rem; font-weight: bold; color: var(--neon-blue); }
+.exp-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 5px; overflow: hidden; }
+.exp-fill { height: 100%; background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple)); box-shadow: 0 0 10px var(--neon-blue); }
+
+/* 메뉴 그리드 */
+.menu-grid { width: 340px; display: flex; flex-direction: column; gap: 15px; }
+
+/* 공통 카드 스타일 */
+.card {
+    background: var(--tile-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(10px);
+}
+
+.card:hover {
+    transform: translateY(-5px) scale(1.02);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 게임 시작 버튼 전용 */
+.btn-play {
+    height: 140px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(157, 80, 187, 0.2));
+    border: 1px solid var(--neon-blue);
+}
+.btn-play .icon { font-size: 2.5rem; margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--neon-blue)); }
+.btn-play .label { font-size: 1.2rem; font-weight: 900; letter-spacing: 2px; }
+.btn-play .sub-label { font-size: 0.7rem; opacity: 0.5; margin-top: 5px; }
+
+/* 도전 Z 버튼 전용 (황금색 네온) */
+.btn-z {
     padding: 20px;
-    box-sizing: border-box;
-    flex-direction: column;
+    display: flex; align-items: center; justify-content: center; gap: 15px;
+    border: 1px solid #d4af37;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(184, 134, 11, 0.1));
 }
-
-.screen.active {
-    display: flex;
+.icon-z {
+    font-size: 1.5rem; font-weight: 900; color: #ffd700;
+    width: 35px; height: 35px; border: 2px solid #ffd700;
+    display: flex; align-items: center; justify-content: center; border-radius: 5px;
+    box-shadow: 0 0 10px #ffd700;
 }
+.btn-z .label { font-weight: 800; color: #ffd700; }
 
-/* 메인 메뉴 */
-h1 { font-size: 2.5rem; text-align: center; margin-bottom: 0; letter-spacing: 4px; color: var(--accent-color); }
-.subtitle { text-align: center; opacity: 0.6; font-size: 0.8rem; margin-top: 5px; margin-bottom: 40px; }
-
-.btn-start {
-    width: 100%;
-    height: 120px;
-    background: linear-gradient(135deg, #0ea5e9, #2563eb);
-    border: none;
-    border-radius: 20px;
-    color: white;
-    font-size: 1.5rem;
-    font-weight: bold;
-    cursor: pointer;
-    position: relative;
-    margin-bottom: 15px;
-    transition: var(--transition);
+/* 하단 서브 메뉴 4분할 */
+.sub-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.card.mini {
+    padding: 15px; display: flex; flex-direction: column; align-items: center; gap: 8px;
 }
+.card.mini span { font-size: 1.5rem; }
+.card.mini p { margin: 0; font-size: 0.85rem; font-weight: 600; }
 
-.level-tag {
-    position: absolute;
-    top: 15px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-}
-
-.btn-challenge-z {
-    width: 100%;
-    padding: 18px;
-    background: #1e293b;
-    border: 2px solid var(--z-color);
-    color: var(--z-color);
-    border-radius: 15px;
-    font-weight: 800;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.sub-menu-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-.sub-menu-grid button {
-    padding: 15px;
-    background: var(--card-bg);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: white;
-    border-radius: 12px;
-    cursor: pointer;
-}
-
-/* 게임 화면 임시 디자인 */
-.game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-.btn-back { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-.target-word span { color: var(--accent-color); font-weight: bold; font-size: 1.2rem; }
-.grid-placeholder { 
-    aspect-ratio: 1/1; 
-    background: #1e293b; 
-    border-radius: 10px; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    opacity: 0.5;
-}
-
-/* 팝업 모달 */
-.modal-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
-}
-
-.modal-overlay.active { display: flex; }
-
-.modal-content {
-    background: var(--card-bg);
-    padding: 30px;
-    border-radius: 20px;
-    width: 80%;
-    max-width: 320px;
-    position: relative;
-    animation: popUp 0.3s ease;
-}
-
-@keyframes popUp {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.close-btn {
-    position: absolute;
-    top: 15px; right: 15px;
-    background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;
-}
+/* 클릭 효과 */
+.card:active { transform: scale(0.95); }
