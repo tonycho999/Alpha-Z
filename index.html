@@ -8,26 +8,85 @@
 </head>
 <body>
 
-    <div class="deco-letter deco-a">A</div>
-    <div class="deco-letter deco-z">Z</div>
-    <div class="deco-letter deco-b">B</div>
-
-    <div class="menu-container">
+    <div id="main-menu" class="screen active">
         <header>
             <h1>ALPHA-Z</h1>
             <p class="subtitle">Combine Letters, Solve the Word</p>
         </header>
 
-        <nav class="button-group">
-            <button class="btn-main" onclick="alert('4x4 Alpha Mode 시작!')">Alpha Mode (4x4)</button>
-            <button class="btn-challenge" onclick="alert('5x5 Challenge Z 시작!')">Challenge Z (5x5)</button>
-            <button class="btn-help">How to Play</button>
-        </nav>
+        <div class="menu-content">
+            <button class="btn-start" onclick="showScreen('game-screen')">
+                <span class="level-tag">LV. 12</span>
+                <span class="btn-text">게임 시작</span>
+            </button>
 
-        <footer class="footer">
-            © 2026 Alpha-Z Studio
-        </footer>
+            <button class="btn-challenge-z" onclick="showScreen('game-screen')">
+                CHALLENGE Z
+            </button>
+
+            <div class="sub-menu-grid">
+                <button onclick="openModal('profile-modal')">프로필</button>
+                <button onclick="openModal('shop-modal')">상점</button>
+                <button onclick="openModal('leaderboard-modal')">리더보드</button>
+                <button onclick="openModal('hall-modal')">명예의 전당</button>
+            </div>
+        </div>
     </div>
 
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <button class="btn-back" onclick="showScreen('main-menu')">←</button>
+            <div class="target-word">목표: <span>ACE</span></div>
+            <div class="score">SCORE: 1250</div>
+        </div>
+        
+        <div class="game-board">
+            <div class="grid-placeholder">BOARD AREA</div>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeModal()">×</button>
+            <h2 id="modal-title">메뉴 제목</h2>
+            <div id="modal-body">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // 화면 전환 함수
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // 팝업 열기 함수
+        function openModal(type) {
+            const overlay = document.getElementById('modal-overlay');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+
+            if(type === 'profile-modal') {
+                title.innerText = "플레이어 프로필";
+                body.innerHTML = "<p>닉네임: AlphaPlayer</p><p>최고 점수: 50,000</p>";
+            } else if(type === 'shop-modal') {
+                title.innerText = "아이템 상점";
+                body.innerHTML = "<p>준비 중입니다...</p>";
+            } else if(type === 'leaderboard-modal') {
+                title.innerText = "리더보드";
+                body.innerHTML = "<ol><li>User1 - 99,999</li><li>User2 - 88,000</li></ol>";
+            } else if(type === 'hall-modal') {
+                title.innerText = "명예의 전당 (Z)";
+                body.innerHTML = "<p>도전 Z를 정복한 영웅들!</p>";
+            }
+
+            overlay.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+        }
+    </script>
 </body>
 </html>
