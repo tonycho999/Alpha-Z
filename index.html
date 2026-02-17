@@ -3,105 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Z: Magical Library</title>
-    <link rel="stylesheet" href="style.css">
+    <title>1:1 화상 채팅 (PeerJS)</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 { margin-bottom: 20px; color: #333; }
+
+        /* 비디오 영역 스타일 */
+        .video-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        video {
+            width: 300px;
+            height: 225px;
+            background-color: #000;
+            border-radius: 10px;
+            object-fit: cover;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* 내 비디오는 거울모드 적용 */
+        #localVideo { transform: scaleX(-1); border: 2px solid #4CAF50; }
+        #remoteVideo { border: 2px solid #2196F3; }
+
+        /* 컨트롤 패널 스타일 */
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .my-id-display {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+            word-break: break-all;
+        }
+
+        input {
+            padding: 10px;
+            width: 60%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover { background-color: #1976D2; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .status { margin-top: 10px; font-size: 0.9em; color: #666; }
+    </style>
 </head>
 <body>
 
-    <div id="main-menu" class="screen active">
-        <header class="main-header">
-            <div class="logo-area">
-                <span class="logo-tile">A</span>
-                <span class="logo-tile">Z</span>
-            </div>
-            <h1>ALPHA-Z</h1>
-            <div class="user-info">
-                <span class="lv-text">📜 LEVEL 12 ARCHIVE</span>
-                <div class="exp-bar"><div class="exp-fill" style="width: 70%;"></div></div>
-            </div>
-        </header>
+    <h1>1:1 화상 채팅</h1>
 
-        <section class="library-section">
-            <div class="shelf-label">HISTORY & CHAPTERS</div>
-            
-            <div class="bookshelf-wrapper">
-                <div class="bookshelf">
-                    <div class="book completed color-red">
-                        <div class="pages-left"><span>10</span></div>
-                        <div class="pages-right"><span>✓</span></div>
-                    </div>
-                    
-                    <div class="book completed color-green">
-                        <div class="pages-left"><span>11</span></div>
-                        <div class="pages-right"><span>✓</span></div>
-                    </div>
-
-                    <div class="book active color-blue" onclick="showScreen('game-screen')">
-                        <div class="book-cover">
-                            <span class="lv-num">12</span>
-                            <div class="playing-tag">PLAY</div>
-                        </div>
-                        <div class="glow"></div>
-                    </div>
-
-                    <div class="book locked color-brown"><div class="book-cover"><span>13</span></div></div>
-                    <div class="book locked color-brown"><div class="book-cover"><span>14</span></div></div>
-                    <div class="book locked color-brown"><div class="book-cover"><span>15</span></div></div>
-                    <div class="book locked color-brown"><div class="book-cover"><span>16</span></div></div>
-                </div>
-                <div class="shelf-wood"></div>
-            </div>
-        </section>
-
-        <div class="action-area">
-            <button class="btn-challenge-z" onclick="showScreen('game-screen')">
-                <span class="z-icon">Z</span> CHALLENGE Z (5x5)
-            </button>
-
-            <div class="bottom-nav">
-                <div class="nav-item" onclick="openModal('프로필')">👤<span>프로필</span></div>
-                <div class="nav-item" onclick="openModal('상점')">🛒<span>상점</span></div>
-                <div class="nav-item" onclick="openModal('리더보드')">🏆<span>랭킹</span></div>
-                <div class="nav-item" onclick="openModal('명예의 전당')">👑<span>명예전당</span></div>
-            </div>
+    <div class="video-container">
+        <div>
+            <p style="text-align:center; margin:5px;">나 (Local)</p>
+            <video id="localVideo" autoplay muted playsinline></video>
+        </div>
+        <div>
+            <p style="text-align:center; margin:5px;">상대방 (Remote)</p>
+            <video id="remoteVideo" autoplay playsinline></video>
         </div>
     </div>
 
-    <div id="game-screen" class="screen">
-        <div class="game-header">
-            <button class="back-btn" onclick="showScreen('main-menu')">↩</button>
-            <div class="target-display">TARGET: <span>ACE</span></div>
-            <div class="score-display">1,250</div>
+    <div class="control-panel">
+        <div class="my-id-display">
+            <strong>나의 ID:</strong> <span id="myId">ID 생성 중...</span>
         </div>
-        <div class="board-4x4">
-            <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
-            <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
-            <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
-            <div class="slot"></div><div class="slot"></div><div class="slot"></div><div class="slot"></div>
+        
+        <div style="margin-bottom: 10px;">
+            <input type="text" id="targetIdInput" placeholder="상대방 ID 입력">
+            <button id="callBtn" onclick="startCall()">연결하기</button>
         </div>
-    </div>
 
-    <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 id="modal-title"></h2>
-            <div id="modal-body"></div>
-            <button class="modal-close" onclick="closeModal()">닫기</button>
-        </div>
+        <div class="status" id="statusMsg">카메라 권한을 허용해주세요.</div>
     </div>
 
     <script>
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+        let localStream;
+        let peer;
+        
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const myIdSpan = document.getElementById('myId');
+        const statusMsg = document.getElementById('statusMsg');
+        const callBtn = document.getElementById('callBtn');
+
+        // 1. 카메라/마이크 접근 권한 요청 및 스트림 획득
+        async function init() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localVideo.srcObject = localStream;
+                statusMsg.innerText = "서버 연결 중...";
+                
+                // PeerJS 객체 생성 (무료 클라우드 서버 사용)
+                peer = new Peer();
+
+                // Peer 서버와 연결되었을 때 내 ID 받기
+                peer.on('open', (id) => {
+                    myIdSpan.innerText = id;
+                    statusMsg.innerText = "준비 완료! 상대방에게 내 ID를 알려주거나, 상대방 ID를 입력하세요.";
+                });
+
+                // 누군가 나에게 전화를 걸었을 때 (수신)
+                peer.on('call', (call) => {
+                    if(confirm('상대방의 연결 요청이 왔습니다. 받으시겠습니까?')) {
+                        call.answer(localStream); // 내 스트림을 보내며 응답
+                        
+                        call.on('stream', (remoteStream) => {
+                            remoteVideo.srcObject = remoteStream; // 상대방 스트림 화면에 표시
+                        });
+                        statusMsg.innerText = "통화 중...";
+                    }
+                });
+
+                // 에러 핸들링
+                peer.on('error', (err) => {
+                    console.error(err);
+                    statusMsg.innerText = "오류 발생: " + err.type;
+                });
+
+            } catch (err) {
+                console.error("미디어 접근 실패:", err);
+                statusMsg.innerText = "카메라/마이크 접근 권한이 필요합니다. (또는 HTTPS/localhost 환경인지 확인하세요)";
+                callBtn.disabled = true;
+            }
         }
-        function openModal(title) {
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-body').innerText = title + " 메뉴는 준비 중입니다.";
-            document.getElementById('modal-overlay').classList.add('active');
+
+        // 2. 내가 상대방에게 전화를 걸 때 (발신)
+        function startCall() {
+            const targetId = document.getElementById('targetIdInput').value;
+            if (!targetId) {
+                alert("상대방 ID를 입력해주세요.");
+                return;
+            }
+
+            statusMsg.innerText = "연결 시도 중...";
+            
+            // 상대방 ID로 연결 요청 및 내 스트림 전달
+            const call = peer.call(targetId, localStream);
+
+            // 상대방이 전화를 받고 스트림을 보내오면 화면에 표시
+            call.on('stream', (remoteStream) => {
+                remoteVideo.srcObject = remoteStream;
+                statusMsg.innerText = "통화 중...";
+            });
+
+            call.on('close', () => {
+                statusMsg.innerText = "통화가 종료되었습니다.";
+                remoteVideo.srcObject = null;
+            });
         }
-        function closeModal() {
-            document.getElementById('modal-overlay').classList.remove('active');
-        }
+
+        // 페이지 로드 시 초기화 실행
+        window.onload = init;
     </script>
 </body>
 </html>
