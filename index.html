@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1:1 화상 채팅 (네트워크 개선판)</title>
+    <title>1:1 화상 채팅 (Pro 연결)</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body {
@@ -19,8 +19,6 @@
             overflow: hidden;
         }
 
-        h2 { margin-bottom: 15px; font-weight: normal; }
-
         .video-container {
             position: relative;
             width: 100%;
@@ -31,7 +29,6 @@
             flex-wrap: wrap;
         }
 
-        /* 상대방 화면 (메인) */
         .remote-video-wrapper {
             position: relative;
             width: 640px;
@@ -46,10 +43,9 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            cursor: pointer; /* 클릭 가능 표시 */
+            cursor: pointer;
         }
 
-        /* 내 화면 (작게, 우측 하단 배치) */
         .local-video-wrapper {
             position: absolute;
             bottom: 20px;
@@ -61,17 +57,15 @@
             border: 2px solid rgba(255,255,255,0.3);
             overflow: hidden;
             z-index: 10;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
         #localVideo {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* 거울 모드 */
+            transform: scaleX(-1);
         }
 
-        /* 컨트롤 패널 */
         .controls {
             margin-top: 20px;
             background: rgba(255, 255, 255, 0.1);
@@ -81,44 +75,13 @@
             backdrop-filter: blur(10px);
         }
 
-        input {
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            width: 200px;
-            margin-right: 10px;
-        }
-
-        button {
-            padding: 12px 24px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            background-color: #8ab4f8;
-            color: #202124;
-            font-weight: bold;
-            transition: 0.2s;
-        }
+        input { padding: 12px; border-radius: 8px; border: none; width: 200px; margin-right: 10px; }
+        button { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; background-color: #8ab4f8; font-weight: bold; }
         button:hover { background-color: #aecbfa; }
+        .status-msg { margin-top: 10px; font-size: 0.9em; color: #bdc1c6; }
+        .my-id { font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; color: #8ab4f8; }
 
-        .status-msg {
-            margin-top: 10px;
-            font-size: 0.9em;
-            color: #bdc1c6;
-        }
-
-        .my-id {
-            font-family: monospace;
-            background: rgba(0,0,0,0.3);
-            padding: 5px 10px;
-            border-radius: 4px;
-            color: #8ab4f8;
-            user-select: text;
-        }
-
-        /* 모바일 대응 */
         @media (max-width: 768px) {
-            .video-container { flex-direction: column; align-items: center; }
             .remote-video-wrapper { width: 95vw; height: 70vw; }
             .local-video-wrapper { width: 120px; height: 90px; bottom: 10px; right: 10px; }
         }
@@ -126,14 +89,13 @@
 </head>
 <body>
 
-    <h2>1:1 화상 채팅 (STUN 서버 적용)</h2>
+    <h2>1:1 화상 채팅 (Metered 서버 적용됨)</h2>
 
     <div class="video-container">
         <div class="remote-video-wrapper">
             <video id="remoteVideo" autoplay playsinline title="더블 클릭하면 전체화면"></video>
             <div style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.5); padding:2px 8px; border-radius:4px; font-size:12px;">상대방</div>
         </div>
-
         <div class="local-video-wrapper">
             <video id="localVideo" autoplay muted playsinline></video>
         </div>
@@ -141,17 +103,20 @@
 
     <div class="controls">
         <div style="margin-bottom: 15px;">
-            내 ID: <span id="myId" class="my-id">생성 중...</span>
+            내 ID: <span id="myId" class="my-id">서버 연결 중...</span>
         </div>
-        
         <div>
             <input type="text" id="targetIdInput" placeholder="상대방 ID 입력">
             <button onclick="startCall()">연결하기</button>
         </div>
-        <p class="status-msg" id="statusMsg">카메라 권한을 확인 중입니다...</p>
+        <p class="status-msg" id="statusMsg">준비 중...</p>
     </div>
 
     <script>
+        // 사용자 설정 정보 (입력해주신 정보)
+        const METERED_DOMAIN = "test99.metered.live";
+        const METERED_API_KEY = "Q3r1QRKkqCeLh_wBBQPG791g3mZ0ipTQtzQLtNpXxTauTsKk";
+
         const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
         const statusMsg = document.getElementById('statusMsg');
@@ -160,50 +125,42 @@
         let localStream = null;
         let peer = null;
 
-        // [중요] 구글 무료 STUN 서버 설정 (다른 네트워크 연결용)
-        const peerConfig = {
-            config: {
-                'iceServers': [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: 'stun:stun3.l.google.com:19302' },
-                    { urls: 'stun:stun4.l.google.com:19302' }
-                ]
-            }
-        };
-
-        // 전체화면 기능
+        // 전체화면 처리
         remoteVideo.addEventListener('dblclick', () => {
-            if (!document.fullscreenElement) {
-                remoteVideo.requestFullscreen().catch(err => {
-                    alert(`전체화면 에러: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
-            }
+            if (!document.fullscreenElement) remoteVideo.requestFullscreen().catch(e => console.log(e));
+            else document.exitFullscreen();
         });
 
         async function init() {
             try {
-                // 카메라/마이크 가져오기
+                statusMsg.innerText = "카메라 권한 요청 중...";
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 localVideo.srcObject = localStream;
-                statusMsg.innerText = "서버에 연결하는 중...";
 
-                // Peer 객체 생성 (STUN 설정 포함)
-                peer = new Peer(peerConfig);
+                statusMsg.innerText = "TURN 서버 정보를 가져오는 중...";
+
+                // 1. Metered.ca API를 통해 최적의 서버 리스트 가져오기
+                const response = await fetch(`https://${METERED_DOMAIN}/api/v1/turn/credentials?apiKey=${METERED_API_KEY}`);
+                const iceServers = await response.json();
+
+                console.log("서버 리스트 확보:", iceServers); // 디버깅용
+
+                // 2. 확보한 서버 정보로 PeerJS 시작
+                peer = new Peer({
+                    config: {
+                        iceServers: iceServers
+                    }
+                });
 
                 peer.on('open', (id) => {
                     myIdSpan.innerText = id;
-                    statusMsg.innerText = "준비 완료! 상대방 ID를 입력해서 연결하세요.";
+                    statusMsg.innerText = "준비 완료! 상대방 ID를 입력하세요.";
                 });
 
                 peer.on('call', (call) => {
-                    if(confirm('전화가 왔습니다. 받으시겠습니까?')) {
-                        call.answer(localStream); // 수락 및 내 스트림 전송
-                        statusMsg.innerText = "연결됨! (영상 수신 대기 중...)";
-                        
+                    if(confirm('전화가 왔습니다. 연결하시겠습니까?')) {
+                        call.answer(localStream);
+                        statusMsg.innerText = "연결 성공! 영상 수신 대기 중...";
                         call.on('stream', (remoteStream) => {
                             remoteVideo.srcObject = remoteStream;
                         });
@@ -212,14 +169,13 @@
 
                 peer.on('error', (err) => {
                     console.error(err);
-                    statusMsg.innerText = `에러 발생: ${err.type}`;
-                    alert("연결 실패. 서로 다른 와이파이라면 방화벽 문제일 수 있습니다.");
+                    statusMsg.innerText = "에러: " + err.type;
                 });
 
             } catch (err) {
                 console.error(err);
-                statusMsg.innerText = "카메라/마이크 권한이 없습니다. (HTTPS 필수)";
-                alert("카메라 권한을 허용해주세요. 로컬 파일 실행(file://)은 안 됩니다.");
+                statusMsg.innerText = "초기화 실패 (콘솔 확인)";
+                alert("카메라 권한이 없거나, 서버 키가 올바르지 않습니다.");
             }
         }
 
@@ -227,16 +183,14 @@
             const targetId = document.getElementById('targetIdInput').value;
             if(!targetId) return alert("상대방 ID를 입력하세요.");
 
-            statusMsg.innerText = "상대방 찾는 중...";
-            
-            // 상대방에게 연결 요청 (내 STUN 정보 포함)
+            statusMsg.innerText = "상대방에게 연결 시도 중...";
             const call = peer.call(targetId, localStream);
 
             call.on('stream', (remoteStream) => {
                 remoteVideo.srcObject = remoteStream;
                 statusMsg.innerText = "통화 중";
             });
-
+            
             call.on('error', (err) => {
                 statusMsg.innerText = "연결 끊김";
             });
