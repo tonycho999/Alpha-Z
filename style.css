@@ -1,96 +1,102 @@
-/* 기본 테마 및 폰트 */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Nanum+Myeongjo:wght@700&display=swap');
-
 :root {
+    --wood-dark: #2c1810;
+    --wood-light: #4e342e;
     --gold: #d4af37;
-    --dark-wood: #2c1810;
+    --paper: #e8d5b5;
 }
 
-body, html {
-    margin: 0; padding: 0; height: 100%; width: 100%;
-    background: #000; overflow: hidden;
-    font-family: 'Nanum Myeongjo', serif;
+body {
+    margin: 0; padding: 0;
+    background: #000;
+    display: flex; justify-content: center;
+    font-family: 'Garamond', serif;
 }
 
-/* 배경 이미지 설정 */
-.library-background {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-image: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1000&q=80');
-    background-size: cover; background-position: center;
-    filter: brightness(0.4) sepia(0.3); z-index: -2;
+/* 웹앱 비율 고정 (Portrait) */
+.app-container {
+    width: 100vw; max-width: 480px; height: 100vh;
+    background: var(--wood-dark);
+    display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+    box-shadow: 0 0 50px rgba(0,0,0,1);
 }
 
-/* 분위기를 위한 오버레이 (그림자 효과) */
-.ambient-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 100%);
-    z-index: -1;
+/* 상단 장식 */
+.library-header {
+    height: 15%; background: linear-gradient(to bottom, #1a0f0a, #2c1810);
+    border-bottom: 5px solid var(--gold);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.crest { display: flex; align-items: center; gap: 10px; }
+.emblem { color: var(--gold); border: 1px solid var(--gold); padding: 5px; font-weight: bold; }
+h1 { color: #fff; margin: 0; letter-spacing: 3px; font-size: 1.5rem; }
+
+/* 책장 시스템 */
+.library-shelves {
+    flex: 1; display: flex; flex-direction: column; padding: 0 10px;
 }
 
-.screen { display: flex; flex-direction: column; height: 100%; align-items: center; }
-
-/* 헤더 */
-.main-header { margin-top: 40px; text-align: center; }
-.logo-text { font-family: 'Cinzel', serif; font-size: 2.5rem; color: #fff; text-shadow: 0 0 15px var(--gold); margin: 0; letter-spacing: 5px; }
-.scholar-badge { color: var(--gold); font-size: 0.8rem; letter-spacing: 3px; margin-top: 5px; }
-
-/* 중앙 독서대 구역 */
-.central-lectern {
-    flex: 1; display: flex; align-items: center; justify-content: center;
-    width: 100%; perspective: 1000px;
+.shelf {
+    flex: 1; position: relative;
+    display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px;
 }
 
-.lectern-stand {
-    position: relative; padding-bottom: 20px;
-    /* 독서대 받침대 이미지나 효과 */
-    border-bottom: 10px solid #3d2419; width: 240px; text-align: center;
+/* 나무 선반 베이스 */
+.shelf-base {
+    position: absolute; bottom: 0; width: 100%; height: 15px;
+    background: #1a0f0a; border-top: 3px solid #3d2419;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.7);
 }
 
-.main-book {
-    position: relative; width: 180px; display: inline-block;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    cursor: pointer; transform: rotateX(10deg);
+/* 상단 액자 메뉴 */
+.frame {
+    width: 60px; height: 80px; background: #3d2419; margin: 0 20px 5px;
+    border: 3px solid var(--gold); border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 2px 5px 10px rgba(0,0,0,0.5);
 }
 
-.main-book img {
-    width: 100%; border-radius: 5px 15px 15px 5px;
-    box-shadow: 20px 20px 50px rgba(0,0,0,0.8);
-    border-left: 8px solid rgba(0,0,0,0.3);
+/* 중앙 현재 책 (가장 큰 비중) */
+.main-book-focus {
+    width: 150px; height: 200px; z-index: 2; margin-bottom: 5px;
+    perspective: 1000px; cursor: pointer;
 }
-
-.main-book:hover { transform: scale(1.05) rotateX(0deg); }
-
-.book-glow {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.3); border-radius: 15px; z-index: -1;
+.book-object {
+    width: 100%; height: 100%; position: relative;
+    transition: transform 0.4s; transform: rotateY(-10deg);
 }
+.book-front {
+    width: 100%; height: 100%; background: #5d1916; color: var(--gold);
+    border-radius: 2px 10px 10px 2px; border-left: 10px solid #3d0a08;
+    display: flex; align-items: center; justify-content: center; font-weight: bold;
+    box-shadow: 10px 10px 30px rgba(0,0,0,0.8);
+}
+.main-book-focus:hover .book-object { transform: rotateY(0deg) scale(1.05); }
 
-.play-hint { margin-top: 15px; color: var(--gold); font-size: 0.7rem; letter-spacing: 2px; animation: blink 2s infinite; }
-
-/* 하단 서가 */
-.shelf-area { width: 100%; position: relative; margin-bottom: 20px; }
-.shelf-wood { height: 15px; background: #3d2419; width: 90%; margin: 0 auto; border-radius: 5px; box-shadow: 0 5px 15px #000; }
-
-.bookshelf {
-    display: flex; gap: 20px; overflow-x: auto; padding: 20px;
+/* 하단 스크롤 책들 */
+.book-scroller {
+    width: 100%; overflow-x: auto; display: flex; gap: 10px; padding: 0 10px 5px;
     scrollbar-width: none;
 }
-.bookshelf::-webkit-scrollbar { display: none; }
+.book-scroller::-webkit-scrollbar { display: none; }
 
-.book-item { flex-shrink: 0; transition: 0.3s; }
-.book-item img { width: 70px; border-radius: 3px 8px 8px 3px; box-shadow: 5px 5px 15px #000; }
-.book-item:hover { transform: translateY(-10px); }
-
-/* 하단 내비게이션 */
-.bottom-nav { width: 90%; margin-bottom: 30px; display: flex; flex-direction: column; gap: 15px; }
-.btn-challenge {
-    background: rgba(0,0,0,0.6); border: 1px solid var(--gold); color: var(--gold);
-    padding: 15px; font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer;
-    border-radius: 5px; transition: 0.3s;
+.mini-book {
+    width: 50px; height: 75px; flex-shrink: 0; background: #2f3e46;
+    border-radius: 2px 5px 5px 2px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 3px 3px 10px rgba(0,0,0,0.5); font-size: 0.8rem;
 }
-.btn-challenge:hover { background: var(--gold); color: #000; }
+.mini-book.completed { background: #3d5a80; }
+.mini-book.locked { background: #1a1a1a; color: #444; }
 
-.icon-group { display: flex; justify-content: space-around; }
-.icon-group button { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.6; }
-
-@keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+/* 하단 서랍 버튼 */
+.library-footer {
+    height: 18%; background: #1a0f0a; padding: 15px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.drawer-btn {
+    background: var(--gold); border: none; padding: 12px; font-weight: bold;
+    border-radius: 4px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+    cursor: pointer;
+}
+.bottom-menu { display: flex; justify-content: space-around; }
+.bottom-menu button { background: none; border: none; font-size: 1.2rem; color: #fff; cursor: pointer; }
