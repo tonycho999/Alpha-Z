@@ -11,7 +11,7 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #000; /* 배경이 로딩되기 전 검은색 */
+    background-color: #000; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -19,32 +19,28 @@ body, html {
     color: #fff;
 }
 
-/* === [핵심] 게임 화면 래퍼 (비율 유지) === */
+/* === 게임 화면 래퍼 (9:16 비율 고정) === */
 .game-wrapper {
-    /* 높이를 화면에 꽉 채움 */
     height: 100vh;
-    /* 가로 세로 비율 9:16 고정 (모바일 비율) */
     aspect-ratio: 9 / 16;
     
-    /* 배경 이미지 */
-    background-image: url('img/bg_main.webp'); /* 확장자 확인하세요 (.jpg or .webp) */
+    background-image: url('img/bg_main.webp');
     background-repeat: no-repeat;
-    background-size: 100% 100%; /* 박스 안에 꽉 차게 */
+    background-size: 100% 100%;
     
-    /* 레이아웃 배치 */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     
-    padding: 2vh 2vh; /* 상하좌우 안쪽 여백을 화면 높이 비례로 설정 */
+    /* 전체적인 여백을 조금 더 주어 답답함 해소 */
+    padding: 3vh 2vh; 
     box-shadow: 0 0 30px rgba(0,0,0,0.8);
 }
 
-/* === 공통 클래스 (반응형 이미지/텍스트) === */
+/* === 공통 클래스 === */
 .img-responsive {
     display: block;
     height: auto;
-    /* 그림자 효과 */
     filter: drop-shadow(0 0.5vh 0.5vh rgba(0,0,0,0.8));
 }
 
@@ -52,12 +48,12 @@ body, html {
     font-weight: bold;
     text-shadow: 0 0.3vh 0.5vh rgba(0,0,0,0.9);
     margin: 0;
-    white-space: nowrap; /* 줄바꿈 방지 */
+    white-space: nowrap;
 }
 
 /* === 1층: 상단 (Current) === */
 .shelf-top {
-    flex: 3; /* 공간 비중 3 */
+    flex: 3;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -72,41 +68,39 @@ body, html {
     align-items: center;
 }
 
-/* 메인 아이콘 크기: 부모 너비의 55% */
+/* [조정] 메인 아이콘: 50% (너무 크지 않게 균형) */
 .main-size {
-    width: 55%; 
-    margin-bottom: 1vh;
+    width: 50%; 
+    margin-bottom: 1.5vh; /* 텍스트와의 간격 확보 */
     filter: drop-shadow(0 0 2vh rgba(255, 215, 0, 0.6));
 }
 
 /* === 2층: 중간 (Icons 4개) === */
 .shelf-middle {
-    flex: 3; /* 공간 비중 3 */
+    flex: 2.5; /* 공간 비중 조절 */
     display: flex;
-    justify-content: space-between; /* 양 끝 정렬 */
-    align-items: center; /* 수직 중앙 정렬 */
+    justify-content: space-between;
+    align-items: center; 
     width: 100%;
-    padding: 0 1vh;
+    padding: 0 0.5vh; /* 좌우 여백 미세 조정 */
 }
 
 .book-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* 4개가 한 줄에 들어가야 하므로, 100% / 4 = 25% */
-    /* 여백 고려하여 개당 22%로 설정 */
-    width: 22%; 
+    /* [조정] 4개가 꽉 차게 보이도록 23% 설정 */
+    width: 23%; 
 }
 
-/* 서브 아이콘은 부모(22%) 안에 꽉 차게 */
 .sub-size {
     width: 100%;
-    margin-bottom: 0.5vh;
+    margin-bottom: 0.8vh;
 }
 
 /* === 3층: 하단 (Challenge) === */
 .shelf-bottom {
-    flex: 2; /* 공간 비중 2 */
+    flex: 2.5; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -121,9 +115,9 @@ body, html {
     align-items: center;
 }
 
-/* 챌린지 아이콘 크기: 부모 너비의 45% */
+/* [조정] 챌린지 아이콘: 40% (메인보다는 작게) */
 .challenge-size {
-    width: 45%;
+    width: 40%;
     margin-bottom: 1vh;
 }
 
@@ -131,33 +125,33 @@ body, html {
     color: #ffcc00;
 }
 
-/* === 폰트 사이즈 (vh 단위 사용) === */
-/* vh를 쓰면 화면 높이에 따라 글자가 자동으로 커지고 작아짐 */
-
-/* 제목 폰트 (Current, Challenge) */
+/* === 폰트 사이즈 (vh 단위) === */
+/* 제목 폰트 */
 .title-size {
-    font-size: 3vh; /* 화면 높이의 3% */
-    margin-top: 1vh;
+    font-size: 3.2vh; /* 조금 더 키워서 시원하게 */
 }
 
 /* 서브 폰트 (Lv.xx) */
 .sub-text-size {
-    font-size: 2vh; /* 화면 높이의 2% */
+    font-size: 2.2vh; /* 가독성 확보 */
+    color: #ddd;
 }
 
 /* === 메뉴바 (Footer) === */
 .menu-bar {
-    flex: 1; /* 공간 비중 1 */
+    flex: 1;
     display: flex;
     justify-content: space-between;
     gap: 1vh;
     margin-top: 1vh;
-    align-items: center;
+    align-items: flex-end; /* 바닥에 붙임 */
 }
 
 .menu-bar button {
     flex: 1;
-    height: 6vh; /* 버튼 높이도 화면 비율로 */
+    /* [조정] 버튼 높이 7vh (터치하기 좋게 큼직하게) */
+    height: 7vh; 
+    
     background: rgba(255, 255, 255, 0.2);
     border: 0.2vh solid rgba(255, 255, 255, 0.4);
     color: white;
@@ -166,8 +160,8 @@ body, html {
     cursor: pointer;
     backdrop-filter: blur(4px);
     
-    /* 폰트 사이즈: 화면 높이의 1.8% */
-    font-size: 1.8vh; 
+    /* [조정] 폰트 2vh (버튼 크기에 맞춰 확대) */
+    font-size: 2vh; 
     padding: 0;
     
     transition: background 0.3s;
