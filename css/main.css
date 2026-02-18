@@ -1,0 +1,29 @@
+body {
+    margin: 0;
+    height: 100vh;
+    background: #000 url('../img/bg_title.webp') no-repeat center/cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-family: 'Arial', sans-serif;
+}
+.title-wrapper { text-align: center; }
+.game-logo {
+    font-size: 4rem;
+    color: #ffd700;
+    text-shadow: 0 0 20px #ff0000;
+    margin-bottom: 10px;
+}
+.subtitle { font-size: 1.2rem; margin-bottom: 50px; opacity: 0.8; }
+.start-btn {
+    display: inline-block;
+    padding: 15px 40px;
+    border: 2px solid white;
+    color: white;
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+    animation: blink 2s infinite;
+}
+@keyframes blink { 50% { opacity: 0.5; } }
