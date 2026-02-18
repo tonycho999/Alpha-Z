@@ -3,218 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1:1 화상 채팅 (완전 연결 버전)</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #202124; /* 어두운 배경 */
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        /* 비디오 배치 영역 */
-        .video-container {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            display: flex;
-            justify-content: center;
-        }
-
-        /* 상대방 화면 (크게) */
-        #remoteVideo {
-            width: 100%;
-            max-width: 640px;
-            height: auto;
-            aspect-ratio: 4/3;
-            background-color: black;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            object-fit: cover;
-        }
-
-        /* 내 화면 (작게 PIP 모드) */
-        #localVideo {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 140px;
-            height: 105px;
-            background-color: #333;
-            border: 2px solid rgba(255,255,255,0.5);
-            border-radius: 8px;
-            object-fit: cover;
-            transform: scaleX(-1); /* 거울 모드 */
-            z-index: 10;
-        }
-
-        /* 컨트롤 패널 */
-        .controls {
-            margin-top: 20px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            text-align: center;
-            backdrop-filter: blur(5px);
-        }
-
-        input {
-            padding: 10px;
-            border-radius: 5px;
-            border: none;
-            width: 180px;
-            margin-right: 8px;
-        }
-
-        button {
-            padding: 10px 20px;
-            border-radius: 5px;
-            border: none;
-            background-color: #8ab4f8; /* 구글 블루 */
-            color: #202124;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button:hover { background-color: #aecbfa; }
-
-        .my-id {
-            display: block;
-            margin-bottom: 15px;
-            font-size: 1.1em;
-            color: #8ab4f8;
-            font-family: monospace;
-            cursor: pointer;
-        }
-
-        .status { margin-top: 10px; font-size: 0.9em; color: #ccc; }
-    </style>
+    <title>Alpha-Z: The Antique Archive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;900&family=Playfair+Display:ital,wght@0,400;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h2>1:1 화상 채팅</h2>
+    <div class="library-vignette"></div>
 
-    <div class="video-container">
-        <video id="remoteVideo" autoplay playsinline></video>
-        <video id="localVideo" autoplay muted playsinline></video>
-    </div>
-
-    <div class="controls">
-        <span id="myId" class="my-id" onclick="copyId()">ID 생성 중... (클릭해서 복사)</span>
-        
-        <div>
-            <input type="text" id="targetIdInput" placeholder="상대방 ID 입력">
-            <button onclick="startCall()">연결하기</button>
-        </div>
-
-        <div class="status" id="statusMsg">카메라 권한을 확인해주세요.</div>
-    </div>
-
-    <script>
-        // ▼▼▼ 회원님이 주신 정보가 여기에 적용되었습니다 ▼▼▼
-        const turnConfig = {
-            urls: "turn:global.turn.metered.ca:80", 
-            username: "4707058b1af2eb4d095f3d27", 
-            credential: "oOaYvySFRfTqrQXQ"
-        };
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-        const localVideo = document.getElementById('localVideo');
-        const remoteVideo = document.getElementById('remoteVideo');
-        const statusMsg = document.getElementById('statusMsg');
-        const myIdSpan = document.getElementById('myId');
-        
-        let localStream = null;
-        let peer = null;
-
-        // 아이디 복사 기능
-        function copyId() {
-            const idText = myIdSpan.innerText;
-            navigator.clipboard.writeText(idText).then(() => {
-                alert("ID가 복사되었습니다: " + idText);
-            });
-        }
-
-        async function init() {
-            try {
-                // 1. 카메라/마이크 켜기
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                localVideo.srcObject = localStream;
-                statusMsg.innerText = "서버에 연결하는 중...";
-
-                // 2. PeerJS 연결 (TURN 서버 설정 포함)
-                peer = new Peer({
-                    config: {
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' }, // 구글 무료 서버 (1차 시도)
-                            turnConfig // 회원님의 유료급 서버 (2차 시도 - 여기서 뚫림)
-                        ]
-                    }
-                });
-
-                // 3. 내 ID가 생성되었을 때
-                peer.on('open', (id) => {
-                    myIdSpan.innerText = id;
-                    statusMsg.innerText = "준비 완료! 상대방 ID를 입력하세요.";
-                });
-
-                // 4. 상대방에게 전화가 왔을 때
-                peer.on('call', (call) => {
-                    if(confirm('상대방이 연결을 요청했습니다. 받으시겠습니까?')) {
-                        statusMsg.innerText = "연결 수락 중...";
-                        call.answer(localStream); // 내 영상 보내기
-                        
-                        // 상대방 영상 받기
-                        call.on('stream', (remoteStream) => {
-                            remoteVideo.srcObject = remoteStream;
-                            statusMsg.innerText = "통화 연결됨!";
-                        });
-                    }
-                });
-
-                peer.on('error', (err) => {
-                    console.error(err);
-                    statusMsg.innerText = "에러 발생: " + err.type;
-                });
-
-            } catch (err) {
-                console.error(err);
-                statusMsg.innerText = "카메라/마이크 권한이 필요합니다.";
-                alert("주의: https:// 또는 localhost 환경에서만 작동합니다.");
-            }
-        }
-
-        // 5. 내가 전화를 걸 때
-        function startCall() {
-            const targetId = document.getElementById('targetIdInput').value;
-            if(!targetId) {
-                alert("상대방 ID를 입력해주세요.");
-                return;
-            }
-
-            statusMsg.innerText = "상대방 찾는 중...";
+    <div id="main-menu" class="screen active">
+        <header class="main-header">
+            <div class="title-crest">
+                <div class="logo-tile">A</div>
+                <h1>ALPHA-Z</h1>
+                <div class="logo-tile">Z</div>
+            </div>
+            <p class="tagline">The Great Alphabet Archive</p>
             
-            // TURN 서버를 통해 연결 시도
-            const call = peer.call(targetId, localStream);
+            <div class="user-status-scroll">
+                <span class="rank-title">Master Scholar</span>
+                <div class="level-indicator">
+                    <span>LEVEL XII</span>
+                </div>
+            </div>
+        </header>
 
-            call.on('stream', (remoteStream) => {
-                remoteVideo.srcObject = remoteStream;
-                statusMsg.innerText = "통화 연결됨!";
-            });
+        <section class="grand-library">
+            <div class="shelf-header">Chapter Selection</div>
+            
+            <div class="scroll-container">
+                <div class="shelf-row">
+                    <div class="book-set">
+                        <div class="book-open completed">
+                            <div class="page-left">X</div>
+                            <div class="page-right">✓</div>
+                        </div>
+                    </div>
 
-            call.on('error', (err) => {
-                statusMsg.innerText = "연결 실패. ID를 확인하세요.";
-            });
-        }
+                    <div class="book-set">
+                        <div class="book-open completed">
+                            <div class="page-left">XI</div>
+                            <div class="page-right">✓</div>
+                        </div>
+                    </div>
 
-        window.onload = init;
-    </script>
-</body>
+                    <div class="book-set">
+                        <div class="book-standing active" onclick="showScreen('game-screen')">
+                            <div class="spine">
+                                <span class="spine-text">XII</span>
+                            </div>
+                            <div class="front-cover">XII</div>
+                        </div>
+                    </div>
+
+                    <div class="book-set">
+                        <div class="book-standing locked"><div class="front-cover">XIII</div></div>
+                    </div>
+                    <div class="book-set">
+                        <div class="book-standing locked"><div class="front-cover">XIV</div></div>
+                    </div>
+                    <div class="book-set">
+                        <div class="book-standing locked"><div class="front-cover">XV</div></div>
+                    </div>
+                </div>
+                <div class="wood-shelf"></div>
+            </div>
+        </section>
+
+        <footer class="main-footer">
+            <button class="btn-z-challenge" onclick="showScreen('game-screen')">
+                THE CHALLENGE OF 'Z'
+            </button>
+            
+            <nav class="icon-nav">
+                <div class="nav-btn" onclick="openModal('Scholar Profile')">👤</div>
+                <div class="nav-btn" onclick="openModal('The Vault')">🛒</div>
+                <div class="nav-btn" onclick="openModal('Grand Rankings')">🏆</div>
+                <div class="nav-btn" onclick="openModal('Hall of Fame')">👑</div>
+            </nav>
+        </footer>
+    </div>
+
+    </body>
 </html>
