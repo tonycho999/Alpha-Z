@@ -2,65 +2,57 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Z: The Grand Library</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alpha-Z: Library</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="app-container">
-        <header class="library-header">
-            <div class="crest">
-                <span class="emblem">A-Z</span>
-                <h1>ALPHA-Z</h1>
-            </div>
-            <div class="user-scroll">
-                <p>Level: 12 / Scholar</p>
+        <div class="background-layer"></div>
+        
+        <header class="header">
+            <div class="user-info">
+                <span class="rank-tag">SCHOLAR</span>
+                <span class="level-text">Level 12</span>
             </div>
         </header>
 
-        <main class="library-shelves">
-            
-            <div class="shelf row-top">
-                <div class="shelf-base"></div>
-                <div class="frame profile" onclick="openModal('Profile')">
-                    <div class="picture">👤</div>
-                </div>
-                <div class="frame leaderboard" onclick="openModal('Ranking')">
-                    <div class="picture">🏆</div>
-                </div>
+        <main class="main-stage">
+            <div class="current-level-focus">
+                <img src="img/current.png" alt="Current Level" class="floating-book">
+                <div class="play-label">READ NOW</div>
             </div>
-
-            <div class="shelf row-middle">
-                <div class="shelf-base current-shelf"></div>
-                <div class="main-book-focus" onclick="showScreen('game-screen')">
-                    <div class="book-object active">
-                        <div class="book-spine"></div>
-                        <div class="book-front">LEVEL 12</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="shelf row-bottom">
-                <div class="shelf-base"></div>
-                <div class="book-scroller">
-                    <div class="mini-book completed"><span>10</span></div>
-                    <div class="mini-book completed"><span>11</span></div>
-                    <div class="mini-book locked"><span>13</span></div>
-                    <div class="mini-book locked"><span>14</span></div>
-                    <div class="mini-book locked"><span>15</span></div>
-                </div>
-            </div>
-            
         </main>
 
-        <footer class="library-footer">
-            <button class="drawer-btn" onclick="showScreen('game-screen')">
-                CHALLENGE Z
-            </button>
-            <div class="bottom-menu">
-                <button>🛒</button>
-                <button>👑</button>
+        <footer class="footer">
+            <div class="shelf-label">ARCHIVE</div>
+            <div class="bookshelf">
+                <div class="book-item cleared">
+                    <img src="img/cleared.png" alt="Cleared Level">
+                    <span class="lv-num">10</span>
+                </div>
+                <div class="book-item cleared">
+                    <img src="img/cleared.png" alt="Cleared Level">
+                    <span class="lv-num">11</span>
+                </div>
+                <div class="book-item locked">
+                    <img src="img/locked.png" alt="Locked Level">
+                    <span class="lv-num">13</span>
+                </div>
+                <div class="book-item locked">
+                    <img src="img/locked.png" alt="Locked Level">
+                    <span class="lv-num">14</span>
+                </div>
+            </div>
+
+            <div class="nav-bar">
+                <button class="btn-primary">CHALLENGE Z</button>
+                <div class="icon-buttons">
+                    <button class="btn-icon">👤</button>
+                    <button class="btn-icon">🛒</button>
+                    <button class="btn-icon">🏆</button>
+                </div>
             </div>
         </footer>
     </div>
