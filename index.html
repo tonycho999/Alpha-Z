@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Z Level Select</title>
+    <title>Alpha-Z Level UI</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,42 +11,63 @@
     <div class="game-wrapper">
         
         <div class="center-area">
-            <div class="main-level-box">
+            <div class="main-level-display">
                 <img src="img/current.png" alt="Current Level" class="main-icon">
-                <div class="level-info">
-                    <span class="level-label">CURRENT LEVEL</span>
-                    <h1 class="level-number">4</h1>
+                <div class="level-text-box">
+                    <p class="label">CURRENT LEVEL</p>
+                    <h1 class="level-num">4</h1>
                 </div>
             </div>
         </div>
 
         <div class="bottom-area">
             
-            <div class="level-list-container">
-                <div class="level-group cleared-group">
-                    <div class="small-icon"><img src="img/cleared.png" alt="Cleared"><span>1</span></div>
-                    <div class="small-icon"><img src="img/cleared.png" alt="Cleared"><span>2</span></div>
-                    <div class="small-icon"><img src="img/cleared.png" alt="Cleared"><span>3</span></div>
+            <div class="status-container">
+                
+                <div class="level-group left">
+                    <div class="mini-slot">
+                        <img src="img/cleared.png" alt="Cleared">
+                        <span>1</span>
+                    </div>
+                    <div class="mini-slot">
+                        <img src="img/cleared.png" alt="Cleared">
+                        <span>2</span>
+                    </div>
+                    <div class="mini-slot">
+                        <img src="img/cleared.png" alt="Cleared">
+                        <span>3</span>
+                    </div>
                 </div>
 
-                <div class="level-group locked-group">
-                    <div class="small-icon"><img src="img/locked.png" alt="Locked"><span>5</span></div>
-                    <div class="small-icon"><img src="img/locked.png" alt="Locked"><span>6</span></div>
-                    <div class="small-icon"><img src="img/locked.png" alt="Locked"><span>7</span></div>
+                <div class="level-group right">
+                    <div class="mini-slot">
+                        <img src="img/locked.png" alt="Locked">
+                        <span>5</span>
+                    </div>
+                    <div class="mini-slot">
+                        <img src="img/locked.png" alt="Locked">
+                        <span>6</span>
+                    </div>
+                    <div class="mini-slot">
+                        <img src="img/locked.png" alt="Locked">
+                        <span>7</span>
+                    </div>
                 </div>
+
             </div>
 
-            <div class="challenge-row">
+            <div class="challenge-section">
                 <img src="img/challenge.png" alt="Challenge Z" class="crown-icon">
-                <h2 class="challenge-text">CHALLENGE-Z</h2>
+                <h2 class="challenge-title">Challenge-Z</h2>
             </div>
 
             <nav class="menu-bar">
-                <button class="big-btn">프로필</button>
-                <button class="big-btn">상점</button>
-                <button class="big-btn">리더보드</button>
-                <button class="big-btn">명예전당</button>
+                <button type="button" class="big-btn">프로필</button>
+                <button type="button" class="big-btn">상점</button>
+                <button type="button" class="big-btn">리더보드</button>
+                <button type="button" class="big-btn">명예전당</button>
             </nav>
+
         </div>
     </div>
 
