@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alpha-Z: Archive</title>
+    <title>Alpha-Z</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,36 +12,51 @@
         <div class="main-background"></div>
 
         <header class="app-header">
-            <div class="user-status-card">
+            <div class="user-info-box">
                 <span class="rank-label">SCHOLAR</span>
-                <span class="level-value">LEVEL 12</span>
+                <span class="level-label">LEVEL 12</span>
             </div>
         </header>
 
-        <main class="main-display">
-            <div class="focus-book-container">
-                <img src="img/current.png" alt="Current Book" class="img-main">
+        <main class="main-stage">
+            <div class="current-level-area">
+                <img src="img/current.png" alt="Current Level" class="img-current">
                 <div class="guide-text">READ NOW</div>
             </div>
         </main>
 
         <footer class="app-footer">
-            <div class="archive-shelf">
-                <div class="shelf-title">ARCHIVE</div>
-                <div class="bookshelf-scroll">
-                    <div class="book-node"><img src="img/cleared.png"><span>X</span></div>
-                    <div class="book-node"><img src="img/cleared.png"><span>XI</span></div>
-                    <div class="book-node locked"><img src="img/locked.png"><span>XIII</span></div>
-                    <div class="book-node locked"><img src="img/locked.png"><span>XIV</span></div>
+            <div class="archive-header">
+                <div class="gold-line"></div>
+                <span>ARCHIVE</span>
+                <div class="gold-line"></div>
+            </div>
+            
+            <div class="shelf-scroll">
+                <div class="book-node">
+                    <img src="img/cleared.png" alt="Level 10">
+                    <span class="lv-text">X</span>
+                </div>
+                <div class="book-node">
+                    <img src="img/cleared.png" alt="Level 11">
+                    <span class="lv-text">XI</span>
+                </div>
+                <div class="book-node locked">
+                    <img src="img/locked.png" alt="Level 13">
+                    <span class="lv-text">XIII</span>
+                </div>
+                <div class="book-node locked">
+                    <img src="img/locked.png" alt="Level 14">
+                    <span class="lv-text">XIV</span>
                 </div>
             </div>
 
-            <nav class="nav-control">
-                <button class="btn-z">CHALLENGE Z</button>
-                <div class="icon-row">
-                    <button class="icon-btn">👤</button>
-                    <button class="icon-btn">🛒</button>
-                    <button class="icon-btn">🏆</button>
+            <nav class="bottom-nav">
+                <button class="btn-challenge">CHALLENGE Z</button>
+                <div class="quick-icons">
+                    <button class="icon-tab">👤</button>
+                    <button class="icon-tab">🛒</button>
+                    <button class="icon-tab">🏆</button>
                 </div>
             </nav>
         </footer>
