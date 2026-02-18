@@ -1,119 +1,118 @@
-/* 화면 고정 및 리셋 */
+/* 기본 리셋 */
 * {
     box-sizing: border-box;
     margin: 0; padding: 0;
     -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
-    width: 100%;
-    height: 100%;
+body, html {
+    width: 100%; height: 100%;
     background-color: #000;
-    overflow: hidden; /* 스크롤 방지 */
+    overflow: hidden;
     font-family: serif;
 }
 
-/* 배경 이미지 강제 고정 */
-.fixed-bg {
-    position: fixed;
+/* 휴대폰 화면 고정 컨테이너 */
+.app-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    max-width: 500px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 배경 이미지: bg_main.webp 가득 채우기 */
+.main-background {
+    position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     background: url('img/bg_main.webp') no-repeat center top;
     background-size: cover;
     z-index: -2;
 }
 
-/* 별표 가리기 마스크 */
-.star-mask {
-    position: fixed;
+/* 오른쪽 하단 별모양 가리기 */
+.bottom-right-cleaner {
+    position: absolute;
     bottom: 0; right: 0;
-    width: 150px; height: 150px;
-    background: radial-gradient(circle at bottom right, rgba(13, 8, 6, 1) 20%, transparent 80%);
+    width: 120px; height: 120px;
+    background: radial-gradient(circle at bottom right, rgba(13, 8, 5, 1) 20%, transparent 75%);
     z-index: -1;
 }
 
-/* 앱 전체 구조 (Flexbox) */
-.app-shell {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    max-width: 500px; /* PC 대응 */
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-}
-
-/* 섹션별 높이 비율 강제 할당 */
-.top-section {
-    height: 30%; /* 상단 ALPHA-Z 로고 공간 */
+/* 상단 정보 (높이 비율 30%) */
+.app-header {
+    height: 30%;
     display: flex;
     align-items: flex-end;
     justify-content: center;
     padding-bottom: 20px;
 }
 
-.mid-section {
-    flex: 1; /* 남은 중간 공간 모두 차지 */
+.user-badge {
+    text-align: center;
+    border: 1px solid rgba(197, 160, 89, 0.5);
+    padding: 5px 22px;
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.4);
+}
+.rank-label { display: block; font-size: 10px; color: #c5a059; letter-spacing: 2px; }
+.level-label { font-size: 14px; color: #fff; font-weight: bold; }
+
+/* 중앙 현재 레벨 */
+.active-stage {
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
 }
+.focus-book { text-align: center; }
+.focus-book img { width: 140px; filter: drop-shadow(0 0 15px #000); }
+.read-text { margin-top: 10px; color: #fceabb; letter-spacing: 4px; font-size: 11px; font-weight: bold; }
 
-.bot-section {
-    height: 40%; /* 아카이브 및 버튼 공간 */
+/* 하단 아카이브 및 메뉴 (높이 비율 40%) */
+.app-footer {
+    height: 40%;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
     padding: 0 25px 25px;
 }
 
-/* 유저 배지 */
-.user-badge {
-    text-align: center;
-    border: 1px solid rgba(197, 160, 89, 0.6);
-    padding: 5px 25px;
-    border-radius: 20px;
-    background: rgba(0,0,0,0.4);
+.shelf-label {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
 }
-.rank-txt { display: block; font-size: 10px; color: #c5a059; letter-spacing: 2px; }
-.lv-txt { font-size: 14px; color: #fff; font-weight: bold; }
+.line { flex: 1; height: 1px; background: rgba(197, 160, 89, 0.3); }
+.shelf-label span { font-size: 10px; color: #c5a059; letter-spacing: 2px; }
 
-/* 중앙 책 (크기 축소) */
-.main-book { text-align: center; }
-.main-book img { width: 140px; filter: drop-shadow(0 0 15px #000); }
-.read-now { margin-top: 10px; color: #fceabb; letter-spacing: 4px; font-size: 12px; font-weight: bold; }
-
-/* 아카이브 (크기 확대) */
-.shelf-line {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 15px;
-}
-.shelf-line::before, .shelf-line::after { content: ""; flex: 1; height: 1px; background: rgba(197, 160, 89, 0.3); }
-.shelf-line span { font-size: 10px; color: #c5a059; letter-spacing: 2px; }
-
-.shelf-scroll {
+.book-scroll {
     display: flex; gap: 20px; overflow-x: auto; padding-bottom: 15px;
 }
-.shelf-scroll::-webkit-scrollbar { display: none; }
-.item { flex-shrink: 0; text-align: center; }
-.item img { width: 85px; display: block; }
-.item span { color: #c5a059; font-size: 11px; margin-top: 5px; display: block; }
+.book-scroll::-webkit-scrollbar { display: none; }
+.book-item { flex-shrink: 0; text-align: center; }
+.book-item img { width: 85px; display: block; } /* 크기 1단계 확대 */
+.book-item span { color: #c5a059; font-size: 11px; margin-top: 5px; display: block; }
 
-/* 하단 버튼 구역 */
-.nav-container { display: flex; flex-direction: column; gap: 15px; }
+/* 하단 네비게이션 */
+.navigation { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
 
-.challenge-box { display: flex; justify-content: center; }
-.challenge-img-btn {
-    background: transparent; border: none; cursor: pointer; padding: 0;
+.challenge-area { display: flex; justify-content: center; }
+.btn-challenge-img {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    width: 100px; /* 꽉 차지 않게 적절한 크기로 고정 */
 }
-.challenge-img-btn img {
-    width: 140px; /* 왕관 이미지 크기 */
-    display: block;
+.btn-challenge-img img {
+    width: 100%;
+    height: auto;
     filter: drop-shadow(0 4px 10px rgba(0,0,0,0.8));
 }
 
-.icon-tabs { display: flex; justify-content: space-between; gap: 10px; }
-.tab {
-    flex: 1; padding: 12px 0;
-    background: rgba(197, 160, 89, 0.1);
+.tab-menu { display: flex; justify-content: space-between; gap: 10px; }
+.tab-btn {
+    flex: 1; padding: 10px 0;
+    background: rgba(197, 160, 89, 0.15); /* 배경색 적용 */
     border: 1px solid rgba(197, 160, 89, 0.3);
     border-radius: 8px;
     color: #fff; font-size: 22px; cursor: pointer;
