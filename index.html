@@ -2,46 +2,46 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Alpha-Z Lobby</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="app-container">
-        <main class="content-view">
-            <div class="level-list">
+        <div class="scroll-content">
+            <div class="level-wrapper">
                 
-                <div class="level-item">
+                <div class="level-node cleared">
                     <img src="img/cleared.png" alt="Cleared">
                 </div>
 
-                <div class="level-item current-focus">
+                <div class="level-node current">
                     <img src="img/current.png" alt="Current">
                 </div>
 
-                <div class="level-item">
+                <div class="level-node locked">
                     <img src="img/locked.png" alt="Locked">
                 </div>
 
-                <div class="challenge-section">
+                <div class="challenge-node">
                     <img src="img/challenge.png" alt="Challenge">
                     <p class="challenge-label">Challenge-Z</p>
                 </div>
 
             </div>
-        </main>
+        </div>
 
-        <nav class="bottom-nav">
-            <div class="nav-btn">
+        <nav class="tab-bar">
+            <div class="tab-item">
                 <span class="icon">👤</span>
                 <span class="label">프로필</span>
             </div>
-            <div class="nav-btn">
+            <div class="tab-item">
                 <span class="icon">🛒</span>
                 <span class="label">상점</span>
             </div>
-            <div class="nav-btn">
+            <div class="tab-item">
                 <span class="icon">🏆</span>
                 <span class="label">리더보드</span>
             </div>
