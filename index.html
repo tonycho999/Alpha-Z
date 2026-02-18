@@ -3,43 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Level UI</title>
+    <title>Alpha-Z Level Select</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="game-container">
-        <div class="main-center">
-            <div class="level-box">
-                <img src="img/current.png" alt="Current Level">
-                <p>Current Level</p>
+        
+        <div class="center-area">
+            <div class="level-display">
+                <img src="img/current.png" alt="Current Level" class="main-icon glow-effect">
+                <h2 class="text-glow">CURRENT LEVEL</h2>
             </div>
         </div>
 
         <div class="bottom-area">
             
-            <div class="status-books">
-                <div class="book-item left">
+            <div class="status-row">
+                <div class="status-item">
                     <img src="img/cleared.png" alt="Cleared">
-                    <span>Cleared</span>
+                    <span class="text-glow">Cleared</span>
                 </div>
-                <div class="book-item right">
+                <div class="status-item">
                     <img src="img/locked.png" alt="Locked">
-                    <span>Locked</span>
+                    <span class="text-glow">Locked</span>
                 </div>
             </div>
 
-            <div class="challenge-title">
-                <img src="img/challenge.png" alt="Challenge Z">
-                <h3>Challenge-Z</h3>
+            <div class="challenge-row">
+                <img src="img/challenge.png" alt="Challenge Z" class="challenge-icon">
+                <h3 class="text-glow">Challenge-Z</h3>
             </div>
 
-            <div class="bottom-menu">
-                <button>프로파일</button>
-                <button>상점</button>
-                <button>리더보드</button>
-                <button>명예의전당</button>
-            </div>
+            <nav class="menu-bar">
+                <button class="btn">프로필</button>
+                <button class="btn">상점</button>
+                <button class="btn">리더보드</button>
+                <button class="btn">명예의전당</button>
+            </nav>
         </div>
     </div>
 
