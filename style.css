@@ -7,63 +7,68 @@
 body, html {
     margin: 0; padding: 0;
     width: 100%; height: 100%;
-    background: transparent; /* 전체 배경 투명 */
+    /* 배경색 투명 또는 검정(이미지 로드 전) */
+    background-color: #000;
     overflow: hidden;
-    font-family: 'serif';
+    font-family: 'serif'; /* 고풍스러운 느낌의 폰트 */
 }
 
-/* 세로형 모바일 레이아웃 고정 */
+/* 휴대폰 화면 비율 고정 컨테이너 */
 .app-container {
     position: relative;
     width: 100%;
-    max-width: 480px; /* 가로폭 제한 */
-    height: 100vh;
-    margin: 0 auto;
+    height: 100%;
+    max-width: 480px; /* PC에서 볼 때 모바일 폭 유지 */
+    margin: 0 auto;   /* 중앙 정렬 */
     display: flex;
     flex-direction: column;
+    /* 배경 이미지가 컨테이너 밖으로 나가지 않도록 설정 */
+    overflow: hidden; 
 }
 
 /* 배경 이미지 설정 */
 .main-background {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
+    /* 배경 이미지 경로 */
     background: url('img/bg_main.webp') no-repeat center top;
-    background-size: cover;
+    background-size: cover; /* 화면을 꽉 채우도록 설정 */
     z-index: -2;
 }
 
-/* 오른쪽 하단 별모양 가리기 마스크 */
-.bottom-right-cleaner {
+/* 우측 하단 별표 가리기 마스크 */
+.bottom-right-mask {
     position: absolute;
     bottom: 0; right: 0;
-    width: 120px; height: 120px;
-    /* 배경 바닥색과 유사한 어두운 그라데이션으로 덮기 */
-    background: radial-gradient(circle at bottom right, rgba(20, 10, 5, 1) 20%, transparent 70%);
+    width: 150px; height: 150px;
+    /* 바닥 타일 색상과 유사한 어두운 그라데이션으로 자연스럽게 덮기 */
+    background: radial-gradient(circle at bottom right, rgba(15, 10, 5, 1) 20%, transparent 70%);
     z-index: -1;
     pointer-events: none;
 }
 
-/* 상단 영역 */
+/* 상단 정보 영역 */
 .app-header {
-    height: 32%;
+    /* 배경의 ALPHA-Z 로고 아래에 정보가 오도록 높이 설정 */
+    height: 28%; 
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding-bottom: 15px;
+    padding-bottom: 10px;
 }
 
 .user-badge {
     text-align: center;
-    border: 1px solid rgba(197, 160, 89, 0.5);
-    padding: 5px 25px;
+    border: 1px solid rgba(197, 160, 89, 0.5); /* 금색 테두리 */
+    padding: 5px 20px;
     border-radius: 20px;
-    background: rgba(0,0,0,0.2); /* 가독성을 위한 아주 연한 배경 */
+    background: rgba(0, 0, 0, 0.3); /* 글씨 가독성을 위한 아주 옅은 음영 */
 }
 
 .rank { display: block; font-size: 10px; color: #c5a059; letter-spacing: 2px; }
 .level { font-size: 14px; color: #fff; font-weight: bold; }
 
-/* 중앙 영역 */
+/* 중앙 메인 영역 (현재 책) */
 .active-focus {
     flex: 1;
     display: flex;
@@ -71,75 +76,95 @@ body, html {
     justify-content: center;
 }
 
-.img-main {
-    width: 140px;
-    filter: drop-shadow(0 0 15px rgba(0,0,0,0.6));
-}
-
-.guide-text {
-    margin-top: 10px;
-    color: #fceabb;
-    letter-spacing: 5px;
-    font-size: 11px;
+.current-book-node {
     text-align: center;
 }
 
-/* 하단 영역 */
+.img-main {
+    width: 160px; /* 책 크기 적절히 조절 */
+    height: auto;
+    filter: drop-shadow(0 0 15px rgba(255, 220, 150, 0.2)); /* 은은한 발광 효과 */
+}
+
+.guide-text {
+    margin-top: 15px;
+    color: #fceabb;
+    letter-spacing: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* 하단 아카이브 및 메뉴 영역 */
 .app-footer {
-    height: 40%;
+    height: 42%; /* 하단 영역 비율 */
     display: flex;
     flex-direction: column;
-    padding: 0 30px 25px;
+    padding: 0 20px 20px;
 }
 
 .shelf-label {
     display: flex; align-items: center; gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .line { flex: 1; height: 1px; background: rgba(197, 160, 89, 0.3); }
 .shelf-label span { font-size: 10px; color: #c5a059; letter-spacing: 2px; }
 
+/* 가로 스크롤 책장 */
 .scroll-wrapper {
     display: flex; gap: 15px;
     overflow-x: auto;
-    padding-bottom: 20px;
-    scrollbar-width: none;
+    padding-bottom: 15px;
+    scrollbar-width: none; /* 스크롤바 숨김 */
 }
 .scroll-wrapper::-webkit-scrollbar { display: none; }
 
 .book-item { position: relative; flex-shrink: 0; text-align: center; }
-.book-item img { width: 85px; display: block; }
-.book-item span { color: #c5a059; font-size: 11px; margin-top: 5px; display: block; }
+.book-item img { width: 75px; display: block; }
+.book-item span { color: #c5a059; font-size: 10px; margin-top: 5px; display: block; }
 
-/* 하단 네비게이션 */
-.navigation { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
+/* 하단 내비게이션 및 버튼 */
+.navigation { 
+    margin-top: auto; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+}
 
-/* Challenge Z 버튼 수정: 배경 투명, 테두리 제거, 이미지 스타일링 */
-.btn-challenge {
-    width: 100%;
-    padding: 0; /* 패딩 제거 */
-    background: transparent; /* 배경 투명 */
-    border: none; /* 테두리 제거 */
-    cursor: pointer;
+/* Challenge Z 버튼 래퍼 */
+.challenge-btn-wrapper {
     display: flex;
     justify-content: center;
+    margin-bottom: 5px;
+}
+
+/* Challenge Z 버튼 스타일 (배경 투명) */
+.btn-challenge {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.btn-challenge:active {
+    transform: scale(0.95); /* 클릭 시 살짝 눌리는 효과 */
 }
 
 .btn-challenge img {
-    width: 100%;
-    max-width: 350px; /* 이미지 너무 커지지 않게 제한 */
-    height: auto;
+    width: 120px; /* Challenge 아이콘 크기 조절 */
     display: block;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); /* 이미지에 입체감 부여 */
+    filter: drop-shadow(0 4px 5px rgba(0,0,0,0.5));
 }
 
+/* 하단 메뉴 아이콘 */
 .menu-icons { display: flex; gap: 10px; justify-content: space-between; }
 
 .menu-btn {
     flex: 1; padding: 12px 0;
-    background: rgba(197, 160, 89, 0.15);
+    /* 아이콘 버튼은 살짝 배경을 줘서 터치 영역 확보 */
+    background: rgba(197, 160, 89, 0.1);
     border: 1px solid rgba(197, 160, 89, 0.3);
     border-radius: 8px;
-    color: #fff; font-size: 22px; cursor: pointer;
+    color: #fff; font-size: 20px; cursor: pointer;
 }
