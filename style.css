@@ -1,5 +1,6 @@
 @charset "UTF-8";
 
+/* 초기화 */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -10,39 +11,39 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    /* [요청사항] 배경 투명 */
-    background-color: transparent;
-    
-    /* 화면 중앙 정렬 */
+    /* 배경색 투명 요청 반영 */
+    background-color: transparent; 
+    /* 내용을 화면 정중앙에 배치 */
     display: flex;
     justify-content: center;
     align-items: center;
-    
     font-family: 'Arial', sans-serif;
     color: #fff;
 }
 
-/* === [핵심] 게임 화면 래퍼 (절대 규칙 준수) === */
+/* === 핵심 컨테이너 === */
 .game-wrapper {
-    /* 1. 세로 높이를 화면(뷰포트)에 100% 맞춤 */
+    /* 1. 세로 길이를 화면 전체(100%)에 맞춤 */
     height: 100vh;
     
-    /* 2. 가로 폭은 비율(9:16)에 맞춰 자동 조절 */
-    aspect-ratio: 9 / 16;
+    /* 2. 가로 길이는 세로 길이에 맞춰 자동 비율 유지 (9:16 비율 가정) */
+    /* 만약 이미지가 조금 뚱뚱하거나 홀쭉하다면 이 숫자를 이미지 비율에 맞춰 조정하세요 (예: 9/19) */
+    aspect-ratio: 9 / 16; 
     
-    /* 배경 이미지 */
-    background-image: url('img/bg_main.jpg'); /* 확장자 확인 (.jpg or .webp) */
+    /* 3. 배경 이미지 설정 */
+    background-image: url('img/bg_main.webp');
     background-repeat: no-repeat;
-    background-size: 100% 100%; /* 박스 안에 꽉 차게 */
+    /* 박스 크기에 딱 맞게 이미지를 채움 */
+    background-size: 100% 100%; 
     
-    /* 내부 레이아웃 */
+    /* UI 정렬을 위한 Flex 설정 */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    padding-bottom: 20px;
     
-    position: relative;
-    /* 투명 배경 위에서 구분되도록 그림자 */
-    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    /* 투명 배경 위에서 구분되도록 약간의 그림자 (선택사항) */
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
 /* 1. 중앙 영역 (Current Level) */
@@ -51,147 +52,107 @@ body, html {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* 화면이 좁아질 때를 대비해 최소 높이 확보 */
-    min-height: 200px; 
+    padding-top: 10%; /* 시각적 균형 */
 }
 
-.main-level-display {
+.level-box {
     text-align: center;
     cursor: pointer;
     transition: transform 0.2s;
 }
 
-.main-level-display:hover {
+.level-box:hover {
     transform: scale(1.05);
 }
 
 .main-icon {
-    /* 중앙 아이콘 */
-    width: 220px; 
-    filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.8)); /* 강한 발광 */
+    width: 35%; /* 부모(모바일화면) 기준 비율 */
+    min-width: 120px;
+    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
 }
 
-.level-text-box {
+.glow-text {
     margin-top: 10px;
-    text-shadow: 3px 3px 6px #000;
-}
-
-.level-text-box .label {
-    font-size: 1.4rem;
-    color: #ffd700;
+    font-size: 1.5rem;
     font-weight: bold;
-    letter-spacing: 2px;
-    margin-bottom: 0;
+    text-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(255, 200, 0, 0.5);
 }
 
-.level-text-box .level-num {
-    font-size: 4.5rem; /* 숫자 아주 크게 */
-    font-weight: bold;
-    margin: 0;
-    line-height: 1;
-}
-
-/* 2. 하단 영역 (여유 공간 확보) */
+/* 2. 하단 영역 */
 .bottom-area {
-    width: 100%;
-    padding: 0 20px 30px 20px; /* 아래 여백 넉넉히 */
     display: flex;
     flex-direction: column;
     gap: 15px;
-    
-    /* 아이콘들이 잘 보이도록 하단부 배경 어둡게 처리 */
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 10%, transparent);
+    padding: 20px;
+    /* 텍스트 가독성을 위해 하단부 그라데이션 */
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
 }
 
-/* 레벨 아이콘 컨테이너 */
-.status-container {
+/* Cleared / Locked 아이콘 */
+.status-row {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding: 0 5px;
-    margin-bottom: 5px;
+    justify-content: space-around;
+    padding: 0 10px;
 }
 
-.level-group {
-    display: flex;
-    gap: 10px;
-}
-
-/* [요청반영] 아이콘들 많이 많이 크게! */
-.mini-slot {
+.status-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 80px; /* 기존 대비 2배 확대 */
+    width: 80px;
 }
 
-.mini-slot img {
-    width: 100%;
-    height: auto;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.9));
+.status-item img {
+    width: 60px;
+    margin-bottom: 5px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
 }
 
-.mini-slot span {
-    font-size: 1.2rem; /* 글자도 크게 */
+.status-item span {
+    font-size: 0.9rem;
     font-weight: bold;
-    margin-top: 5px;
-    color: #fff;
-    text-shadow: 2px 2px 4px #000;
+    text-shadow: 1px 1px 2px #000;
 }
 
 /* Challenge-Z */
-.challenge-section {
+.challenge-row {
     text-align: center;
-    margin-bottom: 10px;
 }
 
-/* [요청반영] 왕관 아이콘 아주 크게 */
-.crown-icon {
-    width: 160px; /* 하단 중앙을 장악하는 크기 */
+.challenge-row img {
+    width: 100px;
     display: block;
     margin: 0 auto;
-    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
 }
 
-.challenge-title {
-    margin: 5px 0 0 0;
-    font-size: 1.6rem;
-    color: #fff;
-    font-weight: bold;
-    text-shadow: 0 0 10px #ff8c00, 3px 3px 5px #000;
+.challenge-row h3 {
+    margin: 5px 0 0;
+    font-size: 1.1rem;
+    color: #ffcc00;
+    text-shadow: 1px 1px 3px #000;
 }
 
-/* [요청반영] 하단 버튼 안 보임 -> 아주 크게 수정 */
+/* 메뉴 버튼 */
 .menu-bar {
     display: flex;
     justify-content: space-between;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 5px;
 }
 
-.big-btn {
+.menu-bar button {
     flex: 1;
-    height: 80px; /* 높이 80px: 모바일에서도 아주 큰 사이즈 */
-    
-    /* 배경과 테두리를 명확하게 */
-    background: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.7); /* 테두리 진하게 */
-    border-radius: 15px;
-    
-    color: #fff;
-    font-size: 1.2rem; /* 폰트 사이즈 확대 */
+    padding: 12px 0;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
     font-weight: bold;
+    border-radius: 8px;
     cursor: pointer;
-    
-    backdrop-filter: blur(5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.6);
-    transition: all 0.2s;
-    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    font-size: 0.8rem;
+    transition: background 0.3s;
 }
 
-.big-btn:hover {
-    background: rgba(255, 255, 255, 0.35);
-    border-color: #ffd700;
-    color: #ffd700;
-    transform: translateY(-3px);
+.menu-bar button:hover {
+    background: rgba(255, 255, 255, 0.4);
 }
