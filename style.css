@@ -73,7 +73,7 @@ body, html {
 
 .glow-text {
     margin-top: 10px;
-    font-size: 1.5rem;
+    font-size: 3rem;
     font-weight: bold;
     text-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(255, 200, 0, 0.5);
 }
@@ -82,7 +82,7 @@ body, html {
 .bottom-area {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 50px;
     padding: 20px;
     /* 텍스트 가독성을 위해 하단부 그라데이션 */
     background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
@@ -109,7 +109,7 @@ body, html {
 }
 
 .status-item span {
-    font-size: 0.9rem;
+    font-size: 3rem;
     font-weight: bold;
     text-shadow: 1px 1px 2px #000;
 }
@@ -126,7 +126,7 @@ body, html {
 }
 
 .challenge-row h3 {
-    margin: 5px 0 0;
+    margin: 20px 0 0;
     font-size: 4rem;
     color: #ffcc00;
     text-shadow: 2px 2px 3px #000;
@@ -136,7 +136,7 @@ body, html {
 .menu-bar {
     display: flex;
     justify-content: space-between;
-    gap: 5px;
+    gap: 50px;
 }
 
 .menu-bar button {
@@ -149,7 +149,7 @@ body, html {
     border-radius: 80px;
     cursor: pointer;
     backdrop-filter: blur(4px);
-    font-size: 4rem;
+    font-size: 3rem;
     transition: background 0.3s;
 }
 
