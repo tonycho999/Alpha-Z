@@ -8,91 +8,87 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #000;
+    background-color: #000; /* 이미지 너머 공간 처리 */
 }
 
-/* 전체 컨테이너: 배경 이미지 폭에 맞춰 UI를 중앙 정렬 */
-.app-container {
-    position: relative;
-    width: fit-content; /* 배경 이미지 원본 폭에 맞춤 */
-    max-width: 100%;
-    height: 100vh;
-    margin: 0 auto;
-}
-
-/* 배경 이미지: 사이즈 조정 절대 금지 */
-.background-layer {
-    position: absolute;
+/* 배경: 사이즈 조정 금지 */
+.background-container {
+    position: fixed;
     top: 0;
-    left: 0;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: -1;
 }
 
-.background-layer img {
-    display: block; /* 원본 사이즈 유지 */
+.background-container img {
+    /* width, height, object-fit 등을 선언하지 않아 원본 크기 유지 */
+    display: block;
 }
 
-/* game_play.html 영역: 스크롤 및 버튼 배치 */
-#game-content {
-    height: 100%;
-    overflow-y: auto;
-    scrollbar-width: none;
+/* UI 전체 구조 */
+.ui-wrapper {
+    position: relative;
+    width: fit-content; /* 배경 이미지 너비에 딱 맞춤 */
+    margin: 0 auto;
+    height: 100vh;
     display: flex;
     flex-direction: column;
 }
-#game-content::-webkit-scrollbar { display: none; }
 
-.level-list {
+/* 상단 로고 가리지 않게 비우기 */
+.top-spacer {
+    height: 150px; 
+    flex-shrink: 0;
+}
+
+/* 중앙 게임 콘텐츠 (스크롤 가능) */
+.game-content {
+    flex: 1;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 35px;
-    padding-bottom: 150px; /* 하단바에 가려지지 않게 여백 */
+    gap: 40px;
+    padding-bottom: 120px; /* 하단바 두께만큼 여백 */
+    scrollbar-width: none;
 }
+.game-content::-webkit-scrollbar { display: none; }
 
-.spacer { height: 160px; } /* ALPHA-Z 로고 공간 */
-
-.level-btn {
-    width: 130px;
-    height: auto;
-    cursor: pointer;
+.level-icon {
+    width: 150px; /* 아이콘 크기만 적절히 지정 */
 }
 
 .challenge-group {
     text-align: center;
-    margin-top: 10px;
 }
-.challenge-group img { width: 80px; }
+.challenge-group img {
+    width: 90px;
+}
 .challenge-group p {
-    color: #fff;
+    color: white;
+    font-size: 1.2rem;
     font-weight: bold;
-    margin-top: 8px;
-    font-size: 1.1rem;
+    margin-top: 10px;
     text-shadow: 2px 2px 4px #000;
 }
 
-/* bottom.html 영역: 어두운 배경으로 별 모양 가리기 */
-#bottom-menu {
+/* 하단 버튼 바: 별 모양 가림용 */
+.bottom-area {
     position: absolute;
     bottom: 0;
-    width: 100%; /* 배경 이미지 가로폭만큼 꽉 채움 */
-    height: 100px;
-    
-    /* 하단 별 모양 차단을 위한 어두운 배경색 */
-    background-color: #1a1614; 
-    border-top: 2px solid #4a3b2b;
-    
+    width: 100%; /* 배경 이미지 너비만큼 확장 */
+    height: 90px;
+    background-color: #0d0b0a; /* 완전히 불투명한 어두운 색으로 별 가림 */
+    border-top: 2px solid #3d2f23;
     display: flex;
     justify-content: space-around;
     align-items: center;
     z-index: 10;
 }
 
-.nav-item {
+.nav-button {
     color: #d4b483;
     font-size: 1.1rem;
     font-weight: bold;
-    flex: 1;
-    text-align: center;
     cursor: pointer;
 }
