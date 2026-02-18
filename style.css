@@ -8,79 +8,79 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #000; /* 배경 바깥쪽은 검은색 */
+    background-color: #000;
 }
 
-/* 전체 컨테이너를 배경 이미지 폭으로 제한 */
+/* 전체 컨테이너: 배경 이미지 폭에 맞춰 UI를 중앙 정렬 */
 .app-container {
     position: relative;
-    width: 100%;
-    max-width: 500px; /* 일반적인 모바일 웹앱 폭 (배경 이미지 폭에 맞춤) */
+    width: fit-content; /* 배경 이미지 원본 폭에 맞춤 */
+    max-width: 100%;
     height: 100vh;
     margin: 0 auto;
-    overflow: hidden;
 }
 
-/* 배경 이미지: 현재 사이즈 유지 */
-.bg-layer {
+/* 배경 이미지: 사이즈 조정 절대 금지 */
+.background-layer {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
     z-index: -1;
 }
 
-.bg-layer img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* 현재 사이즈 비율 유지 */
+.background-layer img {
+    display: block; /* 원본 사이즈 유지 */
 }
 
-/* 스크롤 영역 */
-.content-view {
+/* game_play.html 영역: 스크롤 및 버튼 배치 */
+#game-content {
     height: 100%;
     overflow-y: auto;
     scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
 }
-.content-view::-webkit-scrollbar { display: none; }
+#game-content::-webkit-scrollbar { display: none; }
 
 .level-list {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 30px;
+    gap: 35px;
     padding-bottom: 150px; /* 하단바에 가려지지 않게 여백 */
 }
 
-.spacer { height: 180px; } /* ALPHA-Z 로고 자리 확보 */
+.spacer { height: 160px; } /* ALPHA-Z 로고 공간 */
 
-.level-icon {
-    width: 120px;
+.level-btn {
+    width: 130px;
     height: auto;
+    cursor: pointer;
 }
 
 .challenge-group {
     text-align: center;
+    margin-top: 10px;
 }
-.challenge-group img { width: 70px; }
+.challenge-group img { width: 80px; }
 .challenge-group p {
     color: #fff;
     font-weight: bold;
-    margin-top: 5px;
-    text-shadow: 1px 1px 3px #000;
+    margin-top: 8px;
+    font-size: 1.1rem;
+    text-shadow: 2px 2px 4px #000;
 }
 
-/* 하단 네비게이션 수정 */
-.bottom-nav {
+/* bottom.html 영역: 어두운 배경으로 별 모양 가리기 */
+#bottom-menu {
     position: absolute;
     bottom: 0;
-    width: 100%; /* 부모인 app-container(max-width 500px)에 맞춰짐 */
-    height: 90px;
+    width: 100%; /* 배경 이미지 가로폭만큼 꽉 채움 */
+    height: 100px;
     
-    /* 하단 별 모양을 가리기 위해 어두운 색상 적용 */
-    background-color: #120f0d; 
-    border-top: 2px solid #3d2f23;
+    /* 하단 별 모양 차단을 위한 어두운 배경색 */
+    background-color: #1a1614; 
+    border-top: 2px solid #4a3b2b;
     
     display: flex;
     justify-content: space-around;
@@ -89,14 +89,10 @@ body, html {
 }
 
 .nav-item {
-    color: #e0c097;
-    font-size: 16px; /* 너무 작지 않게 수정 */
+    color: #d4b483;
+    font-size: 1.1rem;
     font-weight: bold;
-    cursor: pointer;
     flex: 1;
     text-align: center;
-}
-
-.nav-item:hover {
-    color: #fff;
+    cursor: pointer;
 }
