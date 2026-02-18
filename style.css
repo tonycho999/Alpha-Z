@@ -1,144 +1,109 @@
-/* --- 도서관 테마 설정 --- */
+/* --- 고전 도서관 테마 --- */
 :root {
-    --lib-bg: #1a120b; /* 짙은 서재 색상 */
-    --shelf-wood: #4e342e; /* 나무 선반 색상 */
-    --neon-gold: #ffd700;
-    --neon-blue: #00d2ff;
-    --paper: #f5f5dc; /* 펼쳐진 책 종이색 */
+    --dark-oak: #1a0f0a;
+    --gold: #c5a059;
+    --parchment: #e8d5b5;
+    --leather-red: #5d1916;
+    --leather-blue: #1a2a44;
+    --text-sepia: #4e342e;
 }
 
 body {
     margin: 0; padding: 0;
-    background-color: var(--lib-bg);
-    background-image: 
-        linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-        url('https://www.transparenttextures.com/patterns/dark-wood.png'); /* 나무 질감 패턴 */
-    color: #e0d8c0;
-    font-family: 'serif';
+    background: var(--dark-oak);
+    /* 웅장한 도서관 배경 느낌의 그라데이션 */
+    background-image: radial-gradient(circle, #2c1810 0%, #0a0504 100%);
+    color: var(--parchment);
+    font-family: 'Playfair Display', serif;
     display: flex; justify-content: center; height: 100vh; overflow: hidden;
 }
 
-.screen {
-    display: none; width: 100%; max-width: 420px; height: 100%;
-    flex-direction: column; padding: 20px; box-sizing: border-box;
+/* 화면 전체에 그림자 효과를 주어 집중도 향상 */
+.library-vignette {
+    position: fixed; inset: 0;
+    background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 100%);
+    pointer-events: none; z-index: 100;
 }
+
+.screen { display: none; width: 100%; max-width: 420px; flex-direction: column; padding: 20px; box-sizing: border-box; }
 .screen.active { display: flex; }
 
-/* --- 헤더 --- */
-.main-header { text-align: center; margin-bottom: 20px; }
+/* --- 헤더: 고전적인 문장(Crest) 스타일 --- */
+.main-header { text-align: center; margin-bottom: 30px; }
+.title-crest { display: flex; align-items: center; justify-content: center; gap: 15px; }
 .logo-tile {
-    display: inline-flex; width: 40px; height: 40px; background: var(--neon-gold);
-    color: #1a120b; font-weight: 900; border-radius: 5px; 
-    align-items: center; justify-content: center; margin: 0 5px;
-    box-shadow: 0 0 15px var(--neon-gold);
+    width: 40px; height: 40px; border: 2px solid var(--gold);
+    color: var(--gold); font-family: 'Cinzel', serif; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 10px rgba(197, 160, 89, 0.3);
 }
-h1 { font-size: 2rem; letter-spacing: 5px; margin: 10px 0; color: #fff; }
-.lv-text { font-size: 0.8rem; color: var(--neon-gold); }
-.exp-bar { height: 4px; background: #333; margin-top: 8px; border-radius: 2px; }
-.exp-fill { height: 100%; background: var(--neon-gold); }
+h1 { font-family: 'Cinzel', serif; font-size: 2.2rem; margin: 0; letter-spacing: 4px; color: #fff; }
+.tagline { font-style: italic; opacity: 0.6; margin-top: 5px; font-size: 0.9rem; }
 
-/* --- 서가 (Bookshelf) 스크롤 설정 --- */
-.library-section { margin-top: 20px; width: 100%; }
-.shelf-label { font-size: 0.7rem; letter-spacing: 3px; opacity: 0.6; margin-bottom: 15px; text-align: center;}
+/* --- 대도서관 서가 (Grand Library) --- */
+.grand-library { margin: 20px 0; width: 100%; }
+.shelf-header { font-family: 'Cinzel', serif; text-align: center; font-size: 0.8rem; color: var(--gold); margin-bottom: 20px; letter-spacing: 2px; }
 
-.bookshelf-wrapper { position: relative; padding-bottom: 20px; }
-.bookshelf {
-    display: flex;
-    gap: 30px;
-    overflow-x: auto; /* 가로 스크롤 */
-    padding: 20px 10px 40px 10px;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
+.scroll-container { position: relative; width: 100%; }
+.shelf-row {
+    display: flex; gap: 35px; overflow-x: auto; padding: 40px 20px;
+    scrollbar-width: none;
 }
-.bookshelf::-webkit-scrollbar { display: none; } /* 스크롤바 숨김 */
+.shelf-row::-webkit-scrollbar { display: none; }
 
-.shelf-wood {
-    position: absolute; bottom: 30px; left: 0; width: 100%; height: 12px;
-    background: var(--shelf-wood);
-    border-radius: 2px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.8);
-    z-index: -1;
+.wood-shelf {
+    position: absolute; bottom: 35px; left: 0; width: 100%; height: 20px;
+    background: linear-gradient(to bottom, #3d2419, #1a0f0a);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.7); border-radius: 2px;
 }
 
-/* --- 책 디자인 --- */
-.book { flex-shrink: 0; transition: transform 0.3s; cursor: pointer; }
+/* --- 책 디자인 (현실적인 입체감) --- */
+.book-set { flex-shrink: 0; perspective: 1000px; }
 
-/* 1. 완료: 펼쳐진 책 이미지 */
-.book.completed {
-    width: 110px; height: 80px;
-    display: flex;
-    perspective: 1000px;
+/* 1. 펼쳐진 책 (완료 레벨) */
+.book-open {
+    display: flex; width: 110px; height: 85px; transform: rotateX(10deg);
 }
-.pages-left, .pages-right {
-    flex: 1; height: 100%; background: var(--paper);
-    color: #333; display: flex; align-items: center; justify-content: center;
-    font-weight: bold; border: 1px solid #ccc;
+.page-left, .page-right {
+    flex: 1; background: var(--parchment); color: var(--text-sepia);
+    display: flex; align-items: center; justify-content: center; font-weight: bold;
+    border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
-.pages-left { 
-    border-radius: 5px 0 0 5px; transform: rotateY(20deg); origin: right;
-    box-shadow: -5px 5px 10px rgba(0,0,0,0.3);
-}
-.pages-right { 
-    border-radius: 0 5px 5px 0; transform: rotateY(-20deg); origin: left;
-    box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
-}
+.page-left { border-radius: 5px 0 0 5px; transform: rotateY(25deg); origin: right; background-image: linear-gradient(to right, #d4c3a3, #e8d5b5); }
+.page-right { border-radius: 0 5px 5px 0; transform: rotateY(-25deg); origin: left; }
 
-/* 2. 현재: 닫혀있지만 화려한 책 */
-.book.active {
-    width: 70px; height: 100px; transform: scale(1.1) translateY(-10px); z-index: 10;
+/* 2. 세워진 가죽 책 (현재/잠금 레벨) */
+.book-standing {
+    width: 65px; height: 100px; position: relative; transform-style: preserve-3d;
+    transition: transform 0.4s ease;
 }
-.book.active .book-cover {
-    height: 100%; background: #2563eb; border-radius: 3px 8px 8px 3px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    border: 2px solid #fff; box-shadow: 0 0 20px var(--neon-blue);
-}
-.playing-tag { font-size: 0.5rem; background: red; color: white; padding: 2px 5px; border-radius: 3px; margin-top: 5px; }
-
-/* 3. 잠금: 닫힌 책 */
-.book.locked { width: 65px; height: 95px; opacity: 0.7; }
-.book.locked .book-cover {
-    height: 100%; background: #4a3728; border-radius: 3px 8px 8px 3px;
-    display: flex; align-items: center; justify-content: center; filter: grayscale(0.5);
+.front-cover {
+    position: absolute; width: 100%; height: 100%; background: var(--leather-red);
+    border-radius: 2px 5px 5px 2px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(255,255,255,0.1); box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
+    font-family: 'Cinzel', serif; font-weight: bold;
 }
 
-/* 책 색상 다양화 */
-.color-red .pages-left, .color-red .pages-right { background: #fee2e2; border-bottom: 4px solid #b91c1c; }
-.color-green .pages-left, .color-green .pages-right { background: #dcfce7; border-bottom: 4px solid #15803d; }
-.color-blue .book-cover { background: #1e3a8a; }
-.color-brown .book-cover { background: #3e2723; border-left: 5px solid #26140f; }
-
-.book:hover { transform: translateY(-15px); }
-
-/* --- 하단 버튼 및 네비게이션 --- */
-.action-area { margin-top: auto; padding-bottom: 20px; }
-.btn-challenge-z {
-    width: 100%; padding: 15px; background: none; border: 2px solid var(--neon-gold);
-    color: var(--neon-gold); border-radius: 12px; font-weight: bold; cursor: pointer;
-    margin-bottom: 20px; transition: 0.3s;
+.book-standing.active { transform: scale(1.15) translateY(-15px); cursor: pointer; }
+.book-standing.active .front-cover {
+    background: var(--leather-blue); border: 2px solid var(--gold); color: var(--gold);
+    box-shadow: 0 0 20px rgba(197, 160, 89, 0.4);
 }
-.btn-challenge-z:hover { background: rgba(255, 215, 0, 0.1); }
 
-.bottom-nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.nav-item { 
-    text-align: center; font-size: 1.2rem; cursor: pointer; opacity: 0.8;
-    background: rgba(255,255,255,0.05); padding: 10px 0; border-radius: 10px;
-}
-.nav-item span { display: block; font-size: 0.6rem; margin-top: 5px; color: #999; }
+.book-standing.locked { opacity: 0.5; filter: sepia(1) brightness(0.7); }
 
-/* --- 게임판 레이아웃 --- */
-.game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-.target-display span { color: var(--neon-blue); font-weight: 900; font-size: 1.5rem; }
-.board-4x4 {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-    background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; border: 2px solid var(--shelf-wood);
-}
-.slot { aspect-ratio: 1/1; background: rgba(255,255,255,0.05); border-radius: 8px; }
+.book-standing:hover:not(.locked) { transform: translateY(-20px) rotateY(-10deg); }
 
-/* --- 모달 --- */
-.modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none;
-    align-items: center; justify-content: center; z-index: 1000;
+/* --- 푸터 및 버튼 --- */
+.main-footer { margin-top: auto; padding-bottom: 20px; text-align: center; }
+.btn-z-challenge {
+    width: 100%; padding: 16px; background: transparent; 
+    border: 2px double var(--gold); color: var(--gold);
+    font-family: 'Cinzel', serif; font-weight: 900; letter-spacing: 2px;
+    cursor: pointer; margin-bottom: 25px; transition: 0.3s;
 }
-.modal-overlay.active { display: flex; }
-.modal-content { background: #2d1f14; padding: 30px; border-radius: 20px; width: 80%; text-align: center; border: 1px solid var(--neon-gold); }
-.modal-close { margin-top: 20px; background: var(--neon-gold); border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+.btn-z-challenge:hover { background: var(--gold); color: var(--dark-oak); }
+
+.icon-nav { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 50px; border: 1px solid rgba(197, 160, 89, 0.2); }
+.nav-btn { font-size: 1.3rem; cursor: pointer; transition: 0.3s; opacity: 0.7; }
+.nav-btn:hover { opacity: 1; transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
