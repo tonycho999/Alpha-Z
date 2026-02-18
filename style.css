@@ -1,72 +1,63 @@
-/* 기본 초기화 및 폰트 설정 */
+/* 기본 설정 */
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
 }
 
 :root {
-    --gold-bright: #fceabb;
     --gold-dark: #c5a059;
-    --brown-deep: #1a0f0a;
+    --gold-light: #fceabb;
 }
 
 body, html {
     margin: 0; padding: 0;
     width: 100%; height: 100%;
     background-color: #000;
-    font-family: 'Cinzel', 'Palatino', serif;
     overflow: hidden;
+    font-family: 'serif';
 }
 
-/* 휴대폰 비율 컨테이너 */
 .app-container {
     position: relative;
     width: 100%;
-    max-width: 450px; /* 휴대폰 폭 대응 */
-    height: 100%;
+    max-width: 450px; /* 휴대폰 가로폭 최적화 */
+    height: 100vh;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
 }
 
-/* 배경 이미지 (bg_main.webp 활용) */
+/* 배경 이미지: bg_main.webp가 화면 전체를 채우도록 설정 */
 .main-background {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: url('img/bg_main.webp') no-repeat center center;
+    /* 이미지 경로가 정확한지 확인하세요. 폴더 구조에 따라 img/bg_main.webp 가 될 수 있습니다. */
+    background: url('img/bg_main.webp') no-repeat center top; 
     background-size: cover;
-    z-index: -2;
-}
-
-.vignette-overlay {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 100%);
     z-index: -1;
 }
 
-/* 상단 정보 영역 */
+/* 상단 헤더: 배경 이미지의 'ALPHA-Z' 로고 아래에 위치하도록 여백 조정 */
 .app-header {
-    height: 12%;
+    height: 25%; /* 로고 공간 확보를 위해 높이 증가 */
     display: flex;
-    align-items: flex-end;
+    align-items: flex-end; /* 로고 아래쪽에 텍스트 배치 */
     justify-content: center;
     padding-bottom: 10px;
 }
 
 .user-status {
     text-align: center;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 8px 25px;
-    border-radius: 30px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 6px 20px;
+    border-radius: 20px;
     border: 1px solid var(--gold-dark);
-    box-shadow: 0 0 10px rgba(197, 160, 89, 0.3);
 }
 
 .rank-label { display: block; font-size: 10px; color: var(--gold-dark); letter-spacing: 2px; }
-.level-value { font-size: 16px; font-weight: bold; color: #fff; }
+.level-value { font-size: 14px; color: #fff; font-weight: bold; }
 
-/* 중앙 메인 도서 영역 */
+/* 중앙 섹션 */
 .main-focus {
     flex: 1;
     display: flex;
@@ -74,111 +65,55 @@ body, html {
     justify-content: center;
 }
 
-.lectern-display {
-    text-align: center;
-    width: 100%;
-}
-
-.current-book-wrapper {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
+.lectern-display { text-align: center; }
 
 .book-primary {
-    width: 200px; /* 사이즈 조정 가능 */
-    filter: drop-shadow(0 0 15px rgba(252, 234, 187, 0.4));
-}
-
-.glow-effect {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    box-shadow: 0 0 40px rgba(197, 160, 89, 0.2);
-    z-index: -1;
+    width: 220px;
+    filter: drop-shadow(0 0 15px rgba(0,0,0,0.8)); /* 책이 배경에서 돋보이게 그림자 추가 */
 }
 
 .action-prompt {
-    margin-top: 25px;
-    color: var(--gold-bright);
-    letter-spacing: 5px;
-    font-size: 14px;
-    animation: pulse 2s infinite;
+    margin-top: 15px;
+    color: var(--gold-light);
+    letter-spacing: 3px;
+    font-size: 13px;
+    text-shadow: 1px 1px 3px #000;
 }
 
-/* 하단 서가 영역 */
+/* 하단 서가 및 메뉴 */
 .archive-section {
-    height: 38%;
-    background: linear-gradient(to top, rgba(0,0,0,1) 80%, transparent);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
+    height: 35%;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 70%, transparent);
+    padding: 15px 20px 25px;
 }
 
 .shelf-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; margin-bottom: 15px;
 }
 
-.gold-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dark), transparent); }
-.shelf-header span { font-size: 11px; letter-spacing: 3px; color: var(--gold-dark); }
+.gold-line { flex: 1; height: 1px; background: var(--gold-dark); opacity: 0.5; }
+.shelf-header span { font-size: 10px; color: var(--gold-dark); letter-spacing: 2px; }
 
 .bookshelf-scroll {
-    display: flex;
-    gap: 20px;
-    overflow-x: auto;
-    padding-bottom: 25px;
+    display: flex; gap: 15px; overflow-x: auto;
+    padding-bottom: 15px;
     scrollbar-width: none;
 }
 .bookshelf-scroll::-webkit-scrollbar { display: none; }
 
-.book-node {
-    position: relative;
-    flex-shrink: 0;
-}
+.book-node img { width: 60px; display: block; }
+.lv-tag { display: block; text-align: center; font-size: 10px; margin-top: 5px; color: var(--gold-dark); }
 
-.book-node img { width: 65px; display: block; }
-.book-node.locked { filter: grayscale(1) brightness(0.6); opacity: 0.7; }
-
-.lv-tag {
-    position: absolute; bottom: -5px; width: 100%;
-    text-align: center; font-size: 10px; color: var(--gold-dark);
-}
-
-/* 하단 네비게이션 */
-.bottom-nav {
-    margin-top: auto;
-    padding-bottom: 20px;
-}
-
+.bottom-nav { margin-top: auto; }
 .btn-challenge {
-    width: 100%;
-    padding: 14px;
-    background: rgba(44, 24, 16, 0.8);
+    width: 100%; padding: 12px;
+    background: rgba(30, 20, 10, 0.9);
     border: 1px solid var(--gold-dark);
-    color: var(--gold-bright);
-    font-weight: bold;
-    border-radius: 5px;
-    letter-spacing: 2px;
-    cursor: pointer;
-    margin-bottom: 15px;
+    color: var(--gold-light);
+    font-weight: bold; border-radius: 4px;
+    margin-bottom: 12px;
 }
 
-.icon-group {
-    display: flex;
-    justify-content: space-around;
-}
-
-.nav-icon {
-    background: none; border: none;
-    color: #fff; font-size: 22px;
-    opacity: 0.6; cursor: pointer;
-}
-
-/* 애니메이션 */
-@keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
-}
+.icon-group { display: flex; justify-content: space-around; }
+.nav-icon { background: none; border: none; color: #fff; font-size: 20px; opacity: 0.7; }
