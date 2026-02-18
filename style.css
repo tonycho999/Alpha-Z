@@ -1,6 +1,5 @@
 @charset "UTF-8";
 
-/* 초기화 */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -12,54 +11,46 @@ body, html {
     height: 100%;
     overflow: hidden;
     background-color: transparent; /* 배경 투명 */
-    
-    /* 화면 정중앙 정렬 */
     display: flex;
     justify-content: center;
     align-items: center;
-    
     font-family: 'Arial', sans-serif;
     color: #fff;
 }
 
-/* === [핵심] 게임 화면 래퍼 === */
+/* === [핵심] 게임 화면 래퍼 (요청사항 준수) === */
 .game-wrapper {
-    /* 요청하신 대로 세로 높이를 화면에 꽉 맞춤 */
+    /* 1. 세로 높이를 화면 전체에 고정 */
     height: 100vh;
     
-    /* 세로 길이에 맞춰 가로 비율 자동 설정 (9:16 비율) */
-    /* 아이패드 등에서도 비율 유지되도록 설정 */
+    /* 2. 가로 폭은 비율에 맞춰 자동 조절 (9:16) */
     aspect-ratio: 9 / 16;
     
-    /* 배경 이미지를 이 박스 안에만 꽉 채움 */
-    background-image: url('img/bg_main.webp');
+    /* 배경 설정 */
+    background-image: url('img/bg_main.jpg'); /* jpg인지 webp인지 확인하세요! */
     background-repeat: no-repeat;
     background-size: 100% 100%;
     
-    /* 내부 UI 배치 */
+    /* 내부 레이아웃 */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     
-    position: relative;
-    /* 투명 배경 위에서 그림자 효과 (선택사항) */
-    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    /* 그림자 효과 */
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
 }
 
-/* 1. 중앙 영역 (Current Level) */
+/* 1. 중앙 영역 */
 .center-area {
-    flex: 1; /* 남은 공간 차지 */
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
-    padding-top: 5vh; /* 시각적 중심 보정 */
+    padding-top: 5vh;
 }
 
 .main-level-display {
     text-align: center;
-    width: 100%;
-    /* 클릭 가능한 느낌 */
     cursor: pointer;
     transition: transform 0.2s;
 }
@@ -68,131 +59,131 @@ body, html {
     transform: scale(1.05);
 }
 
-/* [수정] 메인 아이콘 대폭 확대 */
 .main-icon {
-    width: 60%; /* 화면 너비의 60% 사용 */
-    max-width: 250px; 
-    height: auto;
-    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.6)); /* 금색 후광 */
+    /* 중앙 아이콘 크기 확대 */
+    width: 200px; 
+    filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.7));
 }
 
 .level-text-box {
-    margin-top: 10px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+    margin-top: 15px;
+    text-shadow: 3px 3px 6px rgba(0,0,0,1);
 }
 
 .level-text-box .label {
-    font-size: 1.2rem;
-    color: #ffd700; /* 금색 텍스트 */
+    font-size: 1.3rem;
+    color: #ffd700;
     margin-bottom: 5px;
     font-weight: bold;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
 }
 
 .level-text-box .level-num {
-    font-size: 3.5rem; /* 숫자 아주 크게 */
+    font-size: 4rem;
     font-weight: bold;
     margin: 0;
     line-height: 1;
 }
 
-/* 2. 하단 영역 전체 */
+/* 2. 하단 영역 */
 .bottom-area {
     width: 100%;
-    padding: 0 20px 30px 20px; /* 좌우, 하단 여백 */
+    /* 아래쪽 패딩을 넉넉히 주어 버튼이 바닥에 붙지 않게 함 */
+    padding: 0 20px 40px 20px; 
     display: flex;
     flex-direction: column;
     gap: 15px;
     
-    /* 하단부 가독성을 위한 그라데이션 */
+    /* 하단부가 어두우니 아이콘들이 잘 보이도록 그라데이션 추가 */
     background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
 }
 
-/* 레벨 아이콘 목록 (좌/우 배치) */
+/* 레벨 아이콘 컨테이너 */
 .status-container {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: flex-end; /* 바닥 기준 정렬 */
     padding: 0 10px;
+    margin-bottom: 10px;
 }
 
 .level-group {
     display: flex;
-    gap: 5px; /* 아이콘 사이 간격 */
+    gap: 10px;
 }
 
-/* 작은 아이콘 슬롯 */
+/* [요청반영] 아이콘 크기 대폭 확대 (Cleared/Locked) */
 .mini-slot {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 40px; /* 아이콘 크기 고정 */
+    width: 70px; /* 기존 40px -> 70px로 확대 */
 }
 
 .mini-slot img {
-    width: 100%;
+    width: 100%; /* 부모(70px)에 꽉 차게 */
     height: auto;
-    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.8));
+    filter: drop-shadow(0 4px 5px rgba(0,0,0,0.9));
 }
 
 .mini-slot span {
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-weight: bold;
-    margin-top: 2px;
-    color: #ddd;
-    text-shadow: 1px 1px 2px #000;
+    margin-top: 5px;
+    color: #fff;
+    text-shadow: 2px 2px 4px #000;
 }
 
-/* Challenge-Z 영역 */
+/* Challenge-Z */
 .challenge-section {
     text-align: center;
-    margin-top: 5px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
+/* [요청반영] 왕관 아이콘 아주 크게 */
 .crown-icon {
-    width: 100px; /* 왕관 크기 확대 */
-    height: auto;
+    width: 150px; /* 아주 크게 설정 */
     display: block;
     margin: 0 auto;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
 }
 
 .challenge-title {
     margin: 5px 0 0 0;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     color: #fff;
     font-weight: bold;
-    text-shadow: 0 0 5px #ff8c00, 2px 2px 2px #000;
+    text-shadow: 0 0 10px #ff8c00, 3px 3px 5px #000;
 }
 
-/* [수정] 하단 버튼 크게! */
+/* [요청반영] 하단 버튼 눈에 띄게 크게! */
 .menu-bar {
     display: flex;
     justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
 }
 
 .big-btn {
     flex: 1;
-    height: 65px; /* 버튼 높이 대폭 확대 */
+    height: 70px; /* 높이 대폭 확대 (터치 영역 확보) */
     
-    background: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    /* 어두운 배경에서도 잘 보이도록 밝은 테두리와 배경색 조정 */
+    background: rgba(255, 255, 255, 0.2); 
+    border: 2px solid rgba(255, 255, 255, 0.6); /* 테두리를 더 진하게 */
     border-radius: 12px;
     
     color: #fff;
-    font-size: 1rem; /* 글자 크기 확대 */
+    font-size: 1.1rem; /* 글자 크기 확대 */
     font-weight: bold;
     cursor: pointer;
     
     backdrop-filter: blur(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5); /* 버튼 그림자 추가 */
     transition: all 0.2s;
-    white-space: nowrap; /* 글자 줄바꿈 방지 */
 }
 
 .big-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.4);
     border-color: #ffd700;
     transform: translateY(-3px);
 }
