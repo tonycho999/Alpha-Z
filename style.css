@@ -1,189 +1,184 @@
-/* 기본 설정 */
+/* 기본 초기화 및 폰트 설정 */
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
 }
 
+:root {
+    --gold-bright: #fceabb;
+    --gold-dark: #c5a059;
+    --brown-deep: #1a0f0a;
+}
+
 body, html {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
     background-color: #000;
-    font-family: 'serif'; /* 고전적인 느낌을 위해 세리프체 권장 */
-    color: #fceabb; /* 금색 톤 텍스트 */
+    font-family: 'Cinzel', 'Palatino', serif;
     overflow: hidden;
 }
 
+/* 휴대폰 비율 컨테이너 */
 .app-container {
     position: relative;
     width: 100%;
-    max-width: 500px; /* 휴대폰 사이즈 가로 제한 */
+    max-width: 450px; /* 휴대폰 폭 대응 */
     height: 100%;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
 }
 
-/* 배경 설정 */
-.background-layer {
+/* 배경 이미지 (bg_main.webp 활용) */
+.main-background {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     background: url('img/bg_main.webp') no-repeat center center;
     background-size: cover;
+    z-index: -2;
+}
+
+.vignette-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 100%);
     z-index: -1;
 }
 
-/* 상단 정보 */
-.header {
-    height: 80px;
+/* 상단 정보 영역 */
+.app-header {
+    height: 12%;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    padding-top: 20px;
+    padding-bottom: 10px;
 }
 
-.user-info {
+.user-status {
     text-align: center;
-    background: rgba(0, 0, 0, 0.4);
-    padding: 5px 20px;
-    border-radius: 20px;
-    border: 1px solid rgba(197, 160, 89, 0.5);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 25px;
+    border-radius: 30px;
+    border: 1px solid var(--gold-dark);
+    box-shadow: 0 0 10px rgba(197, 160, 89, 0.3);
 }
 
-.rank-tag {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 2px;
-    opacity: 0.7;
-}
+.rank-label { display: block; font-size: 10px; color: var(--gold-dark); letter-spacing: 2px; }
+.level-value { font-size: 16px; font-weight: bold; color: #fff; }
 
-.level-text {
-    font-weight: bold;
-    font-size: 18px;
-}
-
-/* 중앙 스테이지 */
-.main-stage {
+/* 중앙 메인 도서 영역 */
+.main-focus {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.current-level-focus {
+.lectern-display {
     text-align: center;
+    width: 100%;
+}
+
+.current-book-wrapper {
     position: relative;
+    display: inline-block;
+    cursor: pointer;
+    transition: transform 0.3s ease;
 }
 
-.floating-book {
-    width: 220px;
-    filter: drop-shadow(0 0 20px rgba(197, 160, 89, 0.4));
-    animation: float 3s ease-in-out infinite;
+.book-primary {
+    width: 200px; /* 사이즈 조정 가능 */
+    filter: drop-shadow(0 0 15px rgba(252, 234, 187, 0.4));
 }
 
-.play-label {
-    margin-top: 20px;
+.glow-effect {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    box-shadow: 0 0 40px rgba(197, 160, 89, 0.2);
+    z-index: -1;
+}
+
+.action-prompt {
+    margin-top: 25px;
+    color: var(--gold-bright);
+    letter-spacing: 5px;
     font-size: 14px;
-    letter-spacing: 4px;
     animation: pulse 2s infinite;
 }
 
-/* 하단 서가 및 내비게이션 */
-.footer {
-    height: 280px;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 80%, transparent);
+/* 하단 서가 영역 */
+.archive-section {
+    height: 38%;
+    background: linear-gradient(to top, rgba(0,0,0,1) 80%, transparent);
     padding: 20px;
-}
-
-.shelf-label {
-    font-size: 12px;
-    letter-spacing: 2px;
-    margin-bottom: 10px;
-    opacity: 0.6;
-}
-
-.bookshelf {
     display: flex;
-    gap: 15px;
-    overflow-x: auto;
-    padding-bottom: 20px;
-    scrollbar-width: none; /* 파이어폭스 */
+    flex-direction: column;
 }
 
-.bookshelf::-webkit-scrollbar { display: none; } /* 크롬/사파리 */
+.shelf-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
 
-.book-item {
+.gold-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dark), transparent); }
+.shelf-header span { font-size: 11px; letter-spacing: 3px; color: var(--gold-dark); }
+
+.bookshelf-scroll {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 25px;
+    scrollbar-width: none;
+}
+.bookshelf-scroll::-webkit-scrollbar { display: none; }
+
+.book-node {
     position: relative;
     flex-shrink: 0;
 }
 
-.book-item img {
-    width: 70px;
-    height: auto;
-    display: block;
+.book-node img { width: 65px; display: block; }
+.book-node.locked { filter: grayscale(1) brightness(0.6); opacity: 0.7; }
+
+.lv-tag {
+    position: absolute; bottom: -5px; width: 100%;
+    text-align: center; font-size: 10px; color: var(--gold-dark);
 }
 
-.lv-num {
-    position: absolute;
-    bottom: 5px;
+/* 하단 네비게이션 */
+.bottom-nav {
+    margin-top: auto;
+    padding-bottom: 20px;
+}
+
+.btn-challenge {
     width: 100%;
-    text-align: center;
-    font-size: 12px;
+    padding: 14px;
+    background: rgba(44, 24, 16, 0.8);
+    border: 1px solid var(--gold-dark);
+    color: var(--gold-bright);
     font-weight: bold;
-    text-shadow: 1px 1px 2px #000;
-}
-
-.locked {
-    filter: brightness(0.5) grayscale(0.5);
-}
-
-/* 내비게이션 바 */
-.nav-bar {
-    margin-top: 10px;
-}
-
-.btn-primary {
-    width: 100%;
-    background: linear-gradient(180deg, #c5a059 0%, #8a6d3b 100%);
-    border: none;
-    padding: 12px;
-    color: #fff;
-    font-weight: bold;
-    font-family: inherit;
-    border-radius: 4px;
+    border-radius: 5px;
+    letter-spacing: 2px;
+    cursor: pointer;
     margin-bottom: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 
-.icon-buttons {
+.icon-group {
     display: flex;
     justify-content: space-around;
 }
 
-.btn-icon {
-    background: none;
-    border: none;
-    color: #fceabb;
-    font-size: 20px;
-    opacity: 0.8;
+.nav-icon {
+    background: none; border: none;
+    color: #fff; font-size: 22px;
+    opacity: 0.6; cursor: pointer;
 }
 
 /* 애니메이션 */
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-15px); }
-}
-
 @keyframes pulse {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 0.5; }
+    0%, 100% { opacity: 0.4; }
     50% { opacity: 1; }
 }
