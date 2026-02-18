@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,38 +10,59 @@
 
     <div class="game-wrapper">
         
-        <div class="center-area">
+        <div class="shelf shelf-top">
             <div class="level-box">
-                <img src="img/current.png" alt="Current Level" class="main-icon">
-                <h2 class="glow-text">CURRENT LEVEL</h2>
+                <img src="img/current.png" alt="Current Level" class="icon-large">
+                <h2 class="text-large">CURRENT LEVEL 12</h2>
             </div>
         </div>
 
-        <div class="bottom-area">
-            
-            <div class="status-row">
-                <div class="status-item">
+        <div class="shelf shelf-middle">
+            <div class="book-group">
+                <div class="book-item">
                     <img src="img/cleared.png" alt="Cleared">
-                    <span>Cleared</span>
+                    <span>LEVEL 9</span>
                 </div>
-                <div class="status-item">
+                <div class="book-item">
+                    <img src="img/cleared.png" alt="Cleared">
+                    <span>LEVEL 10</span>
+                </div>
+                <div class="book-item">
+                    <img src="img/cleared.png" alt="Cleared">
+                    <span>LEVEL 11</span>
+                </div>
+            </div>
+
+            <div class="book-group">
+                <div class="book-item">
                     <img src="img/locked.png" alt="Locked">
-                    <span>Locked</span>
+                    <span>LEVEL 13</span>
+                </div>
+                <div class="book-item">
+                    <img src="img/locked.png" alt="Locked">
+                    <span>LEVEL 14</span>
+                </div>
+                <div class="book-item">
+                    <img src="img/locked.png" alt="Locked">
+                    <span>LEVEL 15</span>
                 </div>
             </div>
-
-            <div class="challenge-row">
-                <img src="img/challenge.png" alt="Challenge Z">
-                <h3>Challenge-Z</h3>
-            </div>
-
-            <nav class="menu-bar">
-                <button>프로파일</button>
-                <button>상점</button>
-                <button>리더보드</button>
-                <button>명예의전당</button>
-            </nav>
         </div>
+
+        <div class="shelf shelf-bottom">
+            <div class="challenge-box">
+                <img src="img/challenge.png" alt="Challenge Z" class="icon-large">
+                <h3 class="text-challenge">CHALLENGE-Z</h3>
+            </div>
+        </div>
+
+        <nav class="menu-bar">
+            <button type="button">PROFILE</button>
+            <button type="button">SHOP</button>
+            <button type="button">LEADERBOARD</button>
+            <button type="button">HALL OF FAME</button>
+        </nav>
+
     </div>
 
 </body>
