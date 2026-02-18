@@ -3,57 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alpha-Z: Library</title>
+    <title>Alpha-Z: Library Archive</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="app-container">
-        <div class="background-layer"></div>
-        
-        <header class="header">
-            <div class="user-info">
-                <span class="rank-tag">SCHOLAR</span>
-                <span class="level-text">Level 12</span>
+        <div class="main-background"></div>
+        <div class="vignette-overlay"></div>
+
+        <header class="app-header">
+            <div class="user-status">
+                <span class="rank-label">SCHOLAR</span>
+                <span class="level-value">LEVEL 12</span>
             </div>
         </header>
 
-        <main class="main-stage">
-            <div class="current-level-focus">
-                <img src="img/current.png" alt="Current Level" class="floating-book">
-                <div class="play-label">READ NOW</div>
+        <main class="main-focus">
+            <div class="lectern-display">
+                <div class="current-book-wrapper" onclick="alert('게임 시작!')">
+                    <img src="img/current.png" alt="Current Chapter" class="book-primary">
+                    <div class="glow-effect"></div>
+                </div>
+                <div class="action-prompt">READ NOW</div>
             </div>
         </main>
 
-        <footer class="footer">
-            <div class="shelf-label">ARCHIVE</div>
-            <div class="bookshelf">
-                <div class="book-item cleared">
-                    <img src="img/cleared.png" alt="Cleared Level">
-                    <span class="lv-num">10</span>
+        <footer class="archive-section">
+            <div class="shelf-header">
+                <div class="gold-line"></div>
+                <span>ARCHIVE</span>
+                <div class="gold-line"></div>
+            </div>
+            
+            <div class="bookshelf-scroll">
+                <div class="book-node cleared">
+                    <img src="img/cleared.png" alt="Level 10">
+                    <span class="lv-tag">X</span>
                 </div>
-                <div class="book-item cleared">
-                    <img src="img/cleared.png" alt="Cleared Level">
-                    <span class="lv-num">11</span>
+                <div class="book-node cleared">
+                    <img src="img/cleared.png" alt="Level 11">
+                    <span class="lv-tag">XI</span>
                 </div>
-                <div class="book-item locked">
-                    <img src="img/locked.png" alt="Locked Level">
-                    <span class="lv-num">13</span>
+                <div class="book-node locked">
+                    <img src="img/locked.png" alt="Level 13">
+                    <span class="lv-tag">XIII</span>
                 </div>
-                <div class="book-item locked">
-                    <img src="img/locked.png" alt="Locked Level">
-                    <span class="lv-num">14</span>
+                <div class="book-node locked">
+                    <img src="img/locked.png" alt="Level 14">
+                    <span class="lv-tag">XIV</span>
+                </div>
+                <div class="book-node locked">
+                    <img src="img/locked.png" alt="Level 15">
+                    <span class="lv-tag">XV</span>
                 </div>
             </div>
 
-            <div class="nav-bar">
-                <button class="btn-primary">CHALLENGE Z</button>
-                <div class="icon-buttons">
-                    <button class="btn-icon">👤</button>
-                    <button class="btn-icon">🛒</button>
-                    <button class="btn-icon">🏆</button>
+            <nav class="bottom-nav">
+                <button class="btn-challenge">CHALLENGE Z</button>
+                <div class="icon-group">
+                    <button class="nav-icon">👤</button>
+                    <button class="nav-icon">🛒</button>
+                    <button class="nav-icon">🏆</button>
                 </div>
-            </div>
+            </nav>
         </footer>
     </div>
 
