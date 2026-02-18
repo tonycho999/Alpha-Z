@@ -10,7 +10,8 @@
 
     <div class="app-container">
         <div class="main-background"></div>
-        <div class="bottom-right-cleaner"></div>
+        
+        <div class="bottom-right-mask"></div>
 
         <header class="app-header">
             <div class="user-badge">
@@ -21,7 +22,7 @@
 
         <main class="active-focus">
             <div class="current-book-node">
-                <img src="img/current.png" alt="Current" class="img-main">
+                <img src="img/current.png" alt="Current Level" class="img-main">
                 <p class="guide-text">READ NOW</p>
             </div>
         </main>
@@ -42,9 +43,11 @@
             </div>
 
             <nav class="navigation">
-                <button class="btn-challenge">
-                    <img src="img/challenge.png" alt="Challenge Z">
-                </button>
+                <div class="challenge-btn-wrapper">
+                    <button class="btn-challenge" onclick="alert('Challenge Start!')">
+                        <img src="img/challenge.png" alt="Challenge Z">
+                    </button>
+                </div>
                 
                 <div class="menu-icons">
                     <button class="menu-btn">👤</button>
