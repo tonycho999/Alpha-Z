@@ -3,17 +3,36 @@
     --paper-beige: #f5f5dc;
     --ink-black: #1a1a1a;
     --accent-gold: #ffd700;
-    --font-serif: 'Noto Serif', serif; /* Use a brush-style font if possible */
+    /* 조선시대 느낌이 나는 붓글씨/명조 계열 폰트 권장 */
+    --font-serif: 'Noto Serif KR', 'Nanum Myeongjo', serif;
 }
 
 body {
     background-color: var(--bg-wood);
+    /* 세로 버전의 배경 이미지 경로를 확인해주세요 */
     background-image: url('../assets/images/bg_study.webp');
-    background-size: cover;
+
+    /* 핵심 수정 부분 */
+    /* 가로는 비율에 맞게 자동(auto), 세로는 화면 높이의 100%(100vh)로 설정 */
+    background-size: auto 100vh;
+
+    /* 이미지가 화면 중앙에 오도록 위치 설정 */
+    background-position: center top;
+
+    /* 이미지가 반복되지 않도록 설정 */
+    background-repeat: no-repeat;
+
+    /* 스크롤 시 배경이 고정되도록 설정 (선택 사항) */
+    background-attachment: fixed;
+
+    /* body가 최소한 화면 전체 높이를 가지도록 설정 */
+    min-height: 100vh;
+
     color: var(--paper-beige);
     font-family: var(--font-serif);
     margin: 0;
-    overflow: hidden; /* App-like feel */
+    /* 모바일 앱 느낌을 위해 스크롤 숨김 (필요에 따라 제거 가능) */
+    overflow: hidden;
     user-select: none;
     text-align: center;
 }
