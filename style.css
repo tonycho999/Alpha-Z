@@ -1,5 +1,29 @@
-/* ... 기존 스타일 유지 ... */
+/* 기본 리셋 및 텍스트 설정 */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
 
+body, html {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    background-color: #000; /* 배경 이미지 로딩 전 대비 */
+    overflow: hidden;
+    font-family: 'serif';
+}
+
+/* 세로형 모바일 레이아웃 강제 고정 */
+.app-container {
+    position: relative;
+    width: 100%;
+    max-width: 480px; /* 가로로 퍼지는 현상 방지 */
+    height: 100vh;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 배경 이미지 설정 */
 .main-background {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -8,47 +32,102 @@
     z-index: -2;
 }
 
-/* 오른쪽 하단 별표 이미지를 가리기 위한 레이어 */
-.bottom-right-mask {
+/* 오른쪽 하단 별모양 가리기 */
+.bottom-right-cleaner {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 150px; /* 별표를 충분히 가릴 수 있는 크기 */
-    height: 150px;
-    /* 이미지 바닥 타일 색상과 유사한 어두운 톤으로 그라데이션 처리 */
-    background: radial-gradient(circle at bottom right, rgba(10, 5, 4, 1) 0%, transparent 70%);
+    bottom: 0; right: 0;
+    width: 100px; height: 100px;
+    background: radial-gradient(circle at bottom right, rgba(13, 7, 5, 1) 10%, transparent 80%);
     z-index: -1;
-    pointer-events: none; /* 클릭 방해 금지 */
+    pointer-events: none;
 }
 
-/* 상단 유저 정보 (로고 아래 배치) */
+/* 상단 영역: 로고 아이콘과 겹치지 않게 높이 설정 */
 .app-header {
-    height: 32%; /* 간격을 조금 더 벌림 */
+    height: 32%;
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding-bottom: 20px;
+    padding-bottom: 15px;
 }
 
-/* ... 나머지 버튼 및 책 크기 스타일은 이전과 동일하게 유지 ... */
+.user-badge {
+    text-align: center;
+    border: 1px solid rgba(197, 160, 89, 0.5);
+    padding: 5px 25px;
+    border-radius: 20px;
+}
+
+.rank { display: block; font-size: 10px; color: #c5a059; letter-spacing: 2px; }
+.level { font-size: 14px; color: #fff; font-weight: bold; }
+
+/* 중앙 현재 레벨 (축소 적용) */
+.active-focus {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.img-main {
+    width: 140px; /* 요청하신 대로 축소 유지 */
+    filter: drop-shadow(0 0 10px rgba(0,0,0,0.8));
+}
+
+.guide-text {
+    margin-top: 10px;
+    color: #fceabb;
+    letter-spacing: 5px;
+    font-size: 11px;
+    text-align: center;
+}
+
+/* 하단 영역 (ARCHIVE 및 버튼) */
+.app-footer {
+    height: 40%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 30px 25px;
+}
+
+.shelf-label {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 15px;
+}
+
+.line { flex: 1; height: 1px; background: rgba(197, 160, 89, 0.3); }
+.shelf-label span { font-size: 10px; color: #c5a059; letter-spacing: 2px; }
+
+.scroll-wrapper {
+    display: flex; gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    scrollbar-width: none;
+}
+.scroll-wrapper::-webkit-scrollbar { display: none; }
+
+/* 아카이브 책 크기 1단계 확대 (85px) */
+.book-item { position: relative; flex-shrink: 0; text-align: center; }
+.book-item img { width: 85px; display: block; }
+.book-item span { color: #c5a059; font-size: 11px; margin-top: 5px; display: block; }
+
+/* 하단 버튼 디자인 */
+.navigation { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
 
 .btn-challenge {
-    width: 100%;
-    padding: 14px;
-    background: rgba(44, 24, 16, 0.85); /* 묵직한 배경색 */
-    border: 1.5px solid #c5a059;
-    color: #fceabb;
-    font-weight: bold;
-    border-radius: 8px;
-    margin-bottom: 5px; /* 아이콘과의 간격 조절 */
+    width: 100%; padding: 12px;
+    background: rgba(30, 20, 15, 0.85); /* CSS 배경색 추가 */
+    border: 1px solid #c5a059;
+    color: #fceabb; font-weight: bold;
+    border-radius: 6px; cursor: pointer;
 }
 
-.icon-tab { 
-    flex: 1;
-    padding: 12px 0;
-    background: rgba(197, 160, 89, 0.1); /* 요청하신 대로 아이콘 버튼에 배경색 추가 */
+.menu-icons { display: flex; gap: 10px; justify-content: space-between; }
+
+.menu-btn {
+    flex: 1; padding: 12px 0;
+    background: rgba(197, 160, 89, 0.15); /* 아이콘 버튼 배경색 */
     border: 1px solid rgba(197, 160, 89, 0.3);
     border-radius: 8px;
-    color: #fff; 
-    font-size: 26px; /* 크기 확대 */
+    color: #fff; font-size: 22px; cursor: pointer;
 }
