@@ -2,53 +2,50 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ALPHA-Z Lobby</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alpha-Z Lobby</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="main-container">
-        <header class="game-header">
-            <h1 class="hidden-title">ALPHA-Z</h1>
-        </header>
+    <div class="app-container">
+        <main class="content-view">
+            <div class="level-list">
+                
+                <div class="level-item">
+                    <img src="img/cleared.png" alt="Cleared">
+                </div>
 
-        <main class="level-selection">
-            <div class="level-item cleared">
-                <img src="cleared.jpg" alt="Cleared Level">
-                <span class="level-status">COMPLETED</span>
-            </div>
+                <div class="level-item current-focus">
+                    <img src="img/current.png" alt="Current">
+                </div>
 
-            <div class="level-item current">
-                <img src="current.jpg" alt="Current Level">
-                <span class="level-status">CURRENT</span>
-            </div>
+                <div class="level-item">
+                    <img src="img/locked.png" alt="Locked">
+                </div>
 
-            <div class="level-item locked">
-                <img src="locked.jpg" alt="Locked Level">
-                <span class="level-status">LOCKED</span>
-            </div>
+                <div class="challenge-section">
+                    <img src="img/challenge.png" alt="Challenge">
+                    <p class="challenge-label">Challenge-Z</p>
+                </div>
 
-            <div class="challenge-section">
-                <img src="challenge.png" alt="Challenge-Z">
-                <p class="challenge-text">Challenge-Z</p>
             </div>
         </main>
 
-        <footer class="bottom-nav">
-            <button class="nav-item">
-                <i class="icon-profile"></i>
-                <span>프로필</span>
-            </button>
-            <button class="nav-item">
-                <i class="icon-shop"></i>
-                <span>상점</span>
-            </button>
-            <button class="nav-item">
-                <i class="icon-rank"></i>
-                <span>리더보드</span>
-            </button>
-        </footer>
+        <nav class="bottom-nav">
+            <div class="nav-btn">
+                <span class="icon">👤</span>
+                <span class="label">프로필</span>
+            </div>
+            <div class="nav-btn">
+                <span class="icon">🛒</span>
+                <span class="label">상점</span>
+            </div>
+            <div class="nav-btn">
+                <span class="icon">🏆</span>
+                <span class="label">리더보드</span>
+            </div>
+        </nav>
     </div>
 
 </body>
