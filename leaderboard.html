@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Leaderboard</title>
+    <link rel="stylesheet" href="css/global.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Rankings</h2>
+        <ul id="leaderboard-list">
+            <li>1. Master Kim - Lvl 50</li>
+            <li>2. Scholar Lee - Lvl 48</li>
+        </ul>
+        <button class="btn-joseon" onclick="location.href='index.html'">Back</button>
+    </div>
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        
+        // Fetch top 10 users by 'level'
+    </script>
+</body>
+</html>
