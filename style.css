@@ -1,85 +1,82 @@
-/* 기본 스타일 초기화 */
+/* 초기화 및 웹앱 설정 */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body, html {
-    height: 100%;
     width: 100%;
-    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-    color: #fff;
-    overflow: hidden; /* 전체 페이지 스크롤 방지 */
+    height: 100%;
+    overflow: hidden;
+    background-color: #000; /* 이미지 로딩 전 검은 배경 */
 }
 
-.main-container {
-    position: relative;
+.app-container {
     width: 100%;
     height: 100vh;
-    /* 배경 이미지 설정 */
-    background: url('bg_main.webp') no-repeat center top;
+    display: flex;
+    flex-direction: column;
+    /* 배경 설정: img 폴더 내 파일 참조 */
+    background: url('img/bg_main.webp') no-repeat center top;
     background-size: cover;
-    display: flex;
-    flex-direction: column;
-    
-    /* 배경 오른쪽 아래 별 모양을 가리기 위해 하단 높이를 약간 조절 */
-    height: 98vh; 
-    margin-bottom: 2vh;
+    position: relative;
 }
 
-/* 상단 타이틀 여백 */
-.game-header {
-    height: 150px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* 오른쪽 아래 별 모양을 가리기 위해 컨테이너 하단에 가림막 효과 */
+.app-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    pointer-events: none;
 }
 
-.hidden-title {
-    visibility: hidden; /* 이미지의 로고와 겹치지 않게 숨김 */
-}
-
-/* 레벨 선택 영역 */
-.level-selection {
+/* 스크롤 가능한 메인 뷰 */
+.content-view {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 30px;
-    overflow-y: auto; /* 레벨이 많아질 경우 스크롤 */
-    padding: 20px 0;
+    overflow-y: auto;
+    padding: 120px 0 40px 0; /* 상단 로고 자리를 위해 여백 확보 */
+    scrollbar-width: none; /* 파이어폭스 스크롤바 숨김 */
 }
 
-.level-item {
+.content-view::-webkit-scrollbar {
+    display: none; /* 크롬/사파리 스크롤바 숨김 */
+}
+
+.level-list {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 50px;
+}
+
+/* 레벨 아이콘 스타일 */
+.level-item img {
+    width: 160px;
+    height: auto;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
     transition: transform 0.2s;
 }
 
-.level-item:hover {
-    transform: scale(1.05);
+.level-item:active img {
+    transform: scale(0.95);
 }
 
-.level-item img {
-    width: 140px;
-    height: auto;
-    filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+/* 현재 레벨 강조 효과 */
+.current-focus img {
+    width: 190px;
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
 }
 
-.level-status {
-    margin-top: 5px;
-    font-weight: bold;
-    font-size: 0.9rem;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
-}
-
-/* 챌린지 섹션 */
+/* 챌린지 영역 */
 .challenge-section {
-    margin-top: 20px;
     text-align: center;
-    cursor: pointer;
+    margin-top: 20px;
+    padding-bottom: 60px;
 }
 
 .challenge-section img {
@@ -87,42 +84,39 @@ body, html {
     height: auto;
 }
 
-.challenge-text {
-    margin-top: 8px;
-    font-size: 1.2rem;
+.challenge-label {
+    color: #fff;
+    font-size: 1.3rem;
     font-weight: bold;
-    color: #ffd700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,1);
+    margin-top: 10px;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.8), 0 0 10px rgba(255,215,0,0.4);
 }
 
-/* 하단 네비게이션 */
+/* 하단 네비게이션 (고정) */
 .bottom-nav {
     height: 80px;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(15, 12, 10, 0.95);
     display: flex;
     justify-content: space-around;
     align-items: center;
-    border-top: 2px solid #634a31;
-    backdrop-filter: blur(5px);
+    border-top: 1px solid #4a3b2b;
+    z-index: 10;
 }
 
-.nav-item {
-    background: none;
-    border: none;
-    color: #e0c097;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
+.nav-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
+    color: #c5a687;
+    cursor: pointer;
 }
 
-.nav-item:hover {
-    color: #fff;
+.nav-btn .icon {
+    font-size: 1.4rem;
+    margin-bottom: 4px;
 }
 
-/* 스크롤바 숨기기 (선택 사항) */
-.level-selection::-webkit-scrollbar {
-    display: none;
+.nav-btn .label {
+    font-size: 0.75rem;
+    font-weight: bold;
 }
