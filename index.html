@@ -8,44 +8,31 @@
 </head>
 <body>
 
-    <div class="app-container">
-        <div class="scroll-content">
-            <div class="level-wrapper">
+    <div class="fixed-background">
+        <img src="img/bg_main.webp" alt="background" class="bg-img">
+    </div>
+
+    <div class="app-ui">
+        <header class="logo-spacer"></header>
+
+        <main class="scroll-area">
+            <div class="level-list">
+                <div class="level"><img src="img/cleared.png"></div>
+                <div class="level"><img src="img/current.png"></div>
+                <div class="level"><img src="img/locked.png"></div>
                 
-                <div class="level-node cleared">
-                    <img src="img/cleared.png" alt="Cleared">
+                <div class="challenge-group">
+                    <img src="img/challenge.png">
+                    <p>Challenge-Z</p>
                 </div>
-
-                <div class="level-node current">
-                    <img src="img/current.png" alt="Current">
-                </div>
-
-                <div class="level-node locked">
-                    <img src="img/locked.png" alt="Locked">
-                </div>
-
-                <div class="challenge-node">
-                    <img src="img/challenge.png" alt="Challenge">
-                    <p class="challenge-label">Challenge-Z</p>
-                </div>
-
             </div>
-        </div>
+        </main>
 
-        <nav class="tab-bar">
-            <div class="tab-item">
-                <span class="icon">👤</span>
-                <span class="label">프로필</span>
-            </div>
-            <div class="tab-item">
-                <span class="icon">🛒</span>
-                <span class="label">상점</span>
-            </div>
-            <div class="tab-item">
-                <span class="icon">🏆</span>
-                <span class="label">리더보드</span>
-            </div>
-        </nav>
+        <footer class="bottom-nav">
+            <div class="nav-item"><span>👤</span><p>프로필</p></div>
+            <div class="nav-item"><span>🛒</span><p>상점</p></div>
+            <div class="nav-item"><span>🏆</span><p>리더보드</p></div>
+        </footer>
     </div>
 
 </body>
