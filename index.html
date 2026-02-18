@@ -11,35 +11,41 @@
     <div class="game-wrapper">
         
         <div class="center-area">
-            <div class="level-box">
+            <div class="main-level-box">
                 <img src="img/current.png" alt="Current Level" class="main-icon">
-                <h2 class="glow-text">CURRENT LEVEL</h2>
+                <div class="level-info">
+                    <span class="level-label">CURRENT LEVEL</span>
+                    <h1 class="level-number">4</h1>
+                </div>
             </div>
         </div>
 
         <div class="bottom-area">
             
-            <div class="status-row">
-                <div class="status-item">
-                    <img src="img/cleared.png" alt="Cleared">
-                    <span>Cleared</span>
+            <div class="level-list-container">
+                <div class="level-group cleared-group">
+                    <div class="small-icon"><img src="img/cleared.png" alt="Cleared"><span>1</span></div>
+                    <div class="small-icon"><img src="img/cleared.png" alt="Cleared"><span>2</span></div>
+                    <div class="small-icon"><img src="img/cleared.png" alt="Cleared"><span>3</span></div>
                 </div>
-                <div class="status-item">
-                    <img src="img/locked.png" alt="Locked">
-                    <span>Locked</span>
+
+                <div class="level-group locked-group">
+                    <div class="small-icon"><img src="img/locked.png" alt="Locked"><span>5</span></div>
+                    <div class="small-icon"><img src="img/locked.png" alt="Locked"><span>6</span></div>
+                    <div class="small-icon"><img src="img/locked.png" alt="Locked"><span>7</span></div>
                 </div>
             </div>
 
             <div class="challenge-row">
-                <img src="img/challenge.png" alt="Challenge Z">
-                <h3>Challenge-Z</h3>
+                <img src="img/challenge.png" alt="Challenge Z" class="crown-icon">
+                <h2 class="challenge-text">CHALLENGE-Z</h2>
             </div>
 
             <nav class="menu-bar">
-                <button>프로파일</button>
-                <button>상점</button>
-                <button>리더보드</button>
-                <button>명예의전당</button>
+                <button class="big-btn">프로필</button>
+                <button class="big-btn">상점</button>
+                <button class="big-btn">리더보드</button>
+                <button class="big-btn">명예전당</button>
             </nav>
         </div>
     </div>
