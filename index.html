@@ -8,53 +8,48 @@
 </head>
 <body>
 
-    <div class="app-container">
-        <div class="main-background"></div>
-        
-        <div class="star-cleaner"></div>
+    <div class="fixed-bg"></div>
+    <div class="star-mask"></div>
 
-        <header class="app-header">
+    <div class="app-shell">
+        <div class="top-section">
             <div class="user-badge">
-                <span class="rank-text">SCHOLAR</span>
-                <span class="level-text">LEVEL 12</span>
+                <span class="rank-txt">SCHOLAR</span>
+                <span class="lv-txt">LEVEL 12</span>
             </div>
-        </header>
+        </div>
 
-        <main class="main-content">
-            <div class="current-level">
-                <img src="img/current.png" alt="Current Book" class="img-current">
-                <div class="read-label">READ NOW</div>
+        <div class="mid-section">
+            <div class="main-book">
+                <img src="img/current.png" alt="Current">
+                <div class="read-now">READ NOW</div>
             </div>
-        </main>
+        </div>
 
-        <footer class="app-footer">
-            <div class="archive-shelf">
-                <div class="shelf-header">
-                    <div class="gold-line"></div>
-                    <span>ARCHIVE</span>
-                    <div class="gold-line"></div>
-                </div>
-                <div class="book-list">
-                    <div class="book"><img src="img/cleared.png"><span>X</span></div>
-                    <div class="book"><img src="img/cleared.png"><span>XI</span></div>
-                    <div class="book"><img src="img/locked.png"><span>XIII</span></div>
-                    <div class="book"><img src="img/locked.png"><span>XIV</span></div>
+        <div class="bot-section">
+            <div class="archive-container">
+                <div class="shelf-line"><span>ARCHIVE</span></div>
+                <div class="shelf-scroll">
+                    <div class="item"><img src="img/cleared.png"><span>X</span></div>
+                    <div class="item"><img src="img/cleared.png"><span>XI</span></div>
+                    <div class="item"><img src="img/locked.png"><span>XIII</span></div>
+                    <div class="item"><img src="img/locked.png"><span>XIV</span></div>
                 </div>
             </div>
 
-            <nav class="bottom-nav">
-                <div class="challenge-area">
-                    <button class="challenge-btn">
-                        <img src="img/challenge.png" alt="Challenge Z">
+            <div class="nav-container">
+                <div class="challenge-box">
+                    <button class="challenge-img-btn">
+                        <img src="img/challenge.png" alt="Challenge">
                     </button>
                 </div>
-                <div class="tab-menu">
-                    <button class="tab-item">👤</button>
-                    <button class="tab-item">🛒</button>
-                    <button class="tab-item">🏆</button>
+                <div class="icon-tabs">
+                    <button class="tab">👤</button>
+                    <button class="tab">🛒</button>
+                    <button class="tab">🏆</button>
                 </div>
-            </nav>
-        </footer>
+            </div>
+        </div>
     </div>
 
 </body>
