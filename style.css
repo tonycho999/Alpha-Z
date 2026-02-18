@@ -1,4 +1,4 @@
-/* 기본 리셋 및 텍스트 설정 */
+/* 기본 리셋 */
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
@@ -7,16 +7,16 @@
 body, html {
     margin: 0; padding: 0;
     width: 100%; height: 100%;
-    background-color: #000; /* 배경 이미지 로딩 전 대비 */
+    background: transparent; /* 전체 배경 투명 */
     overflow: hidden;
     font-family: 'serif';
 }
 
-/* 세로형 모바일 레이아웃 강제 고정 */
+/* 세로형 모바일 레이아웃 고정 */
 .app-container {
     position: relative;
     width: 100%;
-    max-width: 480px; /* 가로로 퍼지는 현상 방지 */
+    max-width: 480px; /* 가로폭 제한 */
     height: 100vh;
     margin: 0 auto;
     display: flex;
@@ -32,17 +32,18 @@ body, html {
     z-index: -2;
 }
 
-/* 오른쪽 하단 별모양 가리기 */
+/* 오른쪽 하단 별모양 가리기 마스크 */
 .bottom-right-cleaner {
     position: absolute;
     bottom: 0; right: 0;
-    width: 100px; height: 100px;
-    background: radial-gradient(circle at bottom right, rgba(13, 7, 5, 1) 10%, transparent 80%);
+    width: 120px; height: 120px;
+    /* 배경 바닥색과 유사한 어두운 그라데이션으로 덮기 */
+    background: radial-gradient(circle at bottom right, rgba(20, 10, 5, 1) 20%, transparent 70%);
     z-index: -1;
     pointer-events: none;
 }
 
-/* 상단 영역: 로고 아이콘과 겹치지 않게 높이 설정 */
+/* 상단 영역 */
 .app-header {
     height: 32%;
     display: flex;
@@ -56,12 +57,13 @@ body, html {
     border: 1px solid rgba(197, 160, 89, 0.5);
     padding: 5px 25px;
     border-radius: 20px;
+    background: rgba(0,0,0,0.2); /* 가독성을 위한 아주 연한 배경 */
 }
 
 .rank { display: block; font-size: 10px; color: #c5a059; letter-spacing: 2px; }
 .level { font-size: 14px; color: #fff; font-weight: bold; }
 
-/* 중앙 현재 레벨 (축소 적용) */
+/* 중앙 영역 */
 .active-focus {
     flex: 1;
     display: flex;
@@ -70,8 +72,8 @@ body, html {
 }
 
 .img-main {
-    width: 140px; /* 요청하신 대로 축소 유지 */
-    filter: drop-shadow(0 0 10px rgba(0,0,0,0.8));
+    width: 140px;
+    filter: drop-shadow(0 0 15px rgba(0,0,0,0.6));
 }
 
 .guide-text {
@@ -82,7 +84,7 @@ body, html {
     text-align: center;
 }
 
-/* 하단 영역 (ARCHIVE 및 버튼) */
+/* 하단 영역 */
 .app-footer {
     height: 40%;
     display: flex;
@@ -106,27 +108,37 @@ body, html {
 }
 .scroll-wrapper::-webkit-scrollbar { display: none; }
 
-/* 아카이브 책 크기 1단계 확대 (85px) */
 .book-item { position: relative; flex-shrink: 0; text-align: center; }
 .book-item img { width: 85px; display: block; }
 .book-item span { color: #c5a059; font-size: 11px; margin-top: 5px; display: block; }
 
-/* 하단 버튼 디자인 */
+/* 하단 네비게이션 */
 .navigation { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
 
+/* Challenge Z 버튼 수정: 배경 투명, 테두리 제거, 이미지 스타일링 */
 .btn-challenge {
-    width: 100%; padding: 12px;
-    background: rgba(30, 20, 15, 0.85); /* CSS 배경색 추가 */
-    border: 1px solid #c5a059;
-    color: #fceabb; font-weight: bold;
-    border-radius: 6px; cursor: pointer;
+    width: 100%;
+    padding: 0; /* 패딩 제거 */
+    background: transparent; /* 배경 투명 */
+    border: none; /* 테두리 제거 */
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-challenge img {
+    width: 100%;
+    max-width: 350px; /* 이미지 너무 커지지 않게 제한 */
+    height: auto;
+    display: block;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); /* 이미지에 입체감 부여 */
 }
 
 .menu-icons { display: flex; gap: 10px; justify-content: space-between; }
 
 .menu-btn {
     flex: 1; padding: 12px 0;
-    background: rgba(197, 160, 89, 0.15); /* 아이콘 버튼 배경색 */
+    background: rgba(197, 160, 89, 0.15);
     border: 1px solid rgba(197, 160, 89, 0.3);
     border-radius: 8px;
     color: #fff; font-size: 22px; cursor: pointer;
