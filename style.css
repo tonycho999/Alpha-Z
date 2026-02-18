@@ -1,109 +1,96 @@
-/* --- 고전 도서관 테마 --- */
+/* 기본 테마 및 폰트 */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Nanum+Myeongjo:wght@700&display=swap');
+
 :root {
-    --dark-oak: #1a0f0a;
-    --gold: #c5a059;
-    --parchment: #e8d5b5;
-    --leather-red: #5d1916;
-    --leather-blue: #1a2a44;
-    --text-sepia: #4e342e;
+    --gold: #d4af37;
+    --dark-wood: #2c1810;
 }
 
-body {
-    margin: 0; padding: 0;
-    background: var(--dark-oak);
-    /* 웅장한 도서관 배경 느낌의 그라데이션 */
-    background-image: radial-gradient(circle, #2c1810 0%, #0a0504 100%);
-    color: var(--parchment);
-    font-family: 'Playfair Display', serif;
-    display: flex; justify-content: center; height: 100vh; overflow: hidden;
+body, html {
+    margin: 0; padding: 0; height: 100%; width: 100%;
+    background: #000; overflow: hidden;
+    font-family: 'Nanum Myeongjo', serif;
 }
 
-/* 화면 전체에 그림자 효과를 주어 집중도 향상 */
-.library-vignette {
-    position: fixed; inset: 0;
+/* 배경 이미지 설정 */
+.library-background {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-image: url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1000&q=80');
+    background-size: cover; background-position: center;
+    filter: brightness(0.4) sepia(0.3); z-index: -2;
+}
+
+/* 분위기를 위한 오버레이 (그림자 효과) */
+.ambient-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 100%);
-    pointer-events: none; z-index: 100;
+    z-index: -1;
 }
 
-.screen { display: none; width: 100%; max-width: 420px; flex-direction: column; padding: 20px; box-sizing: border-box; }
-.screen.active { display: flex; }
+.screen { display: flex; flex-direction: column; height: 100%; align-items: center; }
 
-/* --- 헤더: 고전적인 문장(Crest) 스타일 --- */
-.main-header { text-align: center; margin-bottom: 30px; }
-.title-crest { display: flex; align-items: center; justify-content: center; gap: 15px; }
-.logo-tile {
-    width: 40px; height: 40px; border: 2px solid var(--gold);
-    color: var(--gold); font-family: 'Cinzel', serif; font-weight: 900;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 0 10px rgba(197, 160, 89, 0.3);
+/* 헤더 */
+.main-header { margin-top: 40px; text-align: center; }
+.logo-text { font-family: 'Cinzel', serif; font-size: 2.5rem; color: #fff; text-shadow: 0 0 15px var(--gold); margin: 0; letter-spacing: 5px; }
+.scholar-badge { color: var(--gold); font-size: 0.8rem; letter-spacing: 3px; margin-top: 5px; }
+
+/* 중앙 독서대 구역 */
+.central-lectern {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    width: 100%; perspective: 1000px;
 }
-h1 { font-family: 'Cinzel', serif; font-size: 2.2rem; margin: 0; letter-spacing: 4px; color: #fff; }
-.tagline { font-style: italic; opacity: 0.6; margin-top: 5px; font-size: 0.9rem; }
 
-/* --- 대도서관 서가 (Grand Library) --- */
-.grand-library { margin: 20px 0; width: 100%; }
-.shelf-header { font-family: 'Cinzel', serif; text-align: center; font-size: 0.8rem; color: var(--gold); margin-bottom: 20px; letter-spacing: 2px; }
+.lectern-stand {
+    position: relative; padding-bottom: 20px;
+    /* 독서대 받침대 이미지나 효과 */
+    border-bottom: 10px solid #3d2419; width: 240px; text-align: center;
+}
 
-.scroll-container { position: relative; width: 100%; }
-.shelf-row {
-    display: flex; gap: 35px; overflow-x: auto; padding: 40px 20px;
+.main-book {
+    position: relative; width: 180px; display: inline-block;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer; transform: rotateX(10deg);
+}
+
+.main-book img {
+    width: 100%; border-radius: 5px 15px 15px 5px;
+    box-shadow: 20px 20px 50px rgba(0,0,0,0.8);
+    border-left: 8px solid rgba(0,0,0,0.3);
+}
+
+.main-book:hover { transform: scale(1.05) rotateX(0deg); }
+
+.book-glow {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.3); border-radius: 15px; z-index: -1;
+}
+
+.play-hint { margin-top: 15px; color: var(--gold); font-size: 0.7rem; letter-spacing: 2px; animation: blink 2s infinite; }
+
+/* 하단 서가 */
+.shelf-area { width: 100%; position: relative; margin-bottom: 20px; }
+.shelf-wood { height: 15px; background: #3d2419; width: 90%; margin: 0 auto; border-radius: 5px; box-shadow: 0 5px 15px #000; }
+
+.bookshelf {
+    display: flex; gap: 20px; overflow-x: auto; padding: 20px;
     scrollbar-width: none;
 }
-.shelf-row::-webkit-scrollbar { display: none; }
+.bookshelf::-webkit-scrollbar { display: none; }
 
-.wood-shelf {
-    position: absolute; bottom: 35px; left: 0; width: 100%; height: 20px;
-    background: linear-gradient(to bottom, #3d2419, #1a0f0a);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.7); border-radius: 2px;
+.book-item { flex-shrink: 0; transition: 0.3s; }
+.book-item img { width: 70px; border-radius: 3px 8px 8px 3px; box-shadow: 5px 5px 15px #000; }
+.book-item:hover { transform: translateY(-10px); }
+
+/* 하단 내비게이션 */
+.bottom-nav { width: 90%; margin-bottom: 30px; display: flex; flex-direction: column; gap: 15px; }
+.btn-challenge {
+    background: rgba(0,0,0,0.6); border: 1px solid var(--gold); color: var(--gold);
+    padding: 15px; font-family: 'Cinzel', serif; font-weight: bold; cursor: pointer;
+    border-radius: 5px; transition: 0.3s;
 }
+.btn-challenge:hover { background: var(--gold); color: #000; }
 
-/* --- 책 디자인 (현실적인 입체감) --- */
-.book-set { flex-shrink: 0; perspective: 1000px; }
+.icon-group { display: flex; justify-content: space-around; }
+.icon-group button { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.6; }
 
-/* 1. 펼쳐진 책 (완료 레벨) */
-.book-open {
-    display: flex; width: 110px; height: 85px; transform: rotateX(10deg);
-}
-.page-left, .page-right {
-    flex: 1; background: var(--parchment); color: var(--text-sepia);
-    display: flex; align-items: center; justify-content: center; font-weight: bold;
-    border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-}
-.page-left { border-radius: 5px 0 0 5px; transform: rotateY(25deg); origin: right; background-image: linear-gradient(to right, #d4c3a3, #e8d5b5); }
-.page-right { border-radius: 0 5px 5px 0; transform: rotateY(-25deg); origin: left; }
-
-/* 2. 세워진 가죽 책 (현재/잠금 레벨) */
-.book-standing {
-    width: 65px; height: 100px; position: relative; transform-style: preserve-3d;
-    transition: transform 0.4s ease;
-}
-.front-cover {
-    position: absolute; width: 100%; height: 100%; background: var(--leather-red);
-    border-radius: 2px 5px 5px 2px; display: flex; align-items: center; justify-content: center;
-    border: 1px solid rgba(255,255,255,0.1); box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
-    font-family: 'Cinzel', serif; font-weight: bold;
-}
-
-.book-standing.active { transform: scale(1.15) translateY(-15px); cursor: pointer; }
-.book-standing.active .front-cover {
-    background: var(--leather-blue); border: 2px solid var(--gold); color: var(--gold);
-    box-shadow: 0 0 20px rgba(197, 160, 89, 0.4);
-}
-
-.book-standing.locked { opacity: 0.5; filter: sepia(1) brightness(0.7); }
-
-.book-standing:hover:not(.locked) { transform: translateY(-20px) rotateY(-10deg); }
-
-/* --- 푸터 및 버튼 --- */
-.main-footer { margin-top: auto; padding-bottom: 20px; text-align: center; }
-.btn-z-challenge {
-    width: 100%; padding: 16px; background: transparent; 
-    border: 2px double var(--gold); color: var(--gold);
-    font-family: 'Cinzel', serif; font-weight: 900; letter-spacing: 2px;
-    cursor: pointer; margin-bottom: 25px; transition: 0.3s;
-}
-.btn-z-challenge:hover { background: var(--gold); color: var(--dark-oak); }
-
-.icon-nav { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 50px; border: 1px solid rgba(197, 160, 89, 0.2); }
-.nav-btn { font-size: 1.3rem; cursor: pointer; transition: 0.3s; opacity: 0.7; }
-.nav-btn:hover { opacity: 1; transform: scale(1.2); text-shadow: 0 0 10px var(--gold); }
+@keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
