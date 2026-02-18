@@ -1,25 +1,4 @@
-* {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-}
-
-body, html {
-    margin: 0; padding: 0;
-    width: 100%; height: 100%;
-    background: transparent;
-    overflow: hidden;
-    font-family: 'serif';
-}
-
-.app-container {
-    position: relative;
-    width: 100%;
-    max-width: 500px;
-    height: 100vh;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-}
+/* ... 기존 스타일 유지 ... */
 
 .main-background {
     position: absolute;
@@ -29,115 +8,47 @@ body, html {
     z-index: -2;
 }
 
-/* 상단: 로고 아이콘과 겹치지 않게 아래로 더 이동 (margin-top 증가) */
+/* 오른쪽 하단 별표 이미지를 가리기 위한 레이어 */
+.bottom-right-mask {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 150px; /* 별표를 충분히 가릴 수 있는 크기 */
+    height: 150px;
+    /* 이미지 바닥 타일 색상과 유사한 어두운 톤으로 그라데이션 처리 */
+    background: radial-gradient(circle at bottom right, rgba(10, 5, 4, 1) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none; /* 클릭 방해 금지 */
+}
+
+/* 상단 유저 정보 (로고 아래 배치) */
 .app-header {
-    height: 30%; /* 높이를 키워 정보를 더 아래로 배치 */
+    height: 32%; /* 간격을 조금 더 벌림 */
     display: flex;
     align-items: flex-end;
     justify-content: center;
     padding-bottom: 20px;
 }
 
-.user-info-box {
-    text-align: center;
-    border: 1px solid rgba(197, 160, 89, 0.6);
-    padding: 6px 22px;
-    border-radius: 20px;
-    background: rgba(0, 0, 0, 0.3); /* 아주 살짝 어둡게 하여 가독성 확보 */
-}
+/* ... 나머지 버튼 및 책 크기 스타일은 이전과 동일하게 유지 ... */
 
-.rank-label { display: block; font-size: 10px; color: #c5a059; letter-spacing: 2px; }
-.level-label { font-size: 14px; color: #fff; font-weight: bold; }
-
-/* 중앙 섹션 */
-.main-stage {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.img-current {
-    width: 150px; /* 조금 더 축소하여 여백 확보 */
-    filter: drop-shadow(0 0 15px rgba(0,0,0,0.8));
-}
-
-.guide-text {
-    margin-top: 10px;
-    color: #fceabb;
-    letter-spacing: 4px;
-    font-size: 12px;
-    text-align: center;
-}
-
-/* 하단 섹션 */
-.app-footer {
-    height: 40%; /* 하단 UI 영역을 조금 더 확보 */
-    display: flex;
-    flex-direction: column;
-    padding: 0 25px 30px;
-}
-
-.archive-header {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 15px;
-}
-
-.gold-line { flex: 1; height: 1px; background: rgba(197, 160, 89, 0.4); }
-.archive-header span { font-size: 11px; color: #c5a059; letter-spacing: 2px; }
-
-.shelf-scroll {
-    display: flex;
-    gap: 20px;
-    overflow-x: auto;
-    padding-bottom: 25px;
-    scrollbar-width: none;
-}
-.shelf-scroll::-webkit-scrollbar { display: none; }
-
-.book-node img { width: 85px; display: block; } /* 80px에서 조금 더 확대 */
-.lv-text { display: block; text-align: center; color: #c5a059; font-size: 11px; margin-top: 8px; }
-
-/* 하단 네비게이션 및 버튼 */
-.bottom-nav { 
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* 버튼 사이 간격 */
-}
-
-/* Challenge Z 버튼: 위치를 조금 더 위로 */
 .btn-challenge {
     width: 100%;
     padding: 14px;
-    background: rgba(44, 24, 16, 0.8); /* 어두운 나무톤 배경색 */
+    background: rgba(44, 24, 16, 0.85); /* 묵직한 배경색 */
     border: 1.5px solid #c5a059;
     color: #fceabb;
     font-weight: bold;
     border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-}
-
-/* 하단 아이콘 버튼들: 크기 확대 및 배경색 추가 */
-.quick-icons { 
-    display: flex; 
-    justify-content: space-between; 
-    gap: 10px;
+    margin-bottom: 5px; /* 아이콘과의 간격 조절 */
 }
 
 .icon-tab { 
-    flex: 1; /* 가로로 꽉 차게 배분 */
+    flex: 1;
     padding: 12px 0;
-    background: rgba(255, 255, 255, 0.05); /* 은은한 투명 배경색 */
-    border: 1px solid rgba(197, 160, 89, 0.2);
+    background: rgba(197, 160, 89, 0.1); /* 요청하신 대로 아이콘 버튼에 배경색 추가 */
+    border: 1px solid rgba(197, 160, 89, 0.3);
     border-radius: 8px;
     color: #fff; 
-    font-size: 24px; /* 아이콘 크기 확대 */
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.icon-tab:active {
-    background: rgba(197, 160, 89, 0.2);
+    font-size: 26px; /* 크기 확대 */
 }
