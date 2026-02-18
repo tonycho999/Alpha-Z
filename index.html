@@ -4,37 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Alpha-Z</title>
-    <link rel="stylesheet" href="css/common.css">
-    <link rel="stylesheet" href="css/main-menu.css">
-    <link rel="manifest" href="manifest.json">
-</head>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json"> </head>
 <body>
-    <div class="library-container">
-        <header class="user-status">
-            <span id="display-level">Lv. 1</span>
-            <span id="display-name">Guest</span>
-        </header>
+    <header style="margin-top: 50px; text-align: center;">
+        <h1 style="font-size: 3rem; margin-bottom: 10px;">Alpha-Z</h1>
+        <div id="user-level-display">Lv. <span id="current-level">1</span> (초심자)</div>
+    </header>
 
-        <main class="menu-list">
-            <h1>Alpha-Z</h1>
-            <button onclick="location.href='main-game.html'" class="btn-wood">메인 게임 시작</button>
-            
-            <button onclick="location.href='challenge.html'" class="btn-gold">도전 Z (Challenge)</button>
+    <main style="display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 400px; margin-top: 40px;">
+        <button class="btn-primary" onclick="location.href='game_main.html'" style="height: 80px; font-size: 1.2rem;">
+            📚 메인 스토리 진행
+        </button>
 
-            <div class="sub-menu">
-                <a href="shop.html">상점</a>
-                <a href="leaderboard.html">리더보드</a>
-                <a href="hall-of-fame.html">명예의 전당</a>
-                <a href="profile.html">프로필</a>
-            </div>
-        </main>
-    </div>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/auth.js"></script>
+        <button class="btn-primary" onclick="openChallengeModal()" style="background-color: #d35400;">
+            🏆 도전 Z (Challenge)
+        </button>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn-secondary" onclick="location.href='store.html'">🛒 상점</button>
+            <button class="btn-secondary" onclick="location.href='profile.html'">👤 프로필</button>
+            <button class="btn-secondary" onclick="location.href='leaderboard.html'">📊 랭킹</button>
+            <button class="btn-secondary" onclick="location.href='hall_of_fame.html'">🏛 명예의 전당</button>
+        </div>
+    </main>
+
+    <script src="js/common.js"></script>
     <script>
-        // PWA Service Worker 등록
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+        function openChallengeModal() {
+            // 난이도 선택 팝업 로직 (Normal, Hard, Extreme 버튼)
+            // 선택 시 game_challenge.html?diff=normal 형태로 이동
+            alert("난이도를 선택하세요: Normal / Hard / Extreme"); 
+            location.href='game_challenge.html?diff=normal';
         }
     </script>
 </body>
