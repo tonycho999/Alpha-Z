@@ -11,7 +11,7 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #000; 
+    background-color: #000;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -23,18 +23,25 @@ body, html {
 .game-wrapper {
     height: 100vh;
     aspect-ratio: 9 / 16;
-    background-image: url('img/bg_main.webp');
+    background-image: url('img/bg_main.jpg'); /* 배경 이미지 */
     background-repeat: no-repeat;
     background-size: 100% 100%;
+    
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 3vh 2vh; 
+    
+    padding: 1vh 2vh 3vh 2vh; 
     box-shadow: 0 0 30px rgba(0,0,0,0.8);
-    position: relative; /* 절대 위치 아이콘을 위해 기준점 설정 */
 }
 
-/* === 공통 클래스 === */
+/* 배경 로고가 가려지지 않도록 상단에 빈 공간 확보 */
+.logo-spacer {
+    height: 15%; /* 화면 상단 15%는 비워둠 (로고 영역) */
+    width: 100%;
+}
+
+/* === 공통 이미지/텍스트 === */
 .img-responsive {
     display: block;
     height: auto;
@@ -48,39 +55,148 @@ body, html {
     white-space: nowrap;
 }
 
-/* === 1층: 상단 (Current & Icons) === */
+/* === 1층: 상단 (상점/프로필 + Current) === */
 .shelf-top {
-    flex: 3;
+    flex: 3; /* 공간 차지 비율 */
     display: flex;
-    justify-content: center; /* Current Level 중앙 정렬 */
-    align-items: center;
     flex-direction: column;
-    position: relative; /* 내부 아이콘 절대 위치 기준 */
+    justify-content: flex-start;
     width: 100%;
 }
 
-/* [추가] 상점/프로필 아이콘 공통 스타일 */
-.icon-float {
-    position: absolute;
-    width: 15%; /* 적당한 아이콘 크기 */
-    filter: drop-shadow(0 0 1vh rgba(255, 255, 255, 0.4));
-    cursor: pointer;
-    transition: transform 0.2s;
+/* 상점, 프로필 아이콘 줄 */
+.top-icons-row {
+    display: flex;
+    justify-content: space-between; /* 양 끝으로 배치 */
+    width: 100%;
+    padding: 0 2vh; /* 좌우 안쪽 여백 */
+    margin-bottom: 1vh;
 }
 
-.icon-float:hover {
+.icon-btn {
+    width: 12%; /* 아이콘 크기 (화면 너비의 12%) */
+    height: auto;
+    cursor: pointer;
+    transition: transform 0.2s;
+    filter: drop-shadow(0 0 1vh rgba(255,255,255,0.3));
+}
+
+.icon-btn:hover {
     transform: scale(1.1);
 }
 
-/* 위치 지정 */
-.icon-shop {
-    left: 2vh;       /* 왼쪽 여백 */
-    top: 25%;        /* Current Level보다 조금 위쪽 (높이 조정 가능) */
+/* Current Level 컨테이너 */
+.main-level-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
 }
 
-.icon-profile {
-    right: 2vh;      /* 오른쪽 여백 */
-    top: 25%;        /* 상점과 동일 선상 */
+/* [요청 반영] Current 이미지 크기: 30% (기존 대비 60% 수준) */
+.main-size {
+    width: 30%; 
+    filter: drop-shadow(0 0 2vh rgba(255, 215, 0, 0.6));
+    margin-bottom: 1vh;
 }
 
-.level-box {
+.main-text-size {
+    font-size: 2.2vh; /* 글자 크기 조정 */
+}
+
+
+/* === 2층: 중간 (아이콘 4개 한 줄) === */
+.shelf-middle {
+    flex: 2.5; 
+    display: flex;
+    flex-direction: row; /* 가로 정렬 명시 */
+    justify-content: space-between; /* 아이콘 간격 균등 */
+    align-items: flex-start; /* 위쪽 라인 맞춤 */
+    width: 100%;
+    padding: 0 1vh;
+    
+    /* [중요] 절대 줄바꿈 하지 않음 */
+    flex-wrap: nowrap; 
+}
+
+.book-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* [요청 반영] 4개가 한 줄에 들어가도록 너비 설정 (Locked 80% 줄인 크기 반영) */
+    /* 100% / 4 = 25% 이므로 여백 고려해 20% 설정 */
+    width: 20%; 
+}
+
+.sub-size {
+    width: 100%; /* 부모(20%) 너비에 꽉 차게 */
+    margin-bottom: 0.5vh;
+}
+
+.sub-text-size {
+    font-size: 1.8vh;
+    color: #ddd;
+}
+
+
+/* === 3층: 하단 (Challenge) === */
+.shelf-bottom {
+    flex: 2.5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.challenge-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* [요청 반영] Challenge 크기 80% 수준으로 축소 (35%) */
+.challenge-size {
+    width: 35%; 
+    margin-bottom: 1vh;
+}
+
+.challenge-text-size {
+    font-size: 2.5vh;
+}
+
+.challenge-color {
+    color: #ffcc00;
+}
+
+
+/* === 메뉴바 (버튼 2개) === */
+.menu-bar {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    gap: 3vh; /* 버튼 사이 간격 */
+    align-items: flex-end; /* 바닥 쪽으로 붙임 */
+    padding-bottom: 1vh;
+}
+
+.menu-bar button {
+    width: 35%; /* 버튼 너비 */
+    height: 6vh; /* 버튼 높이 */
+    
+    background: rgba(255, 255, 255, 0.2);
+    border: 0.2vh solid rgba(255, 255, 255, 0.4);
+    color: white;
+    font-weight: bold;
+    border-radius: 1.5vh;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    
+    font-size: 2vh;
+    padding: 0;
+    transition: background 0.3s;
+}
+
+.menu-bar button:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
