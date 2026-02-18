@@ -1,4 +1,4 @@
-/* 초기화 및 웹앱 설정 */
+/* 기본 초기화 */
 * {
     margin: 0;
     padding: 0;
@@ -10,7 +10,7 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #000; /* 이미지 로딩 전 검은 배경 */
+    background-color: #120f0d; /* 배경 이미지와 어울리는 어두운 색 */
 }
 
 .app-container {
@@ -18,105 +18,102 @@ body, html {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    /* 배경 설정: img 폴더 내 파일 참조 */
-    background: url('img/bg_main.webp') no-repeat center top;
-    background-size: cover;
+    /* 배경 설정 수정 */
+    background: url('img/bg_main.webp') no-repeat center center;
+    background-size: 100% auto; /* 가로폭에 맞추고 세로는 비율대로 (너무 커지지 않게) */
+    background-attachment: fixed; /* 스크롤해도 배경은 고정 */
     position: relative;
 }
 
-/* 오른쪽 아래 별 모양을 가리기 위해 컨테이너 하단에 가림막 효과 */
+/* 하단 별 모양 가리기용 마스킹 */
 .app-container::after {
     content: '';
     position: absolute;
-    bottom: 0;
+    bottom: 80px; /* 탭바 바로 위 */
     width: 100%;
-    height: 100px;
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    height: 120px;
+    background: linear-gradient(to top, #120f0d 20%, transparent);
     pointer-events: none;
+    z-index: 5;
 }
 
-/* 스크롤 가능한 메인 뷰 */
-.content-view {
+/* 스크롤 영역 */
+.scroll-content {
     flex: 1;
     overflow-y: auto;
-    padding: 120px 0 40px 0; /* 상단 로고 자리를 위해 여백 확보 */
-    scrollbar-width: none; /* 파이어폭스 스크롤바 숨김 */
+    padding-top: 15vh; /* 상단 ALPHA-Z 로고가 보일 수 있게 비워둠 */
+    padding-bottom: 100px;
+    scrollbar-width: none;
 }
 
-.content-view::-webkit-scrollbar {
-    display: none; /* 크롬/사파리 스크롤바 숨김 */
+.scroll-content::-webkit-scrollbar {
+    display: none;
 }
 
-.level-list {
+.level-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 50px;
+    gap: 60px; /* 레벨 간격 */
 }
 
-/* 레벨 아이콘 스타일 */
-.level-item img {
-    width: 160px;
+/* 레벨 아이콘 사이즈 최적화 */
+.level-node img {
+    width: 150px; /* 모바일 화면에 적당한 사이즈 */
     height: auto;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
-    transition: transform 0.2s;
+    filter: drop-shadow(0 8px 15px rgba(0,0,0,0.7));
 }
 
-.level-item:active img {
-    transform: scale(0.95);
+/* 현재 레벨만 약간 더 크게 */
+.level-node.current img {
+    width: 180px;
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));
 }
 
-/* 현재 레벨 강조 효과 */
-.current-focus img {
-    width: 190px;
-    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
-}
-
-/* 챌린지 영역 */
-.challenge-section {
-    text-align: center;
+/* 챌린지 버튼 */
+.challenge-node {
     margin-top: 20px;
-    padding-bottom: 60px;
+    text-align: center;
 }
 
-.challenge-section img {
-    width: 100px;
-    height: auto;
+.challenge-node img {
+    width: 90px;
 }
 
 .challenge-label {
-    color: #fff;
-    font-size: 1.3rem;
+    color: #ffd700;
+    font-size: 1.1rem;
     font-weight: bold;
-    margin-top: 10px;
-    text-shadow: 2px 2px 5px rgba(0,0,0,0.8), 0 0 10px rgba(255,215,0,0.4);
+    margin-top: 12px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
 }
 
-/* 하단 네비게이션 (고정) */
-.bottom-nav {
+/* 웹앱 하단 탭바 스타일 */
+.tab-bar {
     height: 80px;
-    background: rgba(15, 12, 10, 0.95);
+    background: rgba(20, 15, 12, 0.98);
     display: flex;
     justify-content: space-around;
     align-items: center;
-    border-top: 1px solid #4a3b2b;
+    border-top: 1px solid #3d2f23;
     z-index: 10;
+    padding-bottom: env(safe-area-inset-bottom); /* 아이폰 하단 영역 대응 */
 }
 
-.nav-btn {
+.tab-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    color: #c5a687;
-    cursor: pointer;
+    color: #a88e76;
+    flex: 1;
 }
 
-.nav-btn .icon {
-    font-size: 1.4rem;
+.tab-item .icon {
+    font-size: 1.5rem;
     margin-bottom: 4px;
 }
 
-.nav-btn .label {
-    font-size: 0.75rem;
-    font-weight: bold;
+.tab-item .label {
+    font-size: 0.7rem;
+    font-weight: 600;
 }
