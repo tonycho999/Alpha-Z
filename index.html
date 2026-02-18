@@ -3,86 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Z: The Antique Archive</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;900&family=Playfair+Display:ital,wght@0,400;1,700&display=swap" rel="stylesheet">
+    <title>Alpha-Z: The Great Archive</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="library-vignette"></div>
+    <div class="library-background"></div>
+    <div class="ambient-overlay"></div>
 
     <div id="main-menu" class="screen active">
         <header class="main-header">
-            <div class="title-crest">
-                <div class="logo-tile">A</div>
-                <h1>ALPHA-Z</h1>
-                <div class="logo-tile">Z</div>
-            </div>
-            <p class="tagline">The Great Alphabet Archive</p>
-            
-            <div class="user-status-scroll">
-                <span class="rank-title">Master Scholar</span>
-                <div class="level-indicator">
-                    <span>LEVEL XII</span>
-                </div>
-            </div>
+            <h1 class="logo-text">ALPHA-Z</h1>
+            <div class="scholar-badge">MASTER SCHOLAR</div>
         </header>
 
-        <section class="grand-library">
-            <div class="shelf-header">Chapter Selection</div>
-            
-            <div class="scroll-container">
-                <div class="shelf-row">
-                    <div class="book-set">
-                        <div class="book-open completed">
-                            <div class="page-left">X</div>
-                            <div class="page-right">✓</div>
-                        </div>
-                    </div>
-
-                    <div class="book-set">
-                        <div class="book-open completed">
-                            <div class="page-left">XI</div>
-                            <div class="page-right">✓</div>
-                        </div>
-                    </div>
-
-                    <div class="book-set">
-                        <div class="book-standing active" onclick="showScreen('game-screen')">
-                            <div class="spine">
-                                <span class="spine-text">XII</span>
-                            </div>
-                            <div class="front-cover">XII</div>
-                        </div>
-                    </div>
-
-                    <div class="book-set">
-                        <div class="book-standing locked"><div class="front-cover">XIII</div></div>
-                    </div>
-                    <div class="book-set">
-                        <div class="book-standing locked"><div class="front-cover">XIV</div></div>
-                    </div>
-                    <div class="book-set">
-                        <div class="book-standing locked"><div class="front-cover">XV</div></div>
-                    </div>
+        <section class="central-lectern">
+            <div class="lectern-stand">
+                <div class="main-book active" onclick="showScreen('game-screen')">
+                    <img src="https://via.placeholder.com/200x260/5d1916/gold?text=LV+12" alt="Current Level Book">
+                    <div class="book-glow"></div>
+                    <div class="play-hint">TAP TO ENTER</div>
                 </div>
-                <div class="wood-shelf"></div>
             </div>
         </section>
 
-        <footer class="main-footer">
-            <button class="btn-z-challenge" onclick="showScreen('game-screen')">
-                THE CHALLENGE OF 'Z'
-            </button>
-            
-            <nav class="icon-nav">
-                <div class="nav-btn" onclick="openModal('Scholar Profile')">👤</div>
-                <div class="nav-btn" onclick="openModal('The Vault')">🛒</div>
-                <div class="nav-btn" onclick="openModal('Grand Rankings')">🏆</div>
-                <div class="nav-btn" onclick="openModal('Hall of Fame')">👑</div>
-            </nav>
-        </footer>
+        <section class="shelf-area">
+            <div class="shelf-wood"></div>
+            <div class="bookshelf">
+                <div class="book-item completed"><img src="https://via.placeholder.com/80x110/2f3e46/eee?text=10"></div>
+                <div class="book-item completed"><img src="https://via.placeholder.com/80x110/2f3e46/eee?text=11"></div>
+                <div class="book-item locked"><img src="https://via.placeholder.com/80x110/1a1a1a/555?text=🔒"></div>
+                <div class="book-item locked"><img src="https://via.placeholder.com/80x110/1a1a1a/555?text=🔒"></div>
+                <div class="book-item locked"><img src="https://via.placeholder.com/80x110/1a1a1a/555?text=🔒"></div>
+            </div>
+        </section>
+
+        <nav class="bottom-nav">
+            <button class="nav-btn challenge" onclick="showScreen('game-screen')">CHALLENGE Z</button>
+            <div class="icon-group">
+                <button onclick="openModal('Profile')">👤</button>
+                <button onclick="openModal('Shop')">🛒</button>
+                <button onclick="openModal('Rank')">🏆</button>
+            </div>
+        </nav>
     </div>
 
-    </body>
+</body>
 </html>
