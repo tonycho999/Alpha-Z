@@ -3,49 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alpha-Z: The Great Archive</title>
+    <title>Alpha-Z: The Grand Library</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="library-background"></div>
-    <div class="ambient-overlay"></div>
-
-    <div id="main-menu" class="screen active">
-        <header class="main-header">
-            <h1 class="logo-text">ALPHA-Z</h1>
-            <div class="scholar-badge">MASTER SCHOLAR</div>
+    <div class="app-container">
+        <header class="library-header">
+            <div class="crest">
+                <span class="emblem">A-Z</span>
+                <h1>ALPHA-Z</h1>
+            </div>
+            <div class="user-scroll">
+                <p>Level: 12 / Scholar</p>
+            </div>
         </header>
 
-        <section class="central-lectern">
-            <div class="lectern-stand">
-                <div class="main-book active" onclick="showScreen('game-screen')">
-                    <img src="https://via.placeholder.com/200x260/5d1916/gold?text=LV+12" alt="Current Level Book">
-                    <div class="book-glow"></div>
-                    <div class="play-hint">TAP TO ENTER</div>
+        <main class="library-shelves">
+            
+            <div class="shelf row-top">
+                <div class="shelf-base"></div>
+                <div class="frame profile" onclick="openModal('Profile')">
+                    <div class="picture">👤</div>
+                </div>
+                <div class="frame leaderboard" onclick="openModal('Ranking')">
+                    <div class="picture">🏆</div>
                 </div>
             </div>
-        </section>
 
-        <section class="shelf-area">
-            <div class="shelf-wood"></div>
-            <div class="bookshelf">
-                <div class="book-item completed"><img src="https://via.placeholder.com/80x110/2f3e46/eee?text=10"></div>
-                <div class="book-item completed"><img src="https://via.placeholder.com/80x110/2f3e46/eee?text=11"></div>
-                <div class="book-item locked"><img src="https://via.placeholder.com/80x110/1a1a1a/555?text=🔒"></div>
-                <div class="book-item locked"><img src="https://via.placeholder.com/80x110/1a1a1a/555?text=🔒"></div>
-                <div class="book-item locked"><img src="https://via.placeholder.com/80x110/1a1a1a/555?text=🔒"></div>
+            <div class="shelf row-middle">
+                <div class="shelf-base current-shelf"></div>
+                <div class="main-book-focus" onclick="showScreen('game-screen')">
+                    <div class="book-object active">
+                        <div class="book-spine"></div>
+                        <div class="book-front">LEVEL 12</div>
+                    </div>
+                </div>
             </div>
-        </section>
 
-        <nav class="bottom-nav">
-            <button class="nav-btn challenge" onclick="showScreen('game-screen')">CHALLENGE Z</button>
-            <div class="icon-group">
-                <button onclick="openModal('Profile')">👤</button>
-                <button onclick="openModal('Shop')">🛒</button>
-                <button onclick="openModal('Rank')">🏆</button>
+            <div class="shelf row-bottom">
+                <div class="shelf-base"></div>
+                <div class="book-scroller">
+                    <div class="mini-book completed"><span>10</span></div>
+                    <div class="mini-book completed"><span>11</span></div>
+                    <div class="mini-book locked"><span>13</span></div>
+                    <div class="mini-book locked"><span>14</span></div>
+                    <div class="mini-book locked"><span>15</span></div>
+                </div>
             </div>
-        </nav>
+            
+        </main>
+
+        <footer class="library-footer">
+            <button class="drawer-btn" onclick="showScreen('game-screen')">
+                CHALLENGE Z
+            </button>
+            <div class="bottom-menu">
+                <button>🛒</button>
+                <button>👑</button>
+            </div>
+        </footer>
     </div>
 
 </body>
