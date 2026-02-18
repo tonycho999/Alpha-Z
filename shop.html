@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Merchant</title>
+    <link rel="stylesheet" href="css/global.css">
+</head>
+<body>
+    <div class="container">
+        <h2>The Merchant</h2>
+        <div id="coin-balance">Coins: <span id="coins">0</span></div>
+        
+        <div class="shop-list">
+            <div class="shop-item">
+                <img src="assets/images/item_undo.png" alt="Undo">
+                <p>Undo Scroll</p>
+                <button class="btn-joseon" onclick="buyItem('undo', 100)">100 Coins</button>
+            </div>
+            <div class="shop-item">
+                <img src="assets/images/item_bomb.png" alt="Bomb">
+                <p>Tile Eraser</p>
+                <button class="btn-joseon" onclick="buyItem('eraser', 200)">200 Coins</button>
+            </div>
+        </div>
+        <button class="btn-joseon" onclick="location.href='index.html'">Leave Shop</button>
+    </div>
+    
+    <script type="module">
+        import { db, auth } from './js/firebase-config.js';
+        // Logic to deduct coins and add item to inventory in Firestore
+    </script>
+</body>
+</html>
