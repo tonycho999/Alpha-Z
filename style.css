@@ -1,6 +1,6 @@
 @charset "UTF-8";
 
-/* Reset */
+/* 초기화 */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -11,7 +11,7 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: transparent; 
+    background-color: #000; /* 배경이 로딩되기 전 검은색 */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -19,86 +19,160 @@ body, html {
     color: #fff;
 }
 
-/* === Game Wrapper (STRICT RULES) === */
+/* === [핵심] 게임 화면 래퍼 (비율 유지) === */
 .game-wrapper {
+    /* 높이를 화면에 꽉 채움 */
     height: 100vh;
-    aspect-ratio: 9 / 16; 
-    background-image: url('img/bg_main.webp'); /* 확장자 확인 (.jpg or .webp) */
-    background-repeat: no-repeat;
-    background-size: 100% 100%; 
+    /* 가로 세로 비율 9:16 고정 (모바일 비율) */
+    aspect-ratio: 9 / 16;
     
+    /* 배경 이미지 */
+    background-image: url('img/bg_main.webp'); /* 확장자 확인하세요 (.jpg or .webp) */
+    background-repeat: no-repeat;
+    background-size: 100% 100%; /* 박스 안에 꽉 차게 */
+    
+    /* 레이아웃 배치 */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     
-    padding: 20px 0;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    padding: 2vh 2vh; /* 상하좌우 안쪽 여백을 화면 높이 비례로 설정 */
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
 }
 
-/* === Shelf Structure === */
-.shelf {
+/* === 공통 클래스 (반응형 이미지/텍스트) === */
+.img-responsive {
+    display: block;
+    height: auto;
+    /* 그림자 효과 */
+    filter: drop-shadow(0 0.5vh 0.5vh rgba(0,0,0,0.8));
+}
+
+.text-responsive {
+    font-weight: bold;
+    text-shadow: 0 0.3vh 0.5vh rgba(0,0,0,0.9);
+    margin: 0;
+    white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+/* === 1층: 상단 (Current) === */
+.shelf-top {
+    flex: 3; /* 공간 비중 3 */
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
-}
-
-/* Shelf 1: Top */
-.shelf-top {
-    flex: 2; 
     flex-direction: column;
 }
 
 .level-box {
     text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Shelf 2: Middle (Modified for Single Line) */
+/* 메인 아이콘 크기: 부모 너비의 55% */
+.main-size {
+    width: 55%; 
+    margin-bottom: 1vh;
+    filter: drop-shadow(0 0 2vh rgba(255, 215, 0, 0.6));
+}
+
+/* === 2층: 중간 (Icons 4개) === */
 .shelf-middle {
-    flex: 2; 
-    flex-direction: row; /* Horizontal alignment */
-    /* [요청사항] 한 줄에 나오게 하기 위해 줄바꿈 방지 */
-    flex-wrap: nowrap; 
-    gap: 15px; /* 아이콘 사이 간격 */
-    
-    /* 아이콘들이 너무 커서 화면을 넘칠 경우 가로 스크롤 허용 (레이아웃 깨짐 방지) */
-    overflow-x: auto; 
-    /* 스크롤바 숨기기 (깔끔하게) */
-    scrollbar-width: none; 
-    -ms-overflow-style: none;
-    
-    padding: 0 10px;
-    align-items: flex-start; /* 위쪽 정렬 */
-}
-
-.shelf-middle::-webkit-scrollbar { 
-    display: none; 
+    flex: 3; /* 공간 비중 3 */
+    display: flex;
+    justify-content: space-between; /* 양 끝 정렬 */
+    align-items: center; /* 수직 중앙 정렬 */
+    width: 100%;
+    padding: 0 1vh;
 }
 
 .book-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* 아이콘 크기(210px)가 줄어들지 않도록 설정 */
-    flex-shrink: 0; 
+    /* 4개가 한 줄에 들어가야 하므로, 100% / 4 = 25% */
+    /* 여백 고려하여 개당 22%로 설정 */
+    width: 22%; 
 }
 
-/* Shelf 3: Bottom */
+/* 서브 아이콘은 부모(22%) 안에 꽉 차게 */
+.sub-size {
+    width: 100%;
+    margin-bottom: 0.5vh;
+}
+
+/* === 3층: 하단 (Challenge) === */
 .shelf-bottom {
-    flex: 2;
+    flex: 2; /* 공간 비중 2 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
     flex-direction: column;
 }
 
 .challenge-box {
     text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* === SIZING RULES (STRICTLY PRESERVED) === */
-
-/* 1. Main Icons (Current & Challenge) -> 300px */
-.icon-large {
-    width: 300px;
-    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
+/* 챌린지 아이콘 크기: 부모 너비의 45% */
+.challenge-size {
+    width: 45%;
+    margin-bottom: 1vh;
 }
 
-/* 2
+.challenge-color {
+    color: #ffcc00;
+}
+
+/* === 폰트 사이즈 (vh 단위 사용) === */
+/* vh를 쓰면 화면 높이에 따라 글자가 자동으로 커지고 작아짐 */
+
+/* 제목 폰트 (Current, Challenge) */
+.title-size {
+    font-size: 3vh; /* 화면 높이의 3% */
+    margin-top: 1vh;
+}
+
+/* 서브 폰트 (Lv.xx) */
+.sub-text-size {
+    font-size: 2vh; /* 화면 높이의 2% */
+}
+
+/* === 메뉴바 (Footer) === */
+.menu-bar {
+    flex: 1; /* 공간 비중 1 */
+    display: flex;
+    justify-content: space-between;
+    gap: 1vh;
+    margin-top: 1vh;
+    align-items: center;
+}
+
+.menu-bar button {
+    flex: 1;
+    height: 6vh; /* 버튼 높이도 화면 비율로 */
+    background: rgba(255, 255, 255, 0.2);
+    border: 0.2vh solid rgba(255, 255, 255, 0.4);
+    color: white;
+    font-weight: bold;
+    border-radius: 1.5vh;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    
+    /* 폰트 사이즈: 화면 높이의 1.8% */
+    font-size: 1.8vh; 
+    padding: 0;
+    
+    transition: background 0.3s;
+}
+
+.menu-bar button:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
