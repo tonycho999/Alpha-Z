@@ -2,16 +2,40 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Alpha-Z</title>
-    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/main-menu.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <div class="title-wrapper">
-        <h1 class="game-logo">ALPHA-Z</h1>
-        <p class="subtitle">The Archive of Legends</p>
-        
-        <a href="challenge/" class="start-btn">TOUCH TO START</a>
+    <div class="library-container">
+        <header class="user-status">
+            <span id="display-level">Lv. 1</span>
+            <span id="display-name">Guest</span>
+        </header>
+
+        <main class="menu-list">
+            <h1>Alpha-Z</h1>
+            <button onclick="location.href='main-game.html'" class="btn-wood">메인 게임 시작</button>
+            
+            <button onclick="location.href='challenge.html'" class="btn-gold">도전 Z (Challenge)</button>
+
+            <div class="sub-menu">
+                <a href="shop.html">상점</a>
+                <a href="leaderboard.html">리더보드</a>
+                <a href="hall-of-fame.html">명예의 전당</a>
+                <a href="profile.html">프로필</a>
+            </div>
+        </main>
     </div>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // PWA Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
 </body>
 </html>
