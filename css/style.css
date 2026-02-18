@@ -1,0 +1,53 @@
+:root {
+    --bg-color: #Fdfbf7; /* 크림색 종이 질감 */
+    --primary-color: #2c3e50; /* 진한 네이비 (텍스트) */
+    --accent-color: #26a69a; /* 현대적인 청록색 (버튼) */
+    --board-bg: #bbada0; /* 2048 기본 베이스와 유사한 우드톤 */
+    --tile-empty: #cdc1b4;
+    --font-main: 'Noto Sans KR', sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    font-family: var(--font-main);
+    color: var(--primary-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden; /* 세로 게임이므로 가로 스크롤 방지 */
+}
+
+/* 타일 디자인 (CSS로 처리) */
+.tile {
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+    background: #eee4da;
+    transition: transform 0.15s ease-in-out;
+}
+/* 알파벳별 색상 차등 */
+.tile[data-val="A"] { background: #eee4da; color: #776e65; }
+.tile[data-val="B"] { background: #ede0c8; color: #776e65; }
+.tile[data-val="C"] { background: #f2b179; }
+.tile[data-val="Z"] { background: #edc22e; box-shadow: 0 0 10px #edc22e; }
+
+/* 버튼 스타일 */
+.btn-primary {
+    background: var(--accent-color);
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
