@@ -1,123 +1,126 @@
 @charset "UTF-8";
 
-/* 폰트 (게임 분위기에 맞는 무료 폰트가 있다면 import 추천) */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap');
-
+/* 초기화 */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-body {
+body, html {
     width: 100%;
-    height: 100vh;
-    background-color: #111; /* PC 화면의 남는 부분은 어둡게 처리 */
-    display: flex;
-    justify-content: center; /* 게임 화면을 모니터 중앙으로 */
+    height: 100%;
     overflow: hidden;
-    font-family: 'Cinzel', serif; /* 판타지 느낌 폰트 적용 (없으면 기본 serif) */
+    /* 배경색 투명 요청 반영 */
+    background-color: transparent; 
+    /* 내용을 화면 정중앙에 배치 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Arial', sans-serif;
+    color: #fff;
 }
 
-/* === 모바일 게임 화면 컨테이너 === */
-.game-container {
-    width: 100%;
-    max-width: 500px; /* PC에서도 모바일 비율 유지 (게임 화면이 너무 퍼지는 것 방지) */
-    height: 100%;
-    position: relative;
+/* === 핵심 컨테이너 === */
+.game-wrapper {
+    /* 1. 세로 길이를 화면 전체(100%)에 맞춤 */
+    height: 100vh;
+    
+    /* 2. 가로 길이는 세로 길이에 맞춰 자동 비율 유지 (9:16 비율 가정) */
+    /* 만약 이미지가 조금 뚱뚱하거나 홀쭉하다면 이 숫자를 이미지 비율에 맞춰 조정하세요 (예: 9/19) */
+    aspect-ratio: 9 / 16; 
+    
+    /* 3. 배경 이미지 설정 */
+    background-image: url('img/bg_main.webp');
+    background-repeat: no-repeat;
+    /* 박스 크기에 딱 맞게 이미지를 채움 */
+    background-size: 100% 100%; 
+    
+    /* UI 정렬을 위한 Flex 설정 */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    padding-bottom: 20px;
     
-    /* [요청사항 반영] 배경: 세로는 꽉 차게(100vh), 가로는 비율대로 */
-    background-image: url('img/bg_main.webp');
-    background-repeat: no-repeat;
-    background-position: center top; 
-    background-size: auto 100vh; /* 높이를 화면에 맞춤. 너비는 자동 비율 */
-    
-    /* 배경 이미지가 어두운 도서관이므로, 텍스트 가독성을 위해 전체적으로 흰색 */
-    color: #fff;
-    box-shadow: 0 0 50px rgba(0,0,0,0.8); /* 컨테이너 좌우에 그림자 효과 */
+    /* 투명 배경 위에서 구분되도록 약간의 그림자 (선택사항) */
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-/* === 1. 중앙 (Current Level) === */
+/* 1. 중앙 영역 (Current Level) */
 .center-area {
     flex: 1; /* 남은 공간 차지 */
     display: flex;
     justify-content: center;
     align-items: center;
-    padding-top: 50px; /* 시각적으로 조금 더 위로 */
+    padding-top: 10%; /* 시각적 균형 */
 }
 
-.level-display {
+.level-box {
     text-align: center;
-    transform: scale(1);
-    transition: transform 0.3s;
+    cursor: pointer;
+    transition: transform 0.2s;
 }
 
-/* 인터랙션: 마우스 올리면 살짝 커짐 */
-.level-display:hover {
+.level-box:hover {
     transform: scale(1.05);
 }
 
 .main-icon {
-    width: 160px; /* 아이콘 크기 키움 (기존보다 큼) */
-    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6)); /* 금색 빛 효과 */
+    width: 35%; /* 부모(모바일화면) 기준 비율 */
+    min-width: 120px;
+    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
 }
 
-.text-glow {
+.glow-text {
     margin-top: 10px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255, 215, 0, 0.3);
-    letter-spacing: 2px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(255, 200, 0, 0.5);
 }
 
-/* === 2. 하단 영역 그룹 === */
+/* 2. 하단 영역 */
 .bottom-area {
-    padding-bottom: 20px;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 10%, transparent); /* 바닥을 어둡게 해서 버튼 잘 보이게 */
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+    /* 텍스트 가독성을 위해 하단부 그라데이션 */
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
 }
 
-/* 책 아이콘들 */
+/* Cleared / Locked 아이콘 */
 .status-row {
     display: flex;
-    justify-content: space-between;
-    padding: 0 50px;
-    margin-bottom: 10px;
+    justify-content: space-around;
+    padding: 0 10px;
 }
 
 .status-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    cursor: pointer;
-    transition: opacity 0.3s;
-}
-
-.status-item:hover {
-    opacity: 0.8;
+    width: 80px;
 }
 
 .status-item img {
-    width: 70px; /* 아이콘 크기 확대 */
+    width: 60px;
     margin-bottom: 5px;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
 }
 
 .status-item span {
     font-size: 0.9rem;
     font-weight: bold;
-    color: #ddd;
+    text-shadow: 1px 1px 2px #000;
 }
 
-/* 챌린지 Z */
+/* Challenge-Z */
 .challenge-row {
     text-align: center;
-    margin-bottom: 25px;
 }
 
-.challenge-icon {
-    width: 100px; /* 크기 확대 */
+.challenge-row img {
+    width: 100px;
     display: block;
     margin: 0 auto;
 }
@@ -125,34 +128,31 @@ body {
 .challenge-row h3 {
     margin: 5px 0 0;
     font-size: 1.1rem;
-    color: #ffcc00; /* 강조색 */
+    color: #ffcc00;
+    text-shadow: 1px 1px 3px #000;
 }
 
-/* 하단 메뉴 버튼 */
+/* 메뉴 버튼 */
 .menu-bar {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    padding: 10px 15px;
-    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
 }
 
-.btn {
-    background: rgba(255, 255, 255, 0.15); /* 유리 느낌 */
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
+.menu-bar button {
+    flex: 1;
     padding: 12px 0;
-    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
     font-weight: bold;
     border-radius: 8px;
     cursor: pointer;
     backdrop-filter: blur(4px);
-    transition: all 0.2s;
-    font-family: inherit;
+    font-size: 0.8rem;
+    transition: background 0.3s;
 }
 
-.btn:hover {
-    background: rgba(255, 215, 0, 0.2); /* 호버시 금색 틴트 */
-    border-color: rgba(255, 215, 0, 0.5);
-    transform: translateY(-2px);
+.menu-bar button:hover {
+    background: rgba(255, 255, 255, 0.4);
 }
