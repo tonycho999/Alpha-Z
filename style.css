@@ -19,22 +19,19 @@ body, html {
     color: #fff;
 }
 
-/* === 게임 화면 래퍼 (9:16 비율 고정) === */
+/* === 게임 화면 래퍼 === */
 .game-wrapper {
     height: 100vh;
     aspect-ratio: 9 / 16;
-    
     background-image: url('img/bg_main.webp');
     background-repeat: no-repeat;
     background-size: 100% 100%;
-    
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    
-    /* 전체적인 여백을 조금 더 주어 답답함 해소 */
     padding: 3vh 2vh; 
     box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    position: relative; /* 절대 위치 아이콘을 위해 기준점 설정 */
 }
 
 /* === 공통 클래스 === */
@@ -51,122 +48,39 @@ body, html {
     white-space: nowrap;
 }
 
-/* === 1층: 상단 (Current) === */
+/* === 1층: 상단 (Current & Icons) === */
 .shelf-top {
     flex: 3;
     display: flex;
-    justify-content: center;
+    justify-content: center; /* Current Level 중앙 정렬 */
     align-items: center;
     flex-direction: column;
+    position: relative; /* 내부 아이콘 절대 위치 기준 */
+    width: 100%;
+}
+
+/* [추가] 상점/프로필 아이콘 공통 스타일 */
+.icon-float {
+    position: absolute;
+    width: 15%; /* 적당한 아이콘 크기 */
+    filter: drop-shadow(0 0 1vh rgba(255, 255, 255, 0.4));
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.icon-float:hover {
+    transform: scale(1.1);
+}
+
+/* 위치 지정 */
+.icon-shop {
+    left: 2vh;       /* 왼쪽 여백 */
+    top: 25%;        /* Current Level보다 조금 위쪽 (높이 조정 가능) */
+}
+
+.icon-profile {
+    right: 2vh;      /* 오른쪽 여백 */
+    top: 25%;        /* 상점과 동일 선상 */
 }
 
 .level-box {
-    text-align: center;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* [조정] 메인 아이콘: 50% (너무 크지 않게 균형) */
-.main-size {
-    width: 50%; 
-    margin-bottom: 1.5vh; /* 텍스트와의 간격 확보 */
-    filter: drop-shadow(0 0 2vh rgba(255, 215, 0, 0.6));
-}
-
-/* === 2층: 중간 (Icons 4개) === */
-.shelf-middle {
-    flex: 2.5; /* 공간 비중 조절 */
-    display: flex;
-    justify-content: space-between;
-    align-items: center; 
-    width: 100%;
-    padding: 0 0.5vh; /* 좌우 여백 미세 조정 */
-}
-
-.book-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* [조정] 4개가 꽉 차게 보이도록 23% 설정 */
-    width: 23%; 
-}
-
-.sub-size {
-    width: 100%;
-    margin-bottom: 0.8vh;
-}
-
-/* === 3층: 하단 (Challenge) === */
-.shelf-bottom {
-    flex: 2.5; 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-}
-
-.challenge-box {
-    text-align: center;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* [조정] 챌린지 아이콘: 40% (메인보다는 작게) */
-.challenge-size {
-    width: 40%;
-    margin-bottom: 1vh;
-}
-
-.challenge-color {
-    color: #ffcc00;
-}
-
-/* === 폰트 사이즈 (vh 단위) === */
-/* 제목 폰트 */
-.title-size {
-    font-size: 3.2vh; /* 조금 더 키워서 시원하게 */
-}
-
-/* 서브 폰트 (Lv.xx) */
-.sub-text-size {
-    font-size: 2.2vh; /* 가독성 확보 */
-    color: #ddd;
-}
-
-/* === 메뉴바 (Footer) === */
-.menu-bar {
-    flex: 1;
-    display: flex;
-    justify-content: space-between;
-    gap: 1vh;
-    margin-top: 1vh;
-    align-items: flex-end; /* 바닥에 붙임 */
-}
-
-.menu-bar button {
-    flex: 1;
-    /* [조정] 버튼 높이 7vh (터치하기 좋게 큼직하게) */
-    height: 7vh; 
-    
-    background: rgba(255, 255, 255, 0.2);
-    border: 0.2vh solid rgba(255, 255, 255, 0.4);
-    color: white;
-    font-weight: bold;
-    border-radius: 1.5vh;
-    cursor: pointer;
-    backdrop-filter: blur(4px);
-    
-    /* [조정] 폰트 2vh (버튼 크기에 맞춰 확대) */
-    font-size: 2vh; 
-    padding: 0;
-    
-    transition: background 0.3s;
-}
-
-.menu-bar button:hover {
-    background: rgba(255, 255, 255, 0.4);
-}
