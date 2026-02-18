@@ -1,26 +1,29 @@
+/* 휴대폰 환경 강제 고정 */
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 body, html {
     margin: 0; padding: 0;
     width: 100%; height: 100%;
-    background: transparent;
-    overflow: hidden;
+    background-color: #000;
+    overflow: hidden; /* 스크롤 방지 */
     font-family: 'serif';
 }
 
 .app-container {
     position: relative;
-    width: 100%;
-    max-width: 500px;
+    width: 100vw;
     height: 100vh;
+    max-width: 500px; /* PC 접속 시 모바일 폭 유지 */
     margin: 0 auto;
     display: flex;
     flex-direction: column;
 }
 
+/* 배경 이미지: 꽉 차게 배치 */
 .main-background {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -29,18 +32,18 @@ body, html {
     z-index: -2;
 }
 
-/* 우측 하단 별표 가리기용 마스크 */
-.bottom-right-mask {
+/* 오른쪽 하단 별모양 가리기 */
+.star-cleaner {
     position: absolute;
     bottom: 0; right: 0;
     width: 120px; height: 120px;
-    background: radial-gradient(circle at bottom right, rgba(15, 10, 5, 1) 20%, transparent 70%);
+    background: radial-gradient(circle at bottom right, rgba(13, 8, 6, 1) 20%, transparent 75%);
     z-index: -1;
-    pointer-events: none;
 }
 
+/* 상단: 로고 위치 고려하여 30% 높이 확보 */
 .app-header {
-    height: 30%; 
+    height: 30vh;
     display: flex;
     align-items: flex-end;
     justify-content: center;
@@ -50,14 +53,15 @@ body, html {
 .user-info-box {
     text-align: center;
     border: 1px solid rgba(197, 160, 89, 0.6);
-    padding: 6px 22px;
+    padding: 6px 25px;
     border-radius: 20px;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.4);
 }
 
 .rank-label { display: block; font-size: 10px; color: #c5a059; letter-spacing: 2px; }
 .level-label { font-size: 14px; color: #fff; font-weight: bold; }
 
+/* 중앙: 세로 중앙 정렬 */
 .main-stage {
     flex: 1;
     display: flex;
@@ -66,7 +70,7 @@ body, html {
 }
 
 .img-current {
-    width: 150px;
+    width: 160px; /* 축소 요청 반영 */
     filter: drop-shadow(0 0 15px rgba(0,0,0,0.8));
 }
 
@@ -75,84 +79,71 @@ body, html {
     color: #fceabb;
     letter-spacing: 4px;
     font-size: 12px;
-    text-align: center;
 }
 
+/* 하단 섹션: 40% 높이 확보 */
 .app-footer {
-    height: 40%; 
+    height: 40vh;
     display: flex;
     flex-direction: column;
-    padding: 0 25px 30px;
+    padding: 0 30px 30px;
 }
 
 .archive-header {
     display: flex; align-items: center; gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .gold-line { flex: 1; height: 1px; background: rgba(197, 160, 89, 0.4); }
-.archive-header span { font-size: 11px; color: #c5a059; letter-spacing: 2px; }
+.archive-header span { font-size: 11px; color: #c5a059; }
 
 .shelf-scroll {
-    display: flex;
-    gap: 20px;
+    display: flex; gap: 20px;
     overflow-x: auto;
-    padding-bottom: 25px;
+    padding-bottom: 20px;
     scrollbar-width: none;
 }
 .shelf-scroll::-webkit-scrollbar { display: none; }
 
+/* 하단 책 크기 확대 (85px) */
 .book-node img { width: 85px; display: block; }
-.lv-text { display: block; text-align: center; color: #c5a059; font-size: 11px; margin-top: 8px; }
+.lv-text { display: block; text-align: center; color: #c5a059; font-size: 11px; margin-top: 5px; }
 
-.bottom-nav { 
+/* 네비게이션: 하단 정렬 */
+.bottom-nav {
     margin-top: auto;
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-/* Challenge Z 버튼: 배경을 투명하게 하고 이미지를 중앙 정렬 */
+/* Challenge 버튼 (이미지형) */
 .btn-challenge {
-    width: 100%;
-    background: transparent; /* 배경색 제거 */
-    border: none; /* 테두리 제거 */
+    background: transparent;
+    border: none;
     cursor: pointer;
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 0;
 }
 
 .btn-challenge img {
-    width: auto;
-    max-width: 180px; /* 이미지 크기에 맞게 조절하세요 */
-    height: auto;
+    width: 200px;
     filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
 }
 
-.btn-challenge:active {
-    transform: scale(0.95);
-}
-
-.quick-icons { 
-    display: flex; 
-    justify-content: space-between; 
+/* 아이콘 탭: 배경색 추가 및 크기 확대 */
+.quick-icons {
+    display: flex;
+    justify-content: space-between;
     gap: 10px;
 }
 
-.icon-tab { 
+.icon-tab {
     flex: 1;
     padding: 12px 0;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(197, 160, 89, 0.2);
     border-radius: 8px;
-    color: #fff; 
+    color: #fff;
     font-size: 24px;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.icon-tab:active {
-    background: rgba(197, 160, 89, 0.2);
 }
