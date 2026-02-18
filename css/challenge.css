@@ -1,0 +1,233 @@
+@charset "UTF-8";
+
+/* === 초기화 및 기본 설정 === */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none; /* 텍스트 드래그 방지 */
+    -webkit-tap-highlight-color: transparent; /* 모바일 터치 하이라이트 제거 */
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000; /* 배경 로딩 전 검은색 */
+    
+    /* 화면 정중앙 정렬 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    font-family: 'Arial', sans-serif;
+    color: #fff;
+}
+
+/* === 게임 화면 래퍼 (9:16 비율 고정) === */
+.game-wrapper {
+    /* 높이를 화면에 꽉 채움 */
+    height: 100vh;
+    /* 모바일 비율 고정 */
+    aspect-ratio: 9 / 16;
+    
+    /* 배경 이미지 (CSS 파일 기준 상위 폴더로 이동 후 img 접근) */
+    background-image: url('../img/bg_main.webp'); 
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    
+    /* 전체 레이아웃 배치 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    
+    /* 내부 여백 (상, 좌우, 하) */
+    padding: 1vh 2vh 3vh 2vh; 
+    
+    /* 화면 밖 구분 그림자 */
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    position: relative;
+}
+
+/* 배경의 로고가 가려지지 않도록 상단 빈 공간 확보 */
+.logo-spacer {
+    height: 15%; 
+    width: 100%;
+}
+
+/* === 공통 유틸리티 클래스 === */
+.img-responsive {
+    display: block;
+    height: auto;
+    /* 아이콘 그림자 */
+    filter: drop-shadow(0 0.5vh 0.5vh rgba(0,0,0,0.8));
+}
+
+.text-responsive {
+    font-weight: bold;
+    text-shadow: 0 0.3vh 0.5vh rgba(0,0,0,0.9);
+    margin: 0;
+    white-space: nowrap; /* 줄바꿈 방지 */
+    text-align: center;
+}
+
+/* === 1층: 상단 (상점/프로필 + Current Level) === */
+.shelf-top {
+    flex: 3; /* 공간 비중 */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+}
+
+/* 상점, 프로필 아이콘 줄 */
+.top-icons-row {
+    display: flex;
+    justify-content: space-between; /* 양 끝 배분 */
+    width: 100%;
+    padding: 0 1vh; 
+    margin-bottom: 2vh;
+}
+
+.icon-btn {
+    width: 13%; /* 아이콘 크기 */
+    height: auto;
+    cursor: pointer;
+    transition: transform 0.2s;
+    filter: drop-shadow(0 0 1vh rgba(255,255,255,0.3));
+}
+
+.icon-btn:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 1.5vh rgba(255,215,0,0.8));
+}
+
+/* Current Level 컨테이너 (클릭 가능하도록 a 태그 스타일링) */
+.main-level-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    text-decoration: none; /* 링크 밑줄 제거 */
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.main-level-container:hover {
+    transform: scale(1.05);
+}
+
+/* Current 이미지 크기 */
+.main-size {
+    width: 35%; 
+    filter: drop-shadow(0 0 2vh rgba(255, 215, 0, 0.6)); /* 금색 후광 */
+    margin-bottom: 1vh;
+}
+
+.main-text-size {
+    font-size: 2.5vh; 
+    color: #ffd700; /* 금색 텍스트 */
+    letter-spacing: 0.2vh;
+}
+
+/* === 2층: 중간 (아이콘 4개 한 줄) === */
+.shelf-middle {
+    flex: 2.5; 
+    display: flex;
+    flex-direction: row; 
+    justify-content: space-between; /* 균등 배분 */
+    align-items: flex-start; 
+    width: 100%;
+    padding: 0 1vh;
+    
+    /* [중요] 절대 줄바꿈 하지 않음 */
+    flex-wrap: nowrap; 
+}
+
+.book-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* 4개가 한 줄에 들어가도록 너비 설정 (여백 포함) */
+    width: 22%; 
+}
+
+.sub-size {
+    width: 100%; 
+    margin-bottom: 0.5vh;
+    filter: drop-shadow(0 0.5vh 0.5vh rgba(0,0,0,0.8));
+}
+
+.sub-text-size {
+    font-size: 1.8vh;
+    color: #ccc;
+}
+
+/* === 3층: 하단 (Challenge-Z) === */
+.shelf-bottom {
+    flex: 2.5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.challenge-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* Challenge 이미지 크기 */
+.challenge-size {
+    width: 40%; 
+    margin-bottom: 1vh;
+    filter: drop-shadow(0 0 2vh rgba(255, 100, 0, 0.5)); /* 붉은/오렌지 후광 */
+}
+
+.challenge-text-size {
+    font-size: 3vh;
+}
+
+.challenge-color {
+    color: #ffaa00; /* 오렌지 골드 */
+    text-shadow: 0 0 1vh rgba(255, 0, 0, 0.5);
+}
+
+/* === 메뉴바 (하단 버튼 2개) === */
+.menu-bar {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    gap: 2vh; 
+    align-items: flex-end; 
+    padding-bottom: 1vh;
+}
+
+.menu-bar button {
+    width: 40%; 
+    height: 7vh; 
+    
+    /* 유리 질감 효과 */
+    background: rgba(255, 255, 255, 0.15);
+    border: 0.2vh solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-weight: bold;
+    border-radius: 1.5vh;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    
+    font-size: 2.2vh;
+    padding: 0;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.menu-bar button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: #ffd700;
+    color: #ffd700;
+    transform: translateY(-0.3vh);
+}
