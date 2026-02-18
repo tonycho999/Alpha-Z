@@ -2,37 +2,35 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alpha-Z Lobby</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="fixed-background">
-        <img src="img/bg_main.webp" alt="background" class="bg-img">
+    <div class="background-fixed">
+        <img src="img/bg_main.webp" alt="">
     </div>
 
-    <div class="app-ui">
-        <header class="logo-spacer"></header>
-
-        <main class="scroll-area">
+    <div class="app-wrapper">
+        <main class="content">
             <div class="level-list">
-                <div class="level"><img src="img/cleared.png"></div>
-                <div class="level"><img src="img/current.png"></div>
-                <div class="level"><img src="img/locked.png"></div>
+                <img src="img/cleared.png" class="level-icon">
+                <img src="img/current.png" class="level-icon">
+                <img src="img/locked.png" class="level-icon">
                 
-                <div class="challenge-group">
+                <div class="challenge-area">
                     <img src="img/challenge.png">
                     <p>Challenge-Z</p>
                 </div>
             </div>
         </main>
 
-        <footer class="bottom-nav">
-            <div class="nav-item"><span>👤</span><p>프로필</p></div>
-            <div class="nav-item"><span>🛒</span><p>상점</p></div>
-            <div class="nav-item"><span>🏆</span><p>리더보드</p></div>
-        </footer>
+        <nav class="bottom-bar">
+            <div class="btn">프로필</div>
+            <div class="btn">상점</div>
+            <div class="btn">리더보드</div>
+        </nav>
     </div>
 
 </body>
