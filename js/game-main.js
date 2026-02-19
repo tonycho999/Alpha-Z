@@ -15,7 +15,7 @@ window.onload = () => {
     for(let i=0; i<state.gridSize*state.gridSize; i++) {
         const div = document.createElement('div');
         div.className = 'cell'; div.id = `cell-${i}`;
-        div.onclick = () => handleCellClick(i); // 망치용 클릭 이벤트
+        div.onclick = () => handleCellClick(i);
         container.appendChild(div);
     }
 
@@ -35,6 +35,7 @@ window.onload = () => {
 
     document.getElementById('btn-just-save').onclick = () => {
         Core.saveScoreToDB(localStorage.getItem('alpha_username'));
+        document.getElementById('area-exist-user').style.display='none';
         document.getElementById('save-msg').style.display='block';
     };
 };
@@ -53,9 +54,13 @@ function handleCellClick(idx) {
 function nextTurn() {
     state.currentBlock = state.nextBlock;
     state.nextBlock = Core.createRandomBlock();
-    UI.renderSource(state.currentBlock, 'source-block');
-    UI.renderSource(state.nextBlock, 'next-preview');
-    UI.setupDrag(handleDropAttempt);
+    
+    // 리사이즈 될때마다 소스 블록 크기를 갱신하기 위한 약간의 딜레이
+    setTimeout(() => {
+        UI.renderSource(state.currentBlock, 'source-block');
+        UI.renderSource(state.nextBlock, 'next-preview');
+        UI.setupDrag(handleDropAttempt);
+    }, 50);
 
     if(!Core.canPlaceAnywhere(state.currentBlock)) {
         document.getElementById('popup-over').style.display = 'flex';
@@ -101,26 +106,47 @@ async function placeBlock(indices) {
     UI.renderGrid();
     await wait(300);
 
-    let changes = true;
-    while(changes) {
-        changes = false;
+    let checkAgain = true;
+    while(checkAgain) {
+        checkAgain = false;
+        
+        // 1. 합치기
+        let merged = false;
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
             if(state.grid[i]) {
                 const cluster = Core.getCluster(i);
                 if(cluster.length >= 2) {
                     await processMerge(i, cluster);
-                    changes = true; break;
+                    merged = true; break; 
                 }
             }
         }
+        if(merged) { checkAgain = true; continue; }
+
+        // 2. [신규 기능] 자동 업그레이드 (더 이상 나오지 않는 알파벳 교체)
+        const minIdx = Core.getMinIdx();
+        let upgraded = false;
+        for(let i=0; i<state.gridSize*state.gridSize; i++) {
+            if(state.grid[i] && ALPHABET.indexOf(state.grid[i]) < minIdx) {
+                state.grid[i] = ALPHABET[minIdx];
+                upgraded = true;
+                const cell = document.getElementById(`cell-${i}`);
+                if(cell) { cell.classList.add('merging-source'); setTimeout(()=>cell.classList.remove('merging-source'),300); }
+            }
+        }
+        if(upgraded) {
+            UI.renderGrid(); await wait(300);
+            checkAgain = true; // 업그레이드 후 합쳐질 게 있는지 다시 스캔
+        }
     }
+    
     state.isLocked = false;
     nextTurn();
 }
 
 async function processMerge(idx, cluster) {
     const char = state.grid[idx];
-    const nextIdx = ALPHABET.indexOf(char) + (cluster.length - 1);
+    const nextIdx = ALPHABET.indexOf(char) + (cluster.length - 1); // AAA=C, AAAA=D 적용
     const next = ALPHABET[nextIdx] || char;
 
     const centerEl = document.getElementById(`cell-${idx}`);
@@ -136,7 +162,6 @@ async function processMerge(idx, cluster) {
     state.grid[idx] = next;
     cluster.forEach(n => { if(n !== idx) state.grid[n] = null; });
     
-    // 알파벳 O 이상일 때 스타 획득
     if(nextIdx >= ALPHABET.indexOf('O')) {
         state.stars++; localStorage.setItem('alpha_stars', state.stars);
     }
@@ -145,17 +170,23 @@ async function processMerge(idx, cluster) {
     UI.renderGrid(); UI.updateUI(); await wait(200);
 }
 
-// 아이템 전역 등록
 window.gameLogic = {
     useHammer: () => {
         if(state.stars < 2) return alert('스타가 부족합니다 (2성 필요)');
-        state.isHammerMode = true;
-        document.getElementById('grid-container').classList.add('hammer-mode');
+        state.isHammerMode = !state.isHammerMode;
+        document.getElementById('grid-container').classList.toggle('hammer-mode');
     },
     useRefresh: () => {
         if(state.stars < 1) return alert('스타가 부족합니다 (1성 필요)');
         state.stars -= 1; localStorage.setItem('alpha_stars', state.stars);
         UI.updateUI(); nextTurn();
+    },
+    revive: () => {
+        if(state.stars < 5) return alert('스타 부족');
+        state.stars -= 5; localStorage.setItem('alpha_stars', state.stars);
+        for(let i=0; i<state.gridSize; i++) state.grid[i] = null; // 최상단 1줄 삭제
+        document.getElementById('popup-over').style.display = 'none';
+        UI.renderGrid(); UI.updateUI(); nextTurn();
     }
 };
 
