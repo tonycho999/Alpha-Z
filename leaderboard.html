@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="main-bg">
-    <div class="screen">
-        <h1 style="color:var(--accent); margin-top:30px; margin-bottom:20px;">HALL OF FAME</h1>
+    <div class="screen" style="justify-content: flex-start; padding-top: 40px;">
+        <h1 style="color:var(--accent); margin-top:0; margin-bottom:20px;">HALL OF FAME</h1>
         
         <div class="rank-tabs">
             <button class="tab-btn active" onclick="loadRank('EASY')">EASY</button>
@@ -18,10 +18,12 @@
         </div>
 
         <div id="loading-text" style="color:#888; padding:20px;">Loading...</div>
-        <div id="rank-list" class="leaderboard-list"></div>
+        
+        <div id="rank-list" class="leaderboard-list" style="margin-bottom: 20px;"></div>
 
-        <button class="btn" style="margin-top:20px; width:100%; max-width:400px; background:#444;" onclick="location.href='index.html'">🏠 BACK TO MENU</button>
+        <button class="btn" style="width:100%; max-width:400px; background:#444;" onclick="location.href='index.html'">🏠 BACK TO MENU</button>
     </div>
+    
     <script type="module" src="js/leaderboard.js"></script>
 </body>
 </html>
