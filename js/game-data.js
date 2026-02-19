@@ -12,8 +12,19 @@ export const state = {
     grid: [], gridSize: 7,
     stars: 0, best: 'A', diff: 'NORMAL',
     currentBlock: null, nextBlock: null,
-    isLocked: false, isHammerMode: false
+    isLocked: false, isHammerMode: false, isAdmin: false, hasReachedO: false
 };
+
+export function checkAdmin(username) {
+    const admins = ['tony', 'min', 'sara', 'hyun'];
+    if(username && admins.includes(username.toLowerCase())) {
+        localStorage.setItem('alpha_admin', 'true');
+        localStorage.setItem('alpha_stars', '10000');
+        state.stars = 10000; state.isAdmin = true;
+        return true;
+    }
+    return false;
+}
 
 export function initGridSize(diff) {
     if (diff === 'EASY') state.gridSize = 9;
@@ -22,4 +33,5 @@ export function initGridSize(diff) {
     
     state.grid = Array(state.gridSize * state.gridSize).fill(null);
     document.documentElement.style.setProperty('--grid-size', state.gridSize);
+    state.isAdmin = localStorage.getItem('alpha_admin') === 'true';
 }
