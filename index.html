@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <meta name="google-site-verification" content="jpV9ytZrmyOE3ncVmwd9y67IjH7vbZ_W5f1p-c7R940" />
 
-    <title>Alpha-Z | Addictive Alphabet Merge Puzzle Game</title>
+    <title>Alpha-Z | Addictive Alphabet Merge Puzzle</title>
     <meta name="description" content="Merge alphabets, save space, and reach Z! Play Alpha-Z, a highly addictive free puzzle game online.">
     <meta name="keywords" content="Alpha-Z, puzzle game, alphabet merge, 2048 alternative, brain game, free online game">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://alpha-z.pages.dev">
     
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
@@ -41,6 +39,33 @@
             <script src="https://www.highperformanceformat.com/8806e983d7b1aa394a76278f45c55249/invoke.js"></script>
         </div>
     </div>
+
+    <div id="popup-tute" class="popup-overlay">
+        <div class="popup-box">
+            <div id="desktop-qr-sec" style="display: none; text-align: center; margin-bottom: 15px;">
+                <h3 style="color: #4CAF50; margin-top: 0; margin-bottom: 10px;">📱 Play on Mobile!</h3>
+                <img src="alpha-z_QR.png" alt="QR Code" style="width: 140px; height: 140px; border-radius: 10px; border: 3px solid white; margin-bottom: 10px;">
+                <p style="font-size: 0.9rem; color: #ddd; line-height: 1.4; margin:0;">Scan the QR code with your phone.<br>This game is best played on mobile!</p>
+                <hr style="border:0; border-top:1px dashed #555; margin: 15px 0;">
+            </div>
+
+            <h2 style="color:var(--accent); margin-top:0;">HOW TO PLAY</h2>
+            <div style="font-size:0.95rem; line-height:1.6; color:#ccc; text-align:left;">
+                <p>1. Drag blocks to the empty spaces.</p>
+                <p>2. Connect same alphabets to merge.</p>
+                <p style="color:#81c784; text-align:center; font-weight:bold;">A + A = B</p>
+                <p style="color:#64b5f6; text-align:center; font-weight:bold;">A + A + A = C (Jump!)</p>
+                <hr style="border:0; border-top:1px solid #444; margin:10px 0;">
+                <p style="text-align:center;">Reach <strong>'O'</strong> to earn <strong>⭐ Stars</strong>!</p>
+            </div>
+            
+            <div id="nomore-container" style="margin-top:15px; font-size:0.85rem; color:#aaa;">
+                <input type="checkbox" id="chk-nomore"> <label for="chk-nomore">Don't show again</label>
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-top: 15px;" onclick="closeTute()">GAME START</button>
+        </div>
+    </div>
+
     <script type="module" src="./js/index.js"></script>
 </body>
 </html>
