@@ -1,200 +1,62 @@
 :root {
-    --bg-color: #121212;
-    --panel-bg: #1e1e1e;
-    --cell-size: 60px;
-    --gap: 6px;
-    --accent: #f1c40f;
-    --text-color: #ffffff;
+    --bg-color: #121212; --panel-bg: #1e1e1e;
+    --gap: 4px; --accent: #f1c40f; --text-color: #ffffff;
+    --grid-size: 6; /* JS에서 6 또는 7로 자동 변경 */
 }
-
 * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
-
 body {
-    margin: 0; padding: 0;
-    background-color: var(--bg-color); color: var(--text-color);
-    font-family: 'Segoe UI', sans-serif;
-    display: flex; flex-direction: column; align-items: center;
-    height: 100vh; overflow: hidden;
+    margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color);
+    font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center;
+    height: 100vh; overflow-x: hidden; overflow-y: auto;
 }
-
-/* --- Common UI --- */
-.screen { display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%; position: relative; }
+.screen { display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 100%; padding: 20px 10px; }
 .btn {
-    width: 220px; padding: 15px; margin: 10px;
-    background: #333; color: white; border: 2px solid #555;
-    border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer;
-    transition: transform 0.1s;
+    padding: 12px; margin: 5px; background: #333; color: white; border: 2px solid #555;
+    border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center;
 }
 .btn:active { transform: scale(0.95); }
 .btn-primary { background: var(--accent); color: #000; border: none; }
 
-/* --- Index Page --- */
-.title { font-size: 3rem; color: var(--accent); margin-top: 10vh; margin-bottom: 30px; text-align:center; text-shadow: 0 0 20px rgba(241,196,15,0.3); }
+.header { width: 100%; max-width: 400px; display: flex; justify-content: space-between; padding: 10px; background: #222; border-radius: 12px; margin-bottom: 15px; }
+.stat span { display: block; font-size: 10px; color: #888; text-align: center; }
+.stat strong { display: block; font-size: 18px; color: var(--accent); text-align: center; }
 
-/* --- Game Page --- */
-.header {
-    width: 340px; display: flex; justify-content: space-between;
-    padding: 12px; background: #222; border-radius: 12px; margin-top: 20px; margin-bottom: 15px;
-}
-.stat span { display: block; font-size: 11px; color: #888; text-align: center; }
-.stat strong { display: block; font-size: 20px; color: var(--accent); text-align: center; }
-
-/* Next & Current Zones */
-.game-area { display: flex; gap: 10px; margin-bottom: 15px; align-items: flex-end; }
-
-.next-zone {
-    width: 80px; height: 100px;
-    background: #222; border: 1px solid #444; border-radius: 12px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.next-label { font-size: 10px; color: #666; margin-bottom: 5px; }
-
-.drag-zone {
-    width: 250px; height: 140px;
-    background: var(--panel-bg); border: 2px dashed #444; border-radius: 12px;
-    display: flex; justify-content: center; align-items: center;
-}
-
-/* Grid */
+/* 동적 그리드 시스템 (크기 자동 맞춤) */
 .grid-container {
-    width: calc(var(--cell-size) * 5 + var(--gap) * 4 + 20px);
-    height: calc(var(--cell-size) * 5 + var(--gap) * 4 + 20px);
-    background: #222; border-radius: 12px;
+    width: 100%; max-width: 380px; aspect-ratio: 1/1;
+    background: #222; border-radius: 12px; padding: 6px;
     display: grid; 
-    grid-template-columns: repeat(5, var(--cell-size));
-    grid-template-rows: repeat(5, var(--cell-size));
-    gap: var(--gap);
-    padding: 10px;
+    grid-template-columns: repeat(var(--grid-size), 1fr);
+    grid-template-rows: repeat(var(--grid-size), 1fr);
+    gap: var(--gap); margin-bottom: 15px; position: relative;
 }
-
 .cell {
-    width: var(--cell-size); height: var(--cell-size);
-    background: #2d2d2d; border-radius: 8px;
+    width: 100%; height: 100%; background: #2d2d2d; border-radius: 6px;
     display: flex; justify-content: center; align-items: center;
-    font-size: 1.5rem; font-weight: bold; z-index: 1;
+    font-size: 1.2rem; font-weight: bold; z-index: 1;
 }
 
-/* Objects */
-.shape-container { display: grid; gap: var(--gap); touch-action: none; }
+.game-area { display: flex; gap: 10px; margin-bottom: 15px; width: 100%; max-width: 380px; height: 100px; }
+.next-zone { flex: 1; background: #222; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.drag-zone { flex: 3; background: var(--panel-bg); border: 2px dashed #444; border-radius: 10px; display: flex; justify-content: center; align-items: center; }
 
-#ghost {
-    position: fixed; pointer-events: none; z-index: 9999;
-    display: none; gap: var(--gap); opacity: 0.8;
-}
-.ghost-cell {
-    width: var(--cell-size); height: var(--cell-size);
-    border-radius: 8px;
-    display: flex; justify-content: center; align-items: center;
-    font-size: 1.5rem; font-weight: bold;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-}
+/* 드래그 블록의 고정 픽셀 크기 (그리드 칸 크기와 유사하게 맞춤) */
+.shape-container { display: grid; gap: var(--gap); }
+.draggable-cell { width: 40px; height: 40px; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+#ghost { position: fixed; pointer-events: none; z-index: 9999; display: none; gap: var(--gap); opacity: 0.8; transform: translate(-50%, -50%); }
 
 .highlight-valid { background: rgba(46, 204, 113, 0.4) !important; box-shadow: 0 0 10px #2ecc71; }
+.hammer-mode { border: 2px solid #e74c3c !important; animation: pulse 1s infinite; }
 
-/* Animations */
-.merging-source {
-    transition: transform 0.4s ease-in, opacity 0.4s ease-in;
-    z-index: 10; border: 2px solid white;
-}
+.merging-source { transition: transform 0.3s ease, opacity 0.3s ease; z-index: 10; border: 2px solid white; }
 .pop-effect { animation: pop 0.3s ease-out; }
 @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
-/* Block Colors */
-.b-A { background: #eee; color: #222; }
-.b-B { background: #81c784; color: #1b5e20; }
-.b-C { background: #64b5f6; color: #0d47a1; }
-.b-D { background: #ba68c8; color: #4a148c; }
-.b-E { background: #ff8a65; color: #bf360c; }
-.b-F { background: #fff176; color: #f57f17; }
-.b-G { background: #e0e0e0; color: #000; border: 2px solid gold; }
+/* 블록 컬러 */
+.b-A { background: #eee; color: #222; } .b-B { background: #81c784; color: #1b5e20; } .b-C { background: #64b5f6; color: #0d47a1; }
+.b-D { background: #ba68c8; color: white; } .b-E { background: #ff8a65; color: white; } .b-F { background: #fff176; color: #d84315; }
+.b-G { background: #4dd0e1; color: white; } .b-H { background: #f06292; color: white; }
 .b-Z { background: linear-gradient(45deg, gold, orange); animation: glow 1s infinite alternate; }
-@keyframes glow { from { box-shadow: 0 0 5px gold; } to { box-shadow: 0 0 20px gold; } }
 
-/* Popups */
-.popup-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-    display: none; justify-content: center; align-items: center; z-index: 10000;
-}
-.popup-box {
-    background: #333; padding: 30px; border-radius: 15px; text-align: center; width: 320px; position: relative;
-}
-.tute-graphic { margin: 20px 0; font-size: 0.9rem; color: #ccc; line-height: 1.6; }
-
-
-/* --- Leaderboard Styles --- */
-.leaderboard-list {
-    width: 100%;
-    max-height: 300px;
-    overflow-y: auto;
-    margin-top: 15px;
-    text-align: left;
-    border: 1px solid #444;
-    border-radius: 8px;
-    background: #1a1a1a;
-}
-.rank-item {
-    display: flex; justify-content: space-between;
-    padding: 10px; border-bottom: 1px solid #333;
-    font-size: 0.9rem;
-}
-.rank-item:last-child { border-bottom: none; }
-.rank-item span:nth-child(1) { color: #888; width: 30px; } /* 순위 */
-.rank-item span:nth-child(2) { color: white; flex-grow: 1; } /* 이름 */
-.rank-item span:nth-child(3) { color: var(--accent); font-weight: bold; } /* 점수 */
-
-/* Input Field for Game Over */
-.input-name {
-    width: 100%; padding: 12px; margin: 10px 0;
-    background: #222; border: 2px solid #555; color: white;
-    border-radius: 8px; font-size: 1rem; text-align: center;
-}
-.input-name:focus { outline: none; border-color: var(--accent); }
-
-/* ... 기존 변수 및 설정 유지 ... */
-:root {
-    --bg-color: #121212;
-    --panel-bg: #1e1e1e;
-    --cell-size: 60px;
-    --gap: 6px;
-    --accent: #f1c40f;
-    --text-color: #ffffff;
-}
-/* ... (기존 공통 스타일 생략) ... */
-
-/* --- Shop Page Styles --- */
-.shop-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 360px;
-}
-.shop-item {
-    background: #2d2d2d; border: 2px solid #444; border-radius: 12px;
-    padding: 20px; display: flex; flex-direction: column; align-items: center;
-    transition: transform 0.1s;
-}
-.shop-item:active { transform: scale(0.95); border-color: var(--accent); }
-.shop-icon { font-size: 2rem; margin-bottom: 10px; }
-.shop-price { color: var(--accent); font-weight: bold; margin-top: 5px; }
-.shop-desc { font-size: 0.8rem; color: #aaa; text-align: center; margin-top: 5px; }
-
-/* User Profile in Game Over */
-.user-badge {
-    background: #222; border: 1px solid var(--accent); color: var(--accent);
-    padding: 8px 15px; border-radius: 20px; font-weight: bold; margin-bottom: 15px; display: inline-block;
-}
-.warning-text { color: #e74c3c; font-size: 0.8rem; margin-top: 5px; display: none; }
-
-/* Leaderboard Styles */
-.leaderboard-container {
-    width: 100%; max-width: 360px; height: 60vh;
-    background: #1e1e1e; border: 1px solid #444; border-radius: 12px;
-    overflow-y: auto; padding: 10px; margin-bottom: 20px;
-}
-.rank-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 10px; border-bottom: 1px solid #333; font-size: 0.95rem;
-}
-.rank-num { width: 30px; font-weight: bold; }
-.rank-name { flex-grow: 1; color: white; text-align: left; padding-left: 10px; }
-.rank-score { color: var(--accent); font-weight: bold; width: 40px; text-align: right; }
-
-/* Existing Styles... */
-/* (기존 style.css의 내용을 그대로 사용하거나, 위에 작성한 전체 코드로 교체) */
+.popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 10000; }
+.popup-box { background: #333; padding: 25px; border-radius: 15px; text-align: center; width: 320px; }
