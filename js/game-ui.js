@@ -43,28 +43,25 @@ export function setupDrag(onDrop) {
     const ghost = document.getElementById('ghost');
     if(!source) return;
 
-    let isDragging = false;
-
     const start = (e) => {
         if(state.isLocked || state.isHammerMode) return;
-        e.preventDefault(); isDragging = true;
+        e.preventDefault();
         ghost.innerHTML = source.innerHTML; ghost.style.display = 'grid';
         ghost.style.gridTemplateColumns = source.style.gridTemplateColumns;
-        ghost.style.gridTemplateRows = source.style.gridTemplateRows;
         moveGhost(e); source.style.opacity = '0';
     };
 
     const move = (e) => {
-        if(!isDragging) return;
+        if (source.style.opacity !== '0') return;
         moveGhost(e);
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
-        const idx = getMathGridIndex(e); // 오프셋 좌표 반영된 함수 호출
+        const idx = getMathGridIndex(e);
         if(idx !== -1) onDrop(idx, true);
     };
 
     const end = (e) => {
-        if(!isDragging) return;
-        isDragging = false; ghost.style.display = 'none'; source.style.opacity = '1';
+        if (source.style.opacity !== '0') return;
+        ghost.style.display = 'none'; source.style.opacity = '1';
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
         const idx = getMathGridIndex(e);
         if(idx !== -1) onDrop(idx, false);
@@ -78,8 +75,10 @@ export function setupDrag(onDrop) {
 function moveGhost(e) {
     const ptr = e.touches ? e.touches[0] : e;
     const ghost = document.getElementById('ghost');
-    ghost.style.left = ptr.clientX + 'px';
-    ghost.style.top = ptr.clientY + 'px';
+    if(ghost) {
+        ghost.style.left = ptr.clientX + 'px';
+        ghost.style.top = ptr.clientY + 'px';
+    }
 }
 
 function getMathGridIndex(e) {
@@ -89,14 +88,13 @@ function getMathGridIndex(e) {
     
     const rect = grid.getBoundingClientRect();
     const x = ptr.clientX - rect.left;
-    // 손가락 위치에서 60px 위 지점을 기준으로 보드 좌표 계산
+    // 중요: 손가락보다 60px 위 지점을 감지 기준점으로 사용
     const y = (ptr.clientY - 60) - rect.top;
 
     if (x < -20 || y < -20 || x > rect.width + 20 || y > rect.height + 20) return -1;
 
     const cellSizeX = rect.width / state.gridSize;
     const cellSizeY = rect.height / state.gridSize;
-    
     const col = Math.floor(x / cellSizeX);
     const row = Math.floor(y / cellSizeY);
 
