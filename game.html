@@ -17,7 +17,7 @@
         <div class="game-area">
             <div class="next-zone">
                 <span style="font-size:10px; color:#888; margin-bottom:5px;">NEXT</span>
-                <div id="next-preview" class="shape-container" style="transform: scale(0.7);"></div>
+                <div id="next-preview" class="shape-container"></div>
             </div>
             <div class="drag-zone">
                 <div id="source-block" class="shape-container"></div>
@@ -26,41 +26,33 @@
 
         <div id="grid-container" class="grid-container"></div>
 
-        <div style="display:flex; width:100%; max-width:500px; gap:8px; margin-bottom:15px;">
-            <button class="btn" style="flex:1; font-size:0.95rem;" onclick="window.gameLogic.useRefresh()">🔄 Refresh (1★)</button>
-            <button class="btn" style="flex:1; font-size:0.95rem;" onclick="window.gameLogic.useHammer()">🔨 Hammer (2★)</button>
+        <div style="display:flex; width:100%; max-width:500px; gap:5px; margin-bottom:10px;">
+            <button class="btn" style="flex:1;" onclick="window.gameLogic.useRefresh()">🔄 Refresh(1★)</button>
+            <button class="btn" style="flex:1;" onclick="window.gameLogic.useHammer()">🔨 Hammer(2★)</button>
+            <button class="btn" style="flex:1; background:#444;" onclick="location.href='index.html'">🏠 Menu</button>
         </div>
 
-        <div style="display:flex; width:100%; max-width:500px; gap:8px;">
-            <button class="btn" style="flex:1; background:#444;" onclick="location.href='index.html'">🏠 Menu</button>
-            <button class="btn btn-primary" style="flex:1;" onclick="location.href='shop.html'">🛒 Shop</button>
+        <div style="display:flex; width:100%; max-width:500px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="location.href='shop.html'">🛒 SHOP</button>
         </div>
     </div>
 
     <div id="ghost" class="shape-container"></div>
-
     <div id="popup-over" class="popup-overlay">
         <div class="popup-box">
             <h2 style="color:#e74c3c;">GAME OVER</h2>
-            <p>Best Block: <strong id="over-best" style="color:var(--accent); font-size:1.5rem;">A</strong></p>
-            
+            <p>Best: <strong id="over-best" style="color:var(--accent); font-size:1.5rem;">A</strong></p>
             <div id="area-new-user" style="display:none;">
-                <input type="text" id="username-input" placeholder="Enter Username (Cannot be changed)" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:none;">
-                <button class="btn btn-primary" style="width:100%;" id="btn-check-save">Save Record</button>
+                <input type="text" id="username-input" placeholder="Enter Name" style="width:100%; padding:10px; margin-bottom:10px;">
+                <button class="btn btn-primary" style="width:100%;" id="btn-check-save">Save</button>
             </div>
-            
             <div id="area-exist-user" style="display:none;">
-                <div id="user-badge" style="color:var(--accent); font-weight:bold; margin-bottom:10px; font-size:1.2rem;">User</div>
-                <button class="btn btn-primary" style="width:100%;" id="btn-just-save">Save to Leaderboard</button>
+                <div id="user-badge" style="color:var(--accent); font-weight:bold; margin-bottom:10px;">User</div>
+                <button class="btn btn-primary" style="width:100%;" id="btn-just-save">Save Record</button>
             </div>
-            
-            <div id="save-msg" style="display:none; color:#2ecc71; margin:15px 0;">Saved Successfully!</div>
-            <hr style="border:0; border-top:1px solid #444; margin:20px 0;">
-            <button class="btn" style="width:100%; background:#444;" onclick="window.gameLogic.revive()">Use 5★ to clear 1 line</button>
-            <button class="btn" style="width:100%; background:#222;" onclick="location.href='index.html'">Main Menu</button>
+            <button class="btn" style="width:100%; margin-top:10px;" onclick="location.href='index.html'">Menu</button>
         </div>
     </div>
-
     <script type="module" src="js/game-main.js"></script>
 </body>
 </html>
