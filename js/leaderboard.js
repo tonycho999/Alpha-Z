@@ -1,21 +1,24 @@
-// leaderboard.js
-import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { db } from "./firebase-config.js"; // 공통 설정 불러오기
+import { collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { db } from "./firebase-config.js";
 
-async function loadLeaderboard() {
+window.loadRank = async function(difficulty) {
+    // 탭 스타일 업데이트
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
     const list = document.getElementById('rank-list');
     const loading = document.getElementById('loading-text');
     list.innerHTML = '';
+    loading.style.display = 'block';
 
     try {
-        // 점수(인덱스) 기준 내림차순 정렬, 상위 50개
-        const q = query(collection(db, "leaderboard"), orderBy("scoreIndex", "desc"), limit(50));
+        const q = query(collection(db, "leaderboard"), where("difficulty", "==", difficulty), orderBy("scoreIndex", "desc"), limit(50));
         const querySnapshot = await getDocs(q);
         
         loading.style.display = 'none';
         
         if(querySnapshot.empty) {
-            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">아직 기록이 없습니다.<br>첫 번째 주인공이 되어보세요!</div>';
+            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No records yet. Be the first!</div>';
             return;
         }
 
@@ -25,26 +28,26 @@ async function loadLeaderboard() {
             const item = document.createElement('div');
             item.className = 'rank-item';
             
-            // 1,2,3위 강조 스타일
             let rankBadge = rank;
             if(rank === 1) rankBadge = '🥇';
             else if(rank === 2) rankBadge = '🥈';
             else if(rank === 3) rankBadge = '🥉';
 
             item.innerHTML = `
-                <span class="rank-num">${rankBadge}</span>
-                <span class="rank-name">${data.username} <small style="color:#666; font-size:0.7rem;">(${data.difficulty})</small></span>
-                <span class="rank-score">${data.bestChar}</span>
+                <span style="width:30px; font-weight:bold;">${rankBadge}</span>
+                <span style="flex-grow:1; color:white;">${data.username}</span>
+                <span style="color:var(--accent); font-weight:bold;">${data.bestChar}</span>
             `;
             list.appendChild(item);
             rank++;
         });
-
     } catch (e) {
-        console.error("Error fetching leaderboard: ", e);
-        loading.innerHTML = '<span style="color:#e74c3c">데이터를 불러오지 못했습니다.</span>';
+        console.error(e);
+        loading.innerHTML = '<span style="color:#e74c3c">Failed to load data.</span>';
     }
 }
 
-// 페이지 로드 시 실행
-window.onload = loadLeaderboard;
+window.onload = () => {
+    // 최초에 EASY 자동 클릭
+    document.querySelector('.tab-btn').click();
+};
