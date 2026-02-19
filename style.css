@@ -73,7 +73,13 @@ body.main-bg { background: linear-gradient(135deg, #0a3a1f, #121212); }
 .b-Z { background: linear-gradient(45deg, #f1c40f, #e67e22); color: white; animation: glow 1s infinite alternate; }
 
 .popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; }
-.popup-box { background: #222; border: 1px solid #444; padding: 25px; border-radius: 15px; text-align: center; width: 100%; max-width: 350px; }
+.popup-box { 
+    background: #222; border: 1px solid #444; padding: 25px; 
+    border-radius: 15px; text-align: center; width: 100%; max-width: 350px; 
+    /* 아래 두 줄 추가: 팝업이 길어지면 스크롤 생성 */
+    max-height: 90vh; 
+    overflow-y: auto; 
+}
 
 /* Leaderboard */
 .rank-tabs { display: flex; width: 100%; max-width: 400px; gap: 5px; margin-bottom: 15px; }
