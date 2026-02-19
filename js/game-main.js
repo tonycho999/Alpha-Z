@@ -1,4 +1,4 @@
-import { state, ALPHABET, initGridSize, checkAdmin } from "./game-data.js";
+import { state, ALPHABET, initGridSize, checkAdmin, AdManager } from "./game-data.js";
 import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
 
@@ -47,7 +47,6 @@ window.onload = () => {
 function handleCellClick(idx) {
     if(state.isHammerMode && state.grid[idx]) {
         state.grid[idx] = null;
-        if(!state.isAdmin) { state.stars -= 2; localStorage.setItem('alpha_stars', state.stars); }
         state.isHammerMode = false;
         document.getElementById('grid-container').classList.remove('hammer-mode');
         UI.renderGrid(); UI.updateUI();
@@ -112,7 +111,6 @@ async function placeBlock(indices) {
     while(checkAgain) {
         checkAgain = false;
         
-        // 1. Merge Process
         let merged = false;
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
             if(state.grid[i]) {
@@ -125,7 +123,6 @@ async function placeBlock(indices) {
         }
         if(merged) { checkAgain = true; continue; }
 
-        // 2. Auto Upgrade low level blocks
         const minIdx = Core.getMinIdx();
         let upgraded = false;
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
@@ -169,15 +166,11 @@ async function processMerge(idx, cluster) {
         if(!state.isAdmin) {
             state.stars++; localStorage.setItem('alpha_stars', state.stars);
         }
-        
-        // Show Ad Popup once when reaching 'O'
         if(next === 'O' && !state.hasReachedO) {
             state.hasReachedO = true;
             if(!state.isAdmin) {
-                alert("🎉 Congratulations! You reached 'O'! \nA sponsor ad will open in a new tab to support us. (+1 Star)");
+                alert("🎉 Congratulations! You reached 'O'! \nA sponsor ad will open to support us. (+1 Star)");
                 window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
-            } else {
-                alert("🎉 Congratulations Admin! You reached 'O'!");
             }
         }
     }
@@ -185,28 +178,7 @@ async function processMerge(idx, cluster) {
     UI.renderGrid(); UI.updateUI(); await wait(200);
 }
 
-window.gameLogic = {
-    useHammer: () => {
-        if(state.stars < 2 && !state.isAdmin) return alert('Need 2 Stars!');
-        state.isHammerMode = !state.isHammerMode;
-        document.getElementById('grid-container').classList.toggle('hammer-mode');
-    },
-    useRefresh: () => {
-        if(state.stars < 1 && !state.isAdmin) return alert('Need 1 Star!');
-        if(!state.isAdmin) { state.stars -= 1; localStorage.setItem('alpha_stars', state.stars); }
-        UI.updateUI(); nextTurn();
-    },
-    revive: () => {
-        if(state.stars < 5 && !state.isAdmin) return alert('Need 5 Stars!');
-        if(!state.isAdmin) { state.stars -= 5; localStorage.setItem('alpha_stars', state.stars); }
-        for(let i=0; i<state.gridSize; i++) state.grid[i] = null; 
-        document.getElementById('popup-over').style.display = 'none';
-        UI.renderGrid(); UI.updateUI(); nextTurn();
-    }
-};
-
-function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
-
+// 아이템 전역 로직 (광고 통합)
 window.gameLogic = {
     useHammer: () => {
         const cost = 2;
@@ -232,6 +204,20 @@ window.gameLogic = {
         if(!state.isAdmin) { state.stars -= cost; localStorage.setItem('alpha_stars', state.stars); }
         UI.updateUI(); nextTurn();
     },
+    // ⭐ [신규 아이템] 최하위 블록 강제 진화
+    useUpgrade: () => {
+        const cost = 5;
+        if(state.stars < cost && !state.isAdmin) {
+            if (state.stars + 2 >= cost) { // 2별을 보상으로 받았을 때 5별 이상이 되면 사용 가능
+                triggerAdForItem(cost, () => { executeUpgrade(); });
+            } else {
+                alert(`Need ${cost} Stars! You only have ${state.stars}⭐.\nVisit the shop to earn more!`);
+            }
+            return;
+        }
+        if(!state.isAdmin) { state.stars -= cost; localStorage.setItem('alpha_stars', state.stars); UI.updateUI(); }
+        executeUpgrade();
+    },
     revive: () => {
         if(state.stars < 5 && !state.isAdmin) return alert('Need 5 Stars! Play more or visit shop.');
         if(!state.isAdmin) { state.stars -= 5; localStorage.setItem('alpha_stars', state.stars); }
@@ -255,17 +241,83 @@ function triggerAdForItem(cost, actionCallback) {
     }
 
     if(confirm("Not enough stars! Watch an ad to get 2 Stars and use item?")) {
-        // 즉시 창 열기 (브라우저 차단 방지)
         window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
         
-        // 광고 시청 처리 및 비용 차감
         setTimeout(() => {
             AdManager.recordAdWatch();
             state.stars += 2; // 광고 보상
             state.stars -= cost; // 아이템 가격 차감
             localStorage.setItem('alpha_stars', state.stars);
-            actionCallback(); // 아이템 효과 발동
+            actionCallback(); 
             alert("Thanks for watching! Item applied.");
         }, 2000);
     }
 }
+
+// 진화 아이템 발동 함수
+async function executeUpgrade() {
+    if (state.isLocked || state.isHammerMode) return;
+    state.isLocked = true;
+    
+    let lowestIdx = 999;
+    for (let i = 0; i < state.gridSize * state.gridSize; i++) {
+        if (state.grid[i]) {
+            const charIdx = ALPHABET.indexOf(state.grid[i]);
+            if (charIdx < lowestIdx) lowestIdx = charIdx;
+        }
+    }
+
+    if (lowestIdx === 999) { state.isLocked = false; return; }
+
+    const lowestChar = ALPHABET[lowestIdx];
+    const nextChar = ALPHABET[lowestIdx + 1] || lowestChar;
+
+    let upgraded = false;
+    for (let i = 0; i < state.gridSize * state.gridSize; i++) {
+        if (state.grid[i] === lowestChar) {
+            state.grid[i] = nextChar;
+            upgraded = true;
+            const cell = document.getElementById(`cell-${i}`);
+            if (cell) {
+                cell.classList.add('merging-source');
+                setTimeout(() => cell.classList.remove('merging-source'), 300);
+            }
+        }
+    }
+
+    if (upgraded) {
+        UI.renderGrid();
+        await wait(300);
+        
+        let checkAgain = true;
+        while(checkAgain) {
+            checkAgain = false;
+            let merged = false;
+            for(let i=0; i<state.gridSize*state.gridSize; i++) {
+                if(state.grid[i]) {
+                    const cluster = Core.getCluster(i);
+                    if(cluster.length >= 2) {
+                        await processMerge(i, cluster);
+                        merged = true; break; 
+                    }
+                }
+            }
+            if(merged) { checkAgain = true; continue; }
+
+            const minIdx = Core.getMinIdx();
+            let autoUpgraded = false;
+            for(let i=0; i<state.gridSize*state.gridSize; i++) {
+                if(state.grid[i] && ALPHABET.indexOf(state.grid[i]) < minIdx) {
+                    state.grid[i] = ALPHABET[minIdx];
+                    autoUpgraded = true;
+                    const cell = document.getElementById(`cell-${i}`);
+                    if(cell) { cell.classList.add('merging-source'); setTimeout(()=>cell.classList.remove('merging-source'),300); }
+                }
+            }
+            if(autoUpgraded) { UI.renderGrid(); await wait(300); checkAgain = true; }
+        }
+    }
+    state.isLocked = false;
+}
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
