@@ -1,31 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alpha-Z</title>
-    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
-    <div class="container">
-        <h1>Alpha-Z</h1>
-        <div id="user-level-display">Level: <span id="current-level">1</span></div>
-        
-        <nav class="main-menu">
-            <button class="btn-joseon" onclick="location.href='main-game.html'">Main Game (Word Quest)</button>
-            <button class="btn-joseon" onclick="location.href='challenge-z.html'">Challenge Z</button>
-            <button class="btn-joseon" onclick="location.href='shop.html'">Merchant</button>
-            <button class="btn-joseon" onclick="location.href='leaderboard.html'">Leaderboard</button>
-            <button class="btn-joseon" onclick="location.href='hall-of-fame.html'">Hall of Fame</button>
-            <button class="btn-joseon" onclick="location.href='profile.html'">My Profile</button>
-        </nav>
+    <div class="screen">
+        <h1 class="title">Alpha-Z</h1>
+        <button class="btn btn-primary" onclick="selectDiff('EASY')">EASY (초보)</button>
+        <button class="btn btn-primary" onclick="selectDiff('NORMAL')">NORMAL (중수)</button>
+        <button class="btn btn-primary" onclick="selectDiff('HARD')">HARD (고수)</button>
+        <button class="btn btn-primary" onclick="selectDiff('HELL')">HELL (극악)</button>
     </div>
-    
-    <script type="module" src="js/firebase-config.js"></script>
+
+    <div id="popup-tute" class="popup-overlay">
+        <div class="popup-box">
+            <h2 style="color:var(--accent);">HOW TO PLAY</h2>
+            <div class="tute-graphic">
+                <p>1. 막대를 드래그하여 빈 곳에 놓으세요.</p>
+                <p>2. 같은 알파벳이 연결되면 합쳐집니다.</p>
+                <p style="color:#81c784;">A + A = B</p>
+                <p style="color:#64b5f6;">A + A + A = C (보너스!)</p>
+                <p style="color:#ba68c8;">A + A + A + A = D (빅 보너스!)</p>
+            </div>
+            <button class="btn btn-primary" style="width:100%;" onclick="closeTute()">GAME START</button>
+            <div style="margin-top:15px; font-size:0.8rem;">
+                <input type="checkbox" id="chk-nomore"> <label for="chk-nomore">다시 보지 않기</label>
+            </div>
+        </div>
+    </div>
+
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
+        // 튜토리얼 로직
+        window.onload = function() {
+            const hide = localStorage.getItem('hideTutorial');
+            if(!hide) {
+                document.getElementById('popup-tute').style.display = 'flex';
+            }
+        };
+
+        function closeTute() {
+            if(document.getElementById('chk-nomore').checked) {
+                localStorage.setItem('hideTutorial', 'true');
+            }
+            document.getElementById('popup-tute').style.display = 'none';
+        }
+
+        function selectDiff(diff) {
+            // 난이도를 URL 파라미터로 넘김
+            window.location.href = `game.html?diff=${diff}`;
         }
     </script>
 </body>
