@@ -13,26 +13,31 @@
             My Stars: <strong id="shop-stars" style="color:var(--accent);">0</strong>
         </div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:400px;">
-        <button class="btn" id="shop-ad-btn" onclick="watchAdShop()" style="padding:20px; flex-direction:column; border:none;">
-            <div style="font-size:2rem;">📺</div>
-            <div id="ad-text-status">Watch Ad</div>
-            <div style="color:var(--accent);">+2 Stars</div> </button>
-            </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:400px;">
+            <button class="btn" id="shop-ad-btn" onclick="watchAdShop()" style="padding:20px; flex-direction:column; border:none;">
+                <div style="font-size:2rem;">📺</div>
+                <div id="ad-text-status">Watch Ad</div>
+                <div style="color:var(--accent);">+2 Stars</div>
+            </button>
             <div class="btn" style="padding:20px; flex-direction:column; cursor:default;">
                 <div style="font-size:2rem;">🔄</div>
                 <div>Refresh</div>
                 <div style="color:var(--accent);">1 Star</div>
             </div>
-            <div class="btn" style="padding:20px; flex-direction:column; cursor:default; grid-column: span 2;">
+            <div class="btn" style="padding:20px; flex-direction:column; cursor:default;">
                 <div style="font-size:2rem;">🔨</div>
-                <div>Hammer (Delete 1 Cell)</div>
+                <div>Hammer</div>
                 <div style="color:var(--accent);">2 Stars</div>
+            </div>
+            <div class="btn" style="padding:20px; flex-direction:column; cursor:default;">
+                <div style="font-size:2rem;">✨</div>
+                <div>Upgrade</div>
+                <div style="color:var(--accent);">5 Stars</div>
             </div>
         </div>
 
         <button class="btn" style="margin-top:20px; width:100%; max-width:400px;" onclick="location.href='index.html'">🏠 Main Menu</button>
     </div>
-    <script src="js/shop.js"></script>
+    <script type="module" src="js/shop.js"></script>
 </body>
 </html>
