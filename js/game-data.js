@@ -15,6 +15,36 @@ export const state = {
     isLocked: false, isHammerMode: false, isAdmin: false, hasReachedO: false
 };
 
+// 광고 시청 시스템 매니저
+export const AdManager = {
+    canWatchAd() {
+        if(state.isAdmin) return { canWatch: true }; 
+        const today = new Date().toDateString();
+        const lastDate = localStorage.getItem('alpha_ad_date');
+        let count = parseInt(localStorage.getItem('alpha_ad_count')) || 0;
+
+        if (lastDate !== today) { count = 0; localStorage.setItem('alpha_ad_count', count); }
+        if (count >= 10) return { canWatch: false, reason: 'Daily Limit Reached (10/10)' };
+
+        const lastTime = parseInt(localStorage.getItem('alpha_ad_time')) || 0;
+        const elapsed = Date.now() - lastTime;
+        const cooldown = 10 * 60 * 1000; // 10 minutes
+
+        if (elapsed < cooldown) return { canWatch: false, reason: 'cooldown', remaining: cooldown - elapsed };
+        return { canWatch: true };
+    },
+    recordAdWatch() {
+        if(state.isAdmin) return;
+        const today = new Date().toDateString();
+        let count = parseInt(localStorage.getItem('alpha_ad_count')) || 0;
+        if (localStorage.getItem('alpha_ad_date') !== today) count = 0;
+
+        localStorage.setItem('alpha_ad_date', today);
+        localStorage.setItem('alpha_ad_count', count + 1);
+        localStorage.setItem('alpha_ad_time', Date.now());
+    }
+};
+
 export function checkAdmin(username) {
     const admins = ['tony', 'min', 'sara', 'hyun', 'madhel'];
     if(username && admins.includes(username.toLowerCase())) {
@@ -29,7 +59,7 @@ export function checkAdmin(username) {
 export function initGridSize(diff) {
     if (diff === 'EASY') state.gridSize = 9;
     else if (diff === 'NORMAL') state.gridSize = 8;
-    else state.gridSize = 7; // HARD, HELL
+    else state.gridSize = 7; 
     
     state.grid = Array(state.gridSize * state.gridSize).fill(null);
     document.documentElement.style.setProperty('--grid-size', state.gridSize);
