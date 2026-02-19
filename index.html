@@ -14,6 +14,8 @@
         <button class="btn btn-primary" onclick="selectDiff('NORMAL')">NORMAL (중수)</button>
         <button class="btn btn-primary" onclick="selectDiff('HARD')">HARD (고수)</button>
         <button class="btn btn-primary" onclick="selectDiff('HELL')">HELL (극악)</button>
+        
+        <button class="btn" style="margin-top:20px; background:#444;" onclick="openLeaderboard()">🏆 LEADERBOARD</button>
     </div>
 
     <div id="popup-tute" class="popup-overlay">
@@ -23,8 +25,7 @@
                 <p>1. 막대를 드래그하여 빈 곳에 놓으세요.</p>
                 <p>2. 같은 알파벳이 연결되면 합쳐집니다.</p>
                 <p style="color:#81c784;">A + A = B</p>
-                <p style="color:#64b5f6;">A + A + A = C (보너스!)</p>
-                <p style="color:#ba68c8;">A + A + A + A = D (빅 보너스!)</p>
+                <p style="color:#64b5f6;">A + A + A = C (점프!)</p>
             </div>
             <button class="btn btn-primary" style="width:100%;" onclick="closeTute()">GAME START</button>
             <div style="margin-top:15px; font-size:0.8rem;">
@@ -33,24 +34,82 @@
         </div>
     </div>
 
-    <script>
-        // 튜토리얼 로직
-        window.onload = function() {
-            const hide = localStorage.getItem('hideTutorial');
-            if(!hide) {
-                document.getElementById('popup-tute').style.display = 'flex';
-            }
+    <div id="popup-rank" class="popup-overlay">
+        <div class="popup-box">
+            <h2 style="color:var(--accent);">HALL OF FAME</h2>
+            <div id="loading-text" style="color:#888;">Loading...</div>
+            <div id="rank-list" class="leaderboard-list">
+                </div>
+            <button class="btn" style="width:100%; margin-top:15px;" onclick="document.getElementById('popup-rank').style.display='none'">CLOSE</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHQI-CBSLfnBprSyQdgM8kqxSLduhXZXo",
+            authDomain: "alpha-z-puzzle.firebaseapp.com",
+            projectId: "alpha-z-puzzle",
+            storageBucket: "alpha-z-puzzle.firebasestorage.app",
+            messagingSenderId: "112629894683",
+            appId: "1:112629894683:web:fff49e40044eb4dcf1b2be",
+            measurementId: "G-6GJM44TPR3"
         };
 
-        function closeTute() {
-            if(document.getElementById('chk-nomore').checked) {
-                localStorage.setItem('hideTutorial', 'true');
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 전역 함수로 만들기 위해 window에 할당
+        window.openLeaderboard = async function() {
+            document.getElementById('popup-rank').style.display = 'flex';
+            const list = document.getElementById('rank-list');
+            list.innerHTML = '';
+            document.getElementById('loading-text').style.display = 'block';
+
+            try {
+                // 점수(인덱스) 기준 내림차순 정렬, 상위 20개만
+                const q = query(collection(db, "leaderboard"), orderBy("scoreIndex", "desc"), limit(20));
+                const querySnapshot = await getDocs(q);
+                
+                document.getElementById('loading-text').style.display = 'none';
+                
+                let rank = 1;
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const item = document.createElement('div');
+                    item.className = 'rank-item';
+                    item.innerHTML = `
+                        <span>${rank++}</span>
+                        <span>${data.username} <small style="color:#666">(${data.difficulty})</small></span>
+                        <span>${data.bestChar}</span>
+                    `;
+                    list.appendChild(item);
+                });
+
+                if(querySnapshot.empty) {
+                    list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">기록이 없습니다.</div>';
+                }
+
+            } catch (e) {
+                console.error("Error fetching leaderboard: ", e);
+                list.innerHTML = '<div style="padding:20px; color:red;">불러오기 실패</div>';
             }
+        };
+    </script>
+
+    <script>
+        // 기존 일반 스크립트
+        window.onload = function() {
+            const hide = localStorage.getItem('hideTutorial');
+            if(!hide) document.getElementById('popup-tute').style.display = 'flex';
+        };
+        function closeTute() {
+            if(document.getElementById('chk-nomore').checked) localStorage.setItem('hideTutorial', 'true');
             document.getElementById('popup-tute').style.display = 'none';
         }
-
         function selectDiff(diff) {
-            // 난이도를 URL 파라미터로 넘김
             window.location.href = `game.html?diff=${diff}`;
         }
     </script>
