@@ -1,13 +1,32 @@
-const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+// Firebase SDK Import
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// 막대 모양 정의
+// Firebase 설정
+const firebaseConfig = {
+    apiKey: "AIzaSyCHQI-CBSLfnBprSyQdgM8kqxSLduhXZXo",
+    authDomain: "alpha-z-puzzle.firebaseapp.com",
+    projectId: "alpha-z-puzzle",
+    storageBucket: "alpha-z-puzzle.firebasestorage.app",
+    messagingSenderId: "112629894683",
+    appId: "1:112629894683:web:fff49e40044eb4dcf1b2be",
+    measurementId: "G-6GJM44TPR3"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ----------------------------------------------------
+
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const SHAPES = [
-    { w:3, h:1, map:[[0,0],[0,1],[0,2]] }, // ㅡ
-    { w:1, h:3, map:[[0,0],[1,0],[2,0]] }, // ㅣ
-    { w:2, h:2, map:[[0,0],[1,0],[1,1]] }, // ㄴ
-    { w:2, h:2, map:[[0,0],[0,1],[1,0]] }, // ㄱ
-    { w:2, h:2, map:[[0,0],[0,1],[1,1]] }, // ㄱ반대
-    { w:2, h:2, map:[[0,1],[1,1],[1,0]] }, // ㄴ반대
+    { w:3, h:1, map:[[0,0],[0,1],[0,2]] },
+    { w:1, h:3, map:[[0,0],[1,0],[2,0]] },
+    { w:2, h:2, map:[[0,0],[1,0],[1,1]] },
+    { w:2, h:2, map:[[0,0],[0,1],[1,0]] },
+    { w:2, h:2, map:[[0,0],[0,1],[1,1]] },
+    { w:2, h:2, map:[[0,1],[1,1],[1,0]] },
 ];
 
 const gameLogic = {
@@ -16,24 +35,23 @@ const gameLogic = {
         stars: 10,
         best: 'A',
         diff: 'NORMAL',
-        currentBlock: null, // 현재 들고 있는 것
-        nextBlock: null,    // 다음에 나올 것
+        currentBlock: null,
+        nextBlock: null,
         isLocked: false 
     },
 
     init() {
-        // URL에서 난이도 파싱
         const urlParams = new URLSearchParams(window.location.search);
         this.state.diff = urlParams.get('diff') || 'NORMAL';
         document.getElementById('ui-diff').textContent = this.state.diff;
 
         this.initGrid();
-        
-        // 처음 시작 시 Next와 Current 모두 생성
         this.state.nextBlock = this.createRandomBlock();
-        this.shiftBlock(); // next -> current, new next
-        
+        this.shiftBlock();
         this.updateUI();
+
+        // 저장 버튼 이벤트 리스너 연결
+        document.getElementById('btn-save-score').addEventListener('click', () => this.saveToLeaderboard());
     },
 
     initGrid() {
@@ -47,7 +65,6 @@ const gameLogic = {
         }
     },
 
-    // Next를 Current로 옮기고, 새로운 Next 생성
     shiftBlock() {
         this.state.currentBlock = this.state.nextBlock;
         this.state.nextBlock = this.createRandomBlock();
@@ -55,7 +72,6 @@ const gameLogic = {
         this.renderSource(this.state.currentBlock, 'source-block');
         this.renderSource(this.state.nextBlock, 'next-preview');
 
-        // 게임오버 체크: 현재 블록을 놓을 곳이 없으면 종료
         if(!this.canPlaceAnywhere(this.state.currentBlock)) {
             this.showGameOver();
         }
@@ -93,8 +109,6 @@ const gameLogic = {
         const el = document.getElementById(elementId);
         el.innerHTML = '';
         const shape = block.shape;
-        
-        // 작은 미리보기 창은 사이즈 조절
         const size = elementId === 'next-preview' ? '40px' : 'var(--cell-size)';
         
         el.style.gridTemplateColumns = `repeat(${shape.w}, ${size})`;
@@ -103,10 +117,9 @@ const gameLogic = {
         block.items.forEach((char, i) => {
             const coord = shape.map[i];
             const b = document.createElement('div');
-            // 미리보기는 ghost-cell 스타일 대신 일반 cell 스타일 축소
             if(elementId === 'next-preview') {
                 b.className = `cell b-${char}`;
-                b.style.width = size; b.style.height = size; fontSize = '1rem';
+                b.style.width = size; b.style.height = size;
             } else {
                 b.className = `cell b-${char}`;
             }
@@ -128,8 +141,6 @@ const gameLogic = {
             if(this.state.isLocked) return;
             e.preventDefault();
             isDragging = true;
-
-            // Ghost 설정
             ghost.innerHTML = source.innerHTML;
             ghost.style.display = 'grid';
             ghost.style.gridTemplateColumns = source.style.gridTemplateColumns;
@@ -151,9 +162,7 @@ const gameLogic = {
             if(!isDragging) return;
             isDragging = false;
             const ptr = e.changedTouches ? e.changedTouches[0] : e;
-            
             const targetIdx = this.getClosestCellIndex(ptr.clientX, ptr.clientY);
-            
             ghost.style.display = 'none';
             source.style.opacity = '1';
             this.clearHighlights();
@@ -194,7 +203,6 @@ const gameLogic = {
         return targetIdx;
     },
 
-    // 스마트 핏: 어느 부분을 잡고 놓아도 모양이 들어가면 OK
     findBestFit(targetIdx) {
         const shape = this.state.currentBlock.shape;
         const r = Math.floor(targetIdx / 5);
@@ -205,7 +213,6 @@ const gameLogic = {
             const refC = shape.map[i][1];
             const anchorR = r - refR;
             const anchorC = c - refC;
-
             const indices = [];
             let possible = true;
 
@@ -213,7 +220,6 @@ const gameLogic = {
                 const tr = anchorR + shape.map[j][0];
                 const tc = anchorC + shape.map[j][1];
                 const tidx = tr * 5 + tc;
-
                 if (tr < 0 || tr >= 5 || tc < 0 || tc >= 5 || this.state.grid[tidx] !== null) {
                     possible = false; break;
                 }
@@ -224,13 +230,10 @@ const gameLogic = {
         return null;
     },
 
-    // 게임오버 체크용: 이 블록을 어딘가에 놓을 수 있는가?
     canPlaceAnywhere(block) {
         const shape = block.shape;
-        // 모든 그리드 칸에 대해 시도
         for(let r=0; r<5; r++) {
             for(let c=0; c<5; c++) {
-                // shape의 (0,0)을 (r,c)에 맞춰본다
                 let possible = true;
                 for(let j=0; j<shape.map.length; j++) {
                     const tr = r + shape.map[j][0];
@@ -273,7 +276,6 @@ const gameLogic = {
         this.renderGrid();
         await this.wait(300);
 
-        // 연쇄 반응
         let changes = true;
         while(changes) {
             changes = false;
@@ -286,10 +288,9 @@ const gameLogic = {
         }
         
         this.state.isLocked = false;
-        this.shiftBlock(); // 다음 턴
+        this.shiftBlock();
     },
 
-    // --- [중요] AAA=C, AAAA=D 로직 ---
     getCluster(startIdx) {
         const char = this.state.grid[startIdx];
         if (!char) return [];
@@ -318,18 +319,16 @@ const gameLogic = {
         const count = cluster.length;
 
         if (count >= 2) {
-            // 공식: 2개=1단계 점프, 3개=2단계 점프, 4개=3단계 점프...
-            // jump = count - 1
             const jump = count - 1;
             const nextIdx = ALPHABET.indexOf(char) + jump;
-            const next = ALPHABET[nextIdx] || char; // Z 이상이면 유지 혹은 Z
+            const next = ALPHABET[nextIdx] || char;
 
             await this.animateMerge(idx, cluster);
 
             this.state.grid[idx] = next;
             cluster.forEach(n => { if(n !== idx) this.state.grid[n] = null; });
 
-            this.updateScore(next, count); // 점수는 갯수만큼
+            this.updateScore(next, count);
             this.renderGrid();
             await this.wait(300);
             return true;
@@ -379,18 +378,17 @@ const gameLogic = {
 
     showGameOver() {
         document.getElementById('over-best').textContent = this.state.best;
+        document.getElementById('save-area').style.display = 'block'; // 입력창 보이기
         document.getElementById('popup-over').style.display = 'flex';
     },
 
     revive() {
         if(this.state.stars < 5) return alert('스타가 부족합니다.');
         this.state.stars -= 5;
-        // 윗줄 삭제
         for(let i=0; i<5; i++) this.state.grid[i] = null;
         document.getElementById('popup-over').style.display = 'none';
         this.renderGrid();
         this.updateUI();
-        // 다시 체크해서 혹시 또 못 놓으면 게임오버? 일단 기회 제공
     },
 
     updateUI() {
@@ -398,8 +396,38 @@ const gameLogic = {
         document.getElementById('ui-best').textContent = this.state.best;
     },
 
-    wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+    wait(ms) { return new Promise(r => setTimeout(r, ms)); },
+
+    // --- Firebase 저장 로직 ---
+    async saveToLeaderboard() {
+        const usernameInput = document.getElementById('username-input');
+        const username = usernameInput.value.trim();
+
+        if (!username) {
+            alert("이름을 입력해주세요!");
+            return;
+        }
+
+        try {
+            await addDoc(collection(db, "leaderboard"), {
+                username: username,
+                bestChar: this.state.best,
+                scoreIndex: ALPHABET.indexOf(this.state.best), // 정렬용
+                difficulty: this.state.diff,
+                stars: this.state.stars,
+                timestamp: serverTimestamp()
+            });
+
+            document.getElementById('save-area').style.display = 'none';
+            document.getElementById('save-msg').style.display = 'block';
+            
+        } catch (e) {
+            console.error("Error adding document: ", e);
+            alert("저장 실패 ㅠㅠ");
+        }
+    }
 };
 
-// Start
+// Start via global scope (for module)
+window.gameLogic = gameLogic;
 window.onload = () => gameLogic.init();
