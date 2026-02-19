@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -15,27 +15,25 @@
         </div>
 
         <div class="game-area">
-            <div class="next-zone"><div id="next-preview" class="shape-container" style="transform: scale(0.7);"></div></div>
-            <div class="drag-zone"><div id="source-block" class="shape-container"></div></div>
+            <div class="next-zone">
+                <span style="font-size:10px; color:#888; margin-bottom:5px;">NEXT</span>
+                <div id="next-preview" class="shape-container" style="transform: scale(0.7);"></div>
+            </div>
+            <div class="drag-zone">
+                <div id="source-block" class="shape-container"></div>
+            </div>
         </div>
 
         <div id="grid-container" class="grid-container"></div>
 
-        <div style="display:flex; width:100%; max-width:380px; gap:5px; margin-bottom:15px;">
-            <button class="btn" style="flex:1;" onclick="window.gameLogic.useRefresh()">🔄 갱신(1★)</button>
-            <button class="btn" style="flex:1;" onclick="window.gameLogic.useHammer()">🔨 망치(2★)</button>
+        <div style="display:flex; width:100%; max-width:500px; gap:8px; margin-bottom:15px;">
+            <button class="btn" style="flex:1; font-size:0.95rem;" onclick="window.gameLogic.useRefresh()">🔄 Refresh (1★)</button>
+            <button class="btn" style="flex:1; font-size:0.95rem;" onclick="window.gameLogic.useHammer()">🔨 Hammer (2★)</button>
         </div>
 
-        <div style="display:flex; width:100%; max-width:380px; gap:5px;">
-            <button class="btn" style="flex:1;" onclick="location.href='index.html'">메인 메뉴</button>
-            <button class="btn btn-primary" style="flex:1;" onclick="location.href='shop.html'">상점 가기</button>
-        </div>
-
-        <div id="ad-container" style="margin-top: 20px;">
-            <script>
-              atOptions = { 'key' : '8806e983d7b1aa394a76278f45c55249', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
-            </script>
-            <script src="https://www.highperformanceformat.com/8806e983d7b1aa394a76278f45c55249/invoke.js"></script>
+        <div style="display:flex; width:100%; max-width:500px; gap:8px;">
+            <button class="btn" style="flex:1; background:#444;" onclick="location.href='index.html'">🏠 Menu</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="location.href='shop.html'">🛒 Shop</button>
         </div>
     </div>
 
@@ -44,20 +42,25 @@
     <div id="popup-over" class="popup-overlay">
         <div class="popup-box">
             <h2 style="color:#e74c3c;">GAME OVER</h2>
-            <p>기록: <strong id="over-best" style="color:var(--accent); font-size:1.5rem;">A</strong></p>
+            <p>Best Block: <strong id="over-best" style="color:var(--accent); font-size:1.5rem;">A</strong></p>
+            
             <div id="area-new-user" style="display:none;">
-                <input type="text" id="username-input" placeholder="닉네임 (변경불가)" style="width:100%; padding:10px; margin-bottom:10px;">
-                <button class="btn btn-primary" style="width:100%;" id="btn-check-save">기록 저장하기</button>
+                <input type="text" id="username-input" placeholder="Enter Username (Cannot be changed)" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:none;">
+                <button class="btn btn-primary" style="width:100%;" id="btn-check-save">Save Record</button>
             </div>
+            
             <div id="area-exist-user" style="display:none;">
-                <div id="user-badge" style="color:var(--accent); font-weight:bold; margin-bottom:10px;">User</div>
-                <button class="btn btn-primary" style="width:100%;" id="btn-just-save">리더보드에 저장</button>
+                <div id="user-badge" style="color:var(--accent); font-weight:bold; margin-bottom:10px; font-size:1.2rem;">User</div>
+                <button class="btn btn-primary" style="width:100%;" id="btn-just-save">Save to Leaderboard</button>
             </div>
-            <div id="save-msg" style="display:none; color:#2ecc71; margin:10px 0;">저장 완료!</div>
-            <button class="btn" style="width:100%; margin-top:10px;" onclick="location.href='index.html'">메인으로</button>
+            
+            <div id="save-msg" style="display:none; color:#2ecc71; margin:15px 0;">Saved Successfully!</div>
+            <hr style="border:0; border-top:1px solid #444; margin:20px 0;">
+            <button class="btn" style="width:100%; background:#444;" onclick="window.gameLogic.revive()">Use 5★ to clear 1 line</button>
+            <button class="btn" style="width:100%; background:#222;" onclick="location.href='index.html'">Main Menu</button>
         </div>
     </div>
 
-    <script type="module" src="./js/game-main.js"></script>
+    <script type="module" src="js/game-main.js"></script>
 </body>
 </html>
