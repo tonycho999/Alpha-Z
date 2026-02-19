@@ -1,23 +1,6 @@
-// Firebase SDK Import
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-// Firebase 설정
-const firebaseConfig = {
-    apiKey: "AIzaSyCHQI-CBSLfnBprSyQdgM8kqxSLduhXZXo",
-    authDomain: "alpha-z-puzzle.firebaseapp.com",
-    projectId: "alpha-z-puzzle",
-    storageBucket: "alpha-z-puzzle.firebasestorage.app",
-    messagingSenderId: "112629894683",
-    appId: "1:112629894683:web:fff49e40044eb4dcf1b2be",
-    measurementId: "G-6GJM44TPR3"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// ----------------------------------------------------
+// game.js
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { db } from "./firebase-config.js"; // 공통 설정 불러오기
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const SHAPES = [
@@ -32,7 +15,7 @@ const SHAPES = [
 const gameLogic = {
     state: {
         grid: Array(25).fill(null),
-        stars: 10,
+        stars: 0,
         best: 'A',
         diff: 'NORMAL',
         currentBlock: null,
@@ -45,13 +28,15 @@ const gameLogic = {
         this.state.diff = urlParams.get('diff') || 'NORMAL';
         document.getElementById('ui-diff').textContent = this.state.diff;
 
+        this.state.stars = parseInt(localStorage.getItem('alpha_stars')) || 0;
+        this.updateUI();
+
         this.initGrid();
         this.state.nextBlock = this.createRandomBlock();
         this.shiftBlock();
-        this.updateUI();
 
-        // 저장 버튼 이벤트 리스너 연결
-        document.getElementById('btn-save-score').addEventListener('click', () => this.saveToLeaderboard());
+        document.getElementById('btn-check-save').addEventListener('click', () => this.handleNewUserSave());
+        document.getElementById('btn-just-save').addEventListener('click', () => this.handleExistingUserSave());
     },
 
     initGrid() {
@@ -328,7 +313,12 @@ const gameLogic = {
             this.state.grid[idx] = next;
             cluster.forEach(n => { if(n !== idx) this.state.grid[n] = null; });
 
-            this.updateScore(next, count);
+            const O_INDEX = ALPHABET.indexOf('O');
+            if (nextIdx >= O_INDEX) {
+                this.addStar(1);
+            }
+            
+            this.updateBest(next);
             this.renderGrid();
             await this.wait(300);
             return true;
@@ -367,28 +357,21 @@ const gameLogic = {
         }
     },
 
-    updateScore(char, pt) {
-        this.state.stars += pt;
-        document.getElementById('ui-stars').textContent = this.state.stars;
+    addStar(amount) {
+        this.state.stars += amount;
+        this.saveStars();
+        this.updateUI();
+    },
+
+    saveStars() {
+        localStorage.setItem('alpha_stars', this.state.stars);
+    },
+
+    updateBest(char) {
         if(ALPHABET.indexOf(char) > ALPHABET.indexOf(this.state.best)) {
             this.state.best = char;
             document.getElementById('ui-best').textContent = char;
         }
-    },
-
-    showGameOver() {
-        document.getElementById('over-best').textContent = this.state.best;
-        document.getElementById('save-area').style.display = 'block'; // 입력창 보이기
-        document.getElementById('popup-over').style.display = 'flex';
-    },
-
-    revive() {
-        if(this.state.stars < 5) return alert('스타가 부족합니다.');
-        this.state.stars -= 5;
-        for(let i=0; i<5; i++) this.state.grid[i] = null;
-        document.getElementById('popup-over').style.display = 'none';
-        this.renderGrid();
-        this.updateUI();
     },
 
     updateUI() {
@@ -396,38 +379,96 @@ const gameLogic = {
         document.getElementById('ui-best').textContent = this.state.best;
     },
 
-    wait(ms) { return new Promise(r => setTimeout(r, ms)); },
-
-    // --- Firebase 저장 로직 ---
-    async saveToLeaderboard() {
-        const usernameInput = document.getElementById('username-input');
-        const username = usernameInput.value.trim();
-
-        if (!username) {
-            alert("이름을 입력해주세요!");
-            return;
+    showGameOver() {
+        document.getElementById('over-best').textContent = this.state.best;
+        const savedName = localStorage.getItem('alpha_username');
+        if (savedName) {
+            document.getElementById('area-new-user').style.display = 'none';
+            document.getElementById('area-exist-user').style.display = 'block';
+            document.getElementById('user-badge').textContent = savedName;
+        } else {
+            document.getElementById('area-new-user').style.display = 'block';
+            document.getElementById('area-exist-user').style.display = 'none';
         }
+        document.getElementById('popup-over').style.display = 'flex';
+    },
 
+    async handleNewUserSave() {
+        const input = document.getElementById('username-input');
+        const warn = document.getElementById('warning-msg');
+        const username = input.value.trim();
+        const btn = document.getElementById('btn-check-save');
+
+        if (!username) { warn.style.display='block'; warn.textContent="이름을 입력하세요."; return; }
+        
+        btn.disabled = true;
+        btn.textContent = "확인 중...";
+
+        try {
+            const q = query(collection(db, "leaderboard"), where("username", "==", username));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                warn.style.display='block'; 
+                warn.textContent="이미 존재하는 이름입니다. 다른 이름을 써주세요.";
+                btn.disabled = false;
+                btn.textContent = "기록 저장하기";
+                return;
+            }
+
+            localStorage.setItem('alpha_username', username);
+            await this.saveScoreToDB(username);
+            
+            document.getElementById('area-new-user').style.display = 'none';
+            document.getElementById('save-msg').style.display = 'block';
+
+        } catch (e) {
+            console.error(e);
+            alert("저장 오류 발생");
+            btn.disabled = false;
+        }
+    },
+
+    async handleExistingUserSave() {
+        const username = localStorage.getItem('alpha_username');
+        const btn = document.getElementById('btn-just-save');
+        btn.disabled = true;
+        btn.textContent = "저장 중...";
+        
+        await this.saveScoreToDB(username);
+        
+        document.getElementById('area-exist-user').style.display = 'none';
+        document.getElementById('save-msg').style.display = 'block';
+    },
+
+    async saveScoreToDB(username) {
         try {
             await addDoc(collection(db, "leaderboard"), {
                 username: username,
                 bestChar: this.state.best,
-                scoreIndex: ALPHABET.indexOf(this.state.best), // 정렬용
+                scoreIndex: ALPHABET.indexOf(this.state.best),
                 difficulty: this.state.diff,
                 stars: this.state.stars,
                 timestamp: serverTimestamp()
             });
-
-            document.getElementById('save-area').style.display = 'none';
-            document.getElementById('save-msg').style.display = 'block';
-            
         } catch (e) {
-            console.error("Error adding document: ", e);
-            alert("저장 실패 ㅠㅠ");
+            console.error("DB Save Error:", e);
+            alert("DB 연결 실패");
         }
-    }
+    },
+
+    revive() {
+        if(this.state.stars < 5) return alert('스타가 부족합니다.');
+        this.addStar(-5);
+        for(let i=0; i<5; i++) this.state.grid[i] = null;
+        document.getElementById('popup-over').style.display = 'none';
+        document.getElementById('save-msg').style.display = 'none';
+        this.renderGrid();
+        this.updateUI();
+    },
+
+    wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 };
 
-// Start via global scope (for module)
 window.gameLogic = gameLogic;
 window.onload = () => gameLogic.init();
