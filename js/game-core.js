@@ -2,31 +2,32 @@ import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
-export function createRandomBlock() {
-    let pool = SHAPES_3; // 기본 3칸
-    // 초보, 고수는 1~3칸 섞여서 나옴
-    if(state.diff === 'EASY' || state.diff === 'HARD') {
-        const r = Math.random();
-        if(r < 0.3) pool = SHAPES_1;
-        else if(r < 0.6) pool = SHAPES_2;
-    }
-    
-    const shape = pool[Math.floor(Math.random() * pool.length)];
-    
-    // 삭제 및 생성 난이도 한계 설정
-    let limitIdx = ALPHABET.indexOf('O'); // 중수, 고수 (O까지)
+// 현재 난이도에 따른 최하위 블록 단계 계산 (E->A정지, G->B정지 ...)
+export function getMinIdx() {
+    let limitIdx = ALPHABET.indexOf('O');
     if(state.diff === 'EASY') limitIdx = ALPHABET.indexOf('S');
     else if(state.diff === 'HELL') limitIdx = ALPHABET.indexOf('K');
-    
-    const bestIdx = Math.min(ALPHABET.indexOf(state.best), limitIdx);
-    // 2단계 오를때마다 최하위 블록 1개씩 삭제 (계산식: Math.floor(best/2) - 1)
-    const minIdx = Math.max(0, Math.floor(bestIdx / 2) - 1);
 
+    const bestIdx = Math.min(ALPHABET.indexOf(state.best), limitIdx);
+    return Math.max(0, Math.floor((bestIdx - 2) / 2));
+}
+
+export function createRandomBlock() {
+    let pool = SHAPES_3; 
+    // 초보, 상급은 1,2,3 막대 모두 나옴
+    if(state.diff === 'EASY' || state.diff === 'HARD') {
+        const r = Math.random();
+        if(r < 0.25) pool = SHAPES_1;
+        else if(r < 0.55) pool = SHAPES_2;
+    }
+    const shape = pool[Math.floor(Math.random() * pool.length)];
+    const minIdx = getMinIdx();
     const items = [];
+
     for(let i=0; i<shape.map.length; i++) {
         let char;
-        do { // AAB 등 연속 중복 방지
-            const offset = (Math.random() > 0.6 ? 1 : 0) + (Math.random() > 0.8 ? 1 : 0);
+        do { // 중복 방지
+            const offset = (Math.random() > 0.6 ? 1 : 0) + (Math.random() > 0.85 ? 1 : 0);
             char = ALPHABET[minIdx + offset] || 'A';
         } while (items.length > 0 && char === items[items.length - 1]);
         items.push(char);
@@ -40,10 +41,8 @@ export function canPlaceAnywhere(block) {
         for(let c=0; c<size; c++) {
             let possible = true;
             for(let j=0; j<block.shape.map.length; j++) {
-                const tr = r + block.shape.map[j][0];
-                const tc = c + block.shape.map[j][1];
-                const tidx = tr * size + tc;
-                if(tr>=size || tc>=size || state.grid[tidx] !== null) { possible = false; break; }
+                const tr = r + block.shape.map[j][0], tc = c + block.shape.map[j][1];
+                if(tr>=size || tc>=size || state.grid[tr*size+tc] !== null) { possible = false; break; }
             }
             if(possible) return true;
         }
@@ -83,7 +82,5 @@ export async function saveScoreToDB(username) {
         });
         localStorage.setItem('alpha_username', username);
         return { success: true };
-    } catch (e) {
-        console.error(e); return { success: false, msg: "DB 오류" };
-    }
+    } catch (e) { return { success: false, msg: "DB 오류" }; }
 }
