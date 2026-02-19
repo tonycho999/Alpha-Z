@@ -1,47 +1,40 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alpha-Z Shop</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="main-bg">
     <div class="screen">
         <h1 style="color:var(--accent); margin-top:20px;">ITEM SHOP</h1>
         <div style="margin-bottom:20px; font-size:1.2rem;">
-            보유 스타: <strong id="shop-stars" style="color:var(--accent);">0</strong>
+            My Stars: <strong id="shop-stars" style="color:var(--accent);">0</strong>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:360px;">
-            <div class="btn" onclick="watchAd()" style="padding:20px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:400px;">
+            <div class="btn" onclick="watchAd()" style="padding:20px; flex-direction:column;">
                 <div style="font-size:2rem;">📺</div>
-                <div>광고 시청</div>
+                <div>Watch Ad</div>
                 <div style="color:var(--accent);">+1 Star</div>
             </div>
-            <div class="btn" style="padding:20px;">
+            <div class="btn" style="padding:20px; flex-direction:column; cursor:default;">
                 <div style="font-size:2rem;">🔄</div>
-                <div>새로고침</div>
+                <div>Refresh Block</div>
                 <div style="color:var(--accent);">1 Star</div>
-                <small style="font-size:0.7rem; color:#888;">게임 내 사용</small>
+                <small style="color:#888;">Use in Game</small>
             </div>
-            <div class="btn" style="padding:20px;">
+            <div class="btn" style="padding:20px; flex-direction:column; cursor:default; grid-column: span 2;">
                 <div style="font-size:2rem;">🔨</div>
-                <div>망치</div>
+                <div>Hammer (Delete 1 Cell)</div>
                 <div style="color:var(--accent);">2 Stars</div>
-                <small style="font-size:0.7rem; color:#888;">게임 내 사용</small>
+                <small style="color:#888;">Use in Game</small>
             </div>
         </div>
 
-        <button class="btn" style="margin-top:20px; width:100%; max-width:360px;" onclick="location.href='index.html'">메인으로</button>
-
-        <div id="ad-container" style="margin-top: auto;">
-            <script>
-              atOptions = { 'key' : '8806e983d7b1aa394a76278f45c55249', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
-            </script>
-            <script src="https://www.highperformanceformat.com/8806e983d7b1aa394a76278f45c55249/invoke.js"></script>
-        </div>
+        <button class="btn" style="margin-top:20px; width:100%; max-width:400px;" onclick="location.href='index.html'">🏠 Main Menu</button>
     </div>
-    <script src="./js/shop.js"></script>
+    <script src="js/shop.js"></script>
 </body>
 </html>
