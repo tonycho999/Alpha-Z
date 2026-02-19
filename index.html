@@ -1,67 +1,36 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alpha-Z</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
 </head>
-<body>
+<body class="main-bg">
     <div class="screen">
-        <h1 class="title">Alpha-Z</h1>
+        <h1 style="font-size: 3.5rem; color: var(--accent); margin-top: 5vh; margin-bottom: 20px; text-shadow: 0 0 20px rgba(241,196,15,0.4);">Alpha-Z</h1>
         
-        <div style="margin-bottom:20px; color:var(--accent); font-weight:bold;">
+        <div style="margin-bottom:20px; color:var(--accent); font-weight:bold; font-size:1.2rem;">
             MY STARS: <span id="idx-stars">0</span>
         </div>
 
-        <button class="btn btn-primary" onclick="selectDiff('EASY')">EASY (초보)</button>
-        <button class="btn btn-primary" onclick="selectDiff('NORMAL')">NORMAL (중수)</button>
-        <button class="btn btn-primary" onclick="selectDiff('HARD')">HARD (고수)</button>
-        <button class="btn btn-primary" onclick="selectDiff('HELL')">HELL (극악)</button>
+        <button class="btn btn-primary" style="width:250px;" onclick="selectDiff('EASY')">EASY (9x9)</button>
+        <button class="btn btn-primary" style="width:250px;" onclick="selectDiff('NORMAL')">NORMAL (8x8)</button>
+        <button class="btn btn-primary" style="width:250px;" onclick="selectDiff('HARD')">HARD (7x7)</button>
+        <button class="btn btn-primary" style="width:250px;" onclick="selectDiff('HELL')">HELL (7x7)</button>
         
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn" style="width:105px; background:#444;" onclick="location.href='shop.html'">🛒 SHOP</button>
-            <button class="btn" style="width:105px; background:#444;" onclick="location.href='leaderboard.html'">🏆 RANK</button>
+        <div style="display:flex; gap:10px; margin-top:15px; width:250px;">
+            <button class="btn" style="flex:1; background:#444;" onclick="location.href='shop.html'">🛒 SHOP</button>
+            <button class="btn" style="flex:1; background:#444;" onclick="location.href='leaderboard.html'">🏆 RANK</button>
+        </div>
+
+        <div id="ad-container" style="margin-top: 40px; background:#000; padding:5px; border-radius:8px;">
+            <script>
+              atOptions = { 'key' : '8806e983d7b1aa394a76278f45c55249', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
+            </script>
+            <script src="https://www.highperformanceformat.com/8806e983d7b1aa394a76278f45c55249/invoke.js"></script>
         </div>
     </div>
-
-    <div id="popup-tute" class="popup-overlay">
-        <div class="popup-box">
-            <h2 style="color:var(--accent);">HOW TO PLAY</h2>
-            <div class="tute-graphic">
-                <p>1. 막대를 드래그하여 빈 곳에 놓으세요.</p>
-                <p>2. 같은 알파벳이 연결되면 합쳐집니다.</p>
-                <p style="color:#81c784;">A + A = B</p>
-                <p style="color:#64b5f6;">A + A + A = C</p>
-                <hr style="border:0; border-top:1px solid #444; margin:10px 0;">
-                <p><strong>★ 스타 획득 방법</strong></p>
-                <p>알파벳 <strong>'O'</strong> 이상을 만들 때마다<br>스타를 1개씩 얻습니다.</p>
-            </div>
-            <button class="btn btn-primary" style="width:100%;" onclick="closeTute()">GAME START</button>
-            <div style="margin-top:15px; font-size:0.8rem;">
-                <input type="checkbox" id="chk-nomore"> <label for="chk-nomore">다시 보지 않기</label>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        window.onload = function() {
-            const stars = localStorage.getItem('alpha_stars') || 0;
-            document.getElementById('idx-stars').textContent = stars;
-
-            const hide = localStorage.getItem('hideTutorial');
-            if(!hide) document.getElementById('popup-tute').style.display = 'flex';
-        };
-        function closeTute() {
-            if(document.getElementById('chk-nomore').checked) localStorage.setItem('hideTutorial', 'true');
-            document.getElementById('popup-tute').style.display = 'none';
-        }
-        function selectDiff(diff) {
-            window.location.href = `game.html?diff=${diff}`;
-        }
-    </script
-
-    <script type="module" src="./js/index.js"></script>
+    <script type="module" src="js/index.js"></script>
 </body>
 </html>
