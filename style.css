@@ -4,16 +4,27 @@
     --grid-size: 7; /* JS에서 동적 변경 */
 }
 * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
+
 body {
     margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center;
-    height: 100vh; overflow-x: hidden; overflow-y: auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; /* 상하 가운데 정렬 추가 */
+    min-height: 100vh; /* 화면 밖으로 넘칠 때 잘림 방지 */
+    overflow-x: hidden; overflow-y: auto;
 }
 
 /* Green Theme for Main Menu */
 body.main-bg { background: linear-gradient(135deg, #0a3a1f, #121212); }
 
-.screen { display: flex; flex-direction: column; align-items: center; width: 100%; min-height: 100%; padding: 20px 10px; }
+.screen { 
+    display: flex; flex-direction: column; align-items: center; 
+    justify-content: center; /* 상하 가운데 정렬 추가 */
+    width: 100%; min-height: 100vh; 
+    padding: 20px 10px; 
+    box-sizing: border-box; /* 패딩 포함 크기 계산 */
+}
+
 .btn {
     padding: 12px; margin: 5px; background: #333; color: white; border: 2px solid #555;
     border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center;
