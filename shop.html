@@ -1,32 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-    <title>Merchant</title>
-    <link rel="stylesheet" href="css/global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alpha-Z Shop</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h2>The Merchant</h2>
-        <div id="coin-balance">Coins: <span id="coins">0</span></div>
+    <div class="screen">
+        <h1 class="title" style="margin-top:40px;">ITEM SHOP</h1>
         
-        <div class="shop-list">
-            <div class="shop-item">
-                <img src="assets/images/item_undo.png" alt="Undo">
-                <p>Undo Scroll</p>
-                <button class="btn-joseon" onclick="buyItem('undo', 100)">100 Coins</button>
+        <div style="margin-bottom:30px; font-size:1.2rem;">
+            내 보유 스타: <strong id="shop-stars" style="color:var(--accent);">0</strong>
+        </div>
+
+        <div class="shop-grid">
+            <div class="shop-item" onclick="watchAd()">
+                <div class="shop-icon">📺</div>
+                <div style="font-weight:bold;">광고 시청</div>
+                <div class="shop-price">FREE</div>
+                <div class="shop-desc">즉시 +1 스타 획득</div>
             </div>
-            <div class="shop-item">
-                <img src="assets/images/item_bomb.png" alt="Bomb">
-                <p>Tile Eraser</p>
-                <button class="btn-joseon" onclick="buyItem('eraser', 200)">200 Coins</button>
+
+            <div class="shop-item" onclick="buyItem('undo')">
+                <div class="shop-icon">↩️</div>
+                <div style="font-weight:bold;">되돌리기</div>
+                <div class="shop-price">3 Stars</div>
+                <div class="shop-desc">게임 내에서 구매 가능</div>
+            </div>
+
+            <div class="shop-item" onclick="buyItem('hammer')">
+                <div class="shop-icon">🔨</div>
+                <div style="font-weight:bold;">한 칸 삭제</div>
+                <div class="shop-price">5 Stars</div>
+                <div class="shop-desc">게임 내에서 구매 가능</div>
+            </div>
+
+             <div class="shop-item" onclick="alert('준비 중입니다!')">
+                <div class="shop-icon">📦</div>
+                <div style="font-weight:bold;">랜덤 박스</div>
+                <div class="shop-price">10 Stars</div>
+                <div class="shop-desc">랜덤 스타 획득</div>
             </div>
         </div>
-        <button class="btn-joseon" onclick="location.href='index.html'">Leave Shop</button>
+
+        <button class="btn" style="margin-top:auto; margin-bottom:30px; background:#444;" onclick="location.href='index.html'">BACK TO MENU</button>
     </div>
-    
-    <script type="module">
-        import { db, auth } from './js/firebase-config.js';
-        // Logic to deduct coins and add item to inventory in Firestore
+
+    <script>
+        let myStars = parseInt(localStorage.getItem('alpha_stars')) || 0;
+        document.getElementById('shop-stars').textContent = myStars;
+
+        function updateDisplay() {
+            localStorage.setItem('alpha_stars', myStars);
+            document.getElementById('shop-stars').textContent = myStars;
+        }
+
+        function watchAd() {
+            // 실제 광고 SDK 연동 부분 (여기선 시뮬레이션)
+            const btn = event.currentTarget;
+            btn.style.opacity = "0.5";
+            btn.textContent = "Loading Ad...";
+            
+            setTimeout(() => {
+                alert("광고를 시청해주셔서 감사합니다! (+1 Star)");
+                myStars += 1;
+                updateDisplay();
+                // UI 복구
+                btn.style.opacity = "1";
+                btn.innerHTML = `
+                    <div class="shop-icon">📺</div>
+                    <div style="font-weight:bold;">광고 시청</div>
+                    <div class="shop-price">FREE</div>
+                    <div class="shop-desc">즉시 +1 스타 획득</div>
+                `;
+            }, 1000);
+        }
+
+        function buyItem(type) {
+            alert("이 아이템은 게임 플레이 도중에 하단 버튼을 눌러 사용할 수 있습니다.");
+        }
     </script>
 </body>
 </html>
