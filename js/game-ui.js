@@ -1,6 +1,5 @@
 import { state } from "./game-data.js";
 
-// 동적으로 현재 화면에 렌더링된 셀의 사이즈를 가져옴
 function getActualCellSize() {
     const sample = document.querySelector('.grid-container .cell');
     return sample ? sample.getBoundingClientRect().width : 40;
@@ -25,7 +24,7 @@ export function renderSource(block, elementId) {
     if(!el) return;
     el.innerHTML = '';
     
-    // Grid 셀 크기와 똑같이 맞춰서 드래그 위화감 없앰
+    // Ghost 및 Source 블록의 크기를 그리드 셀과 완전히 동일하게 맞춤
     const size = elementId === 'next-preview' ? 30 : getActualCellSize();
     el.style.gridTemplateColumns = `repeat(${block.shape.w}, ${size}px)`;
     el.style.gridTemplateRows = `repeat(${block.shape.h}, ${size}px)`;
@@ -33,7 +32,8 @@ export function renderSource(block, elementId) {
     block.items.forEach((char, i) => {
         const b = document.createElement('div');
         b.className = `cell b-${char}`;
-        b.style.fontSize = elementId === 'next-preview' ? '0.9rem' : '1.2rem';
+        b.style.fontSize = elementId === 'next-preview' ? '0.9rem' : '1.3rem';
+        b.style.borderRadius = '6px';
         b.textContent = char;
         b.style.gridColumnStart = block.shape.map[i][1] + 1;
         b.style.gridRowStart = block.shape.map[i][0] + 1;
@@ -51,13 +51,9 @@ export function setupDrag(onDrop) {
     const start = (e) => {
         if(state.isLocked || state.isHammerMode) return;
         e.preventDefault(); isDragging = true;
-        
-        // 고스트 크기 동기화
-        ghost.innerHTML = source.innerHTML; 
-        ghost.style.display = 'grid';
+        ghost.innerHTML = source.innerHTML; ghost.style.display = 'grid';
         ghost.style.gridTemplateColumns = source.style.gridTemplateColumns;
         ghost.style.gridTemplateRows = source.style.gridTemplateRows;
-        
         moveGhost(e); source.style.opacity = '0';
     };
 
@@ -65,7 +61,7 @@ export function setupDrag(onDrop) {
         if(!isDragging) return;
         moveGhost(e);
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
-        const idx = getExactHoveredCell(e);
+        const idx = getMathGridIndex(e);
         if(idx !== -1) onDrop(idx, true);
     };
 
@@ -73,7 +69,7 @@ export function setupDrag(onDrop) {
         if(!isDragging) return;
         isDragging = false; ghost.style.display = 'none'; source.style.opacity = '1';
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
-        const idx = getExactHoveredCell(e);
+        const idx = getMathGridIndex(e);
         if(idx !== -1) onDrop(idx, false);
     };
 
@@ -85,20 +81,32 @@ export function setupDrag(onDrop) {
 function moveGhost(e) {
     const ptr = e.touches ? e.touches[0] : e;
     const ghost = document.getElementById('ghost');
-    ghost.style.left = ptr.clientX + 'px';
-    ghost.style.top = ptr.clientY + 'px';
+    if(ghost) {
+        ghost.style.left = ptr.clientX + 'px';
+        ghost.style.top = ptr.clientY + 'px';
+    }
 }
 
-// 가장 완벽한 타겟팅 방식: 마우스 포인터 밑에 있는 요소를 직접 찾음
-function getExactHoveredCell(e) {
+// 100% 정밀한 수학적 계산 (실패 없음)
+function getMathGridIndex(e) {
     const ptr = e.changedTouches ? e.changedTouches[0] : (e.touches ? e.touches[0] : e);
-    const elements = document.elementsFromPoint(ptr.clientX, ptr.clientY);
-    for (let el of elements) {
-        if (el.classList.contains('cell') && el.parentElement.id === 'grid-container') {
-            return parseInt(el.id.replace('cell-', ''));
-        }
-    }
-    return -1;
+    const grid = document.getElementById('grid-container');
+    if(!grid) return -1;
+    
+    const rect = grid.getBoundingClientRect();
+    const x = ptr.clientX - rect.left;
+    const y = ptr.clientY - rect.top;
+
+    if (x < -20 || y < -20 || x > rect.width + 20 || y > rect.height + 20) return -1;
+
+    const cellSizeX = rect.width / state.gridSize;
+    const cellSizeY = rect.height / state.gridSize;
+    
+    const col = Math.floor(x / cellSizeX);
+    const row = Math.floor(y / cellSizeY);
+
+    if (col < 0 || col >= state.gridSize || row < 0 || row >= state.gridSize) return -1;
+    return row * state.gridSize + col;
 }
 
 export function updateUI() {
