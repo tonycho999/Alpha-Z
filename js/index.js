@@ -1,57 +1,37 @@
-import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { db } from "./firebase-config.js";
+// js/index.js
 
-// 튜토리얼 및 스타 표시
 window.onload = function() {
+    // 1. 어드민(Admin) 모드 체크 (stars 10000 지급)
+    const admin = localStorage.getItem('alpha_admin') === 'true';
+    if(admin) {
+        localStorage.setItem('alpha_stars', '10000');
+    }
+    
+    // 2. 보유 스타 화면에 표시
     const stars = localStorage.getItem('alpha_stars') || 0;
     const starsEl = document.getElementById('idx-stars');
-    if(starsEl) starsEl.textContent = stars;
+    if(starsEl) {
+        starsEl.textContent = admin ? 'ADMIN (10000)' : stars;
+    }
 
+    // 3. 튜토리얼 팝업 표시 (다시 보지 않기 체크 안 한 경우만)
     const hide = localStorage.getItem('hideTutorial');
-    if(!hide) document.getElementById('popup-tute').style.display = 'flex';
+    if(!hide) {
+        const tute = document.getElementById('popup-tute');
+        if(tute) tute.style.display = 'flex';
+    }
 };
 
-// 전역 함수 등록 (HTML onclick용)
+// 튜토리얼 닫기 버튼
 window.closeTute = function() {
-    if(document.getElementById('chk-nomore').checked) localStorage.setItem('hideTutorial', 'true');
+    const chk = document.getElementById('chk-nomore');
+    if(chk && chk.checked) {
+        localStorage.setItem('hideTutorial', 'true');
+    }
     document.getElementById('popup-tute').style.display = 'none';
 };
 
+// 게임 난이도 선택 후 게임 화면으로 이동
 window.selectDiff = function(diff) {
     window.location.href = `game.html?diff=${diff}`;
-};
-
-// 리더보드 팝업 로직 (공통 config 사용)
-window.openLeaderboard = async function() {
-    document.getElementById('popup-rank').style.display = 'flex';
-    const list = document.getElementById('rank-list');
-    list.innerHTML = '';
-    document.getElementById('loading-text').style.display = 'block';
-
-    try {
-        const q = query(collection(db, "leaderboard"), orderBy("scoreIndex", "desc"), limit(20));
-        const querySnapshot = await getDocs(q);
-        
-        document.getElementById('loading-text').style.display = 'none';
-        
-        let rank = 1;
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const item = document.createElement('div');
-            item.className = 'rank-item';
-            item.innerHTML = `
-                <span>${rank++}</span>
-                <span>${data.username} <small style="color:#666">(${data.difficulty})</small></span>
-                <span>${data.bestChar}</span>
-            `;
-            list.appendChild(item);
-        });
-
-        if(querySnapshot.empty) {
-            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">기록이 없습니다.</div>';
-        }
-    } catch (e) {
-        console.error(e);
-        list.innerHTML = '<div style="padding:20px; color:red;">불러오기 실패</div>';
-    }
 };
