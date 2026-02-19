@@ -23,8 +23,6 @@ export function renderSource(block, elementId) {
     const el = document.getElementById(elementId);
     if(!el) return;
     el.innerHTML = '';
-    
-    // Ghost 및 Source 블록의 크기를 그리드 셀과 완전히 동일하게 맞춤
     const size = elementId === 'next-preview' ? 30 : getActualCellSize();
     el.style.gridTemplateColumns = `repeat(${block.shape.w}, ${size}px)`;
     el.style.gridTemplateRows = `repeat(${block.shape.h}, ${size}px)`;
@@ -33,7 +31,6 @@ export function renderSource(block, elementId) {
         const b = document.createElement('div');
         b.className = `cell b-${char}`;
         b.style.fontSize = elementId === 'next-preview' ? '0.9rem' : '1.3rem';
-        b.style.borderRadius = '6px';
         b.textContent = char;
         b.style.gridColumnStart = block.shape.map[i][1] + 1;
         b.style.gridRowStart = block.shape.map[i][0] + 1;
@@ -61,7 +58,7 @@ export function setupDrag(onDrop) {
         if(!isDragging) return;
         moveGhost(e);
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
-        const idx = getMathGridIndex(e);
+        const idx = getMathGridIndex(e); // 오프셋 좌표 반영된 함수 호출
         if(idx !== -1) onDrop(idx, true);
     };
 
@@ -81,13 +78,10 @@ export function setupDrag(onDrop) {
 function moveGhost(e) {
     const ptr = e.touches ? e.touches[0] : e;
     const ghost = document.getElementById('ghost');
-    if(ghost) {
-        ghost.style.left = ptr.clientX + 'px';
-        ghost.style.top = ptr.clientY + 'px';
-    }
+    ghost.style.left = ptr.clientX + 'px';
+    ghost.style.top = ptr.clientY + 'px';
 }
 
-// 100% 정밀한 수학적 계산 (실패 없음)
 function getMathGridIndex(e) {
     const ptr = e.changedTouches ? e.changedTouches[0] : (e.touches ? e.touches[0] : e);
     const grid = document.getElementById('grid-container');
@@ -95,7 +89,8 @@ function getMathGridIndex(e) {
     
     const rect = grid.getBoundingClientRect();
     const x = ptr.clientX - rect.left;
-    const y = ptr.clientY - rect.top;
+    // 손가락 위치에서 60px 위 지점을 기준으로 보드 좌표 계산
+    const y = (ptr.clientY - 60) - rect.top;
 
     if (x < -20 || y < -20 || x > rect.width + 20 || y > rect.height + 20) return -1;
 
@@ -112,4 +107,10 @@ function getMathGridIndex(e) {
 export function updateUI() {
     document.getElementById('ui-stars').textContent = state.stars;
     document.getElementById('ui-best').textContent = state.best;
+    
+    // 어드민인 경우 광고 컨테이너 숨김
+    if (state.isAdmin) {
+        const ad = document.getElementById('ad-container');
+        if (ad) ad.classList.add('admin-no-ad');
+    }
 }
