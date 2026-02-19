@@ -8,79 +8,40 @@
 </head>
 <body>
     <div class="screen">
-        <h1 class="title" style="margin-top:40px;">ITEM SHOP</h1>
-        
-        <div style="margin-bottom:30px; font-size:1.2rem;">
-            내 보유 스타: <strong id="shop-stars" style="color:var(--accent);">0</strong>
+        <h1 style="color:var(--accent); margin-top:20px;">ITEM SHOP</h1>
+        <div style="margin-bottom:20px; font-size:1.2rem;">
+            보유 스타: <strong id="shop-stars" style="color:var(--accent);">0</strong>
         </div>
 
-        <div class="shop-grid">
-            <div class="shop-item" onclick="watchAd()">
-                <div class="shop-icon">📺</div>
-                <div style="font-weight:bold;">광고 시청</div>
-                <div class="shop-price">FREE</div>
-                <div class="shop-desc">즉시 +1 스타 획득</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:360px;">
+            <div class="btn" onclick="watchAd()" style="padding:20px;">
+                <div style="font-size:2rem;">📺</div>
+                <div>광고 시청</div>
+                <div style="color:var(--accent);">+1 Star</div>
             </div>
-
-            <div class="shop-item" onclick="buyItem('undo')">
-                <div class="shop-icon">↩️</div>
-                <div style="font-weight:bold;">되돌리기</div>
-                <div class="shop-price">3 Stars</div>
-                <div class="shop-desc">게임 내에서 구매 가능</div>
+            <div class="btn" style="padding:20px;">
+                <div style="font-size:2rem;">🔄</div>
+                <div>새로고침</div>
+                <div style="color:var(--accent);">1 Star</div>
+                <small style="font-size:0.7rem; color:#888;">게임 내 사용</small>
             </div>
-
-            <div class="shop-item" onclick="buyItem('hammer')">
-                <div class="shop-icon">🔨</div>
-                <div style="font-weight:bold;">한 칸 삭제</div>
-                <div class="shop-price">5 Stars</div>
-                <div class="shop-desc">게임 내에서 구매 가능</div>
-            </div>
-
-             <div class="shop-item" onclick="alert('준비 중입니다!')">
-                <div class="shop-icon">📦</div>
-                <div style="font-weight:bold;">랜덤 박스</div>
-                <div class="shop-price">10 Stars</div>
-                <div class="shop-desc">랜덤 스타 획득</div>
+            <div class="btn" style="padding:20px;">
+                <div style="font-size:2rem;">🔨</div>
+                <div>망치</div>
+                <div style="color:var(--accent);">2 Stars</div>
+                <small style="font-size:0.7rem; color:#888;">게임 내 사용</small>
             </div>
         </div>
 
-        <button class="btn" style="margin-top:auto; margin-bottom:30px; background:#444;" onclick="location.href='index.html'">BACK TO MENU</button>
+        <button class="btn" style="margin-top:20px; width:100%; max-width:360px;" onclick="location.href='index.html'">메인으로</button>
+
+        <div id="ad-container" style="margin-top: auto;">
+            <script>
+              atOptions = { 'key' : '8806e983d7b1aa394a76278f45c55249', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
+            </script>
+            <script src="https://www.highperformanceformat.com/8806e983d7b1aa394a76278f45c55249/invoke.js"></script>
+        </div>
     </div>
-
-    <script>
-        let myStars = parseInt(localStorage.getItem('alpha_stars')) || 0;
-        document.getElementById('shop-stars').textContent = myStars;
-
-        function updateDisplay() {
-            localStorage.setItem('alpha_stars', myStars);
-            document.getElementById('shop-stars').textContent = myStars;
-        }
-
-        function watchAd() {
-            // 실제 광고 SDK 연동 부분 (여기선 시뮬레이션)
-            const btn = event.currentTarget;
-            btn.style.opacity = "0.5";
-            btn.textContent = "Loading Ad...";
-            
-            setTimeout(() => {
-                alert("광고를 시청해주셔서 감사합니다! (+1 Star)");
-                myStars += 1;
-                updateDisplay();
-                // UI 복구
-                btn.style.opacity = "1";
-                btn.innerHTML = `
-                    <div class="shop-icon">📺</div>
-                    <div style="font-weight:bold;">광고 시청</div>
-                    <div class="shop-price">FREE</div>
-                    <div class="shop-desc">즉시 +1 스타 획득</div>
-                `;
-            }, 1000);
-        }
-
-        function buyItem(type) {
-            alert("이 아이템은 게임 플레이 도중에 하단 버튼을 눌러 사용할 수 있습니다.");
-        }
-    </script>
-    <script src="js/shop.js"></script>
+    <script src="./js/shop.js"></script>
 </body>
 </html>
