@@ -206,3 +206,66 @@ window.gameLogic = {
 };
 
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+window.gameLogic = {
+    useHammer: () => {
+        const cost = 2;
+        if(state.stars < cost && !state.isAdmin) {
+            triggerAdForItem(cost, () => {
+                state.isHammerMode = !state.isHammerMode;
+                document.getElementById('grid-container').classList.toggle('hammer-mode');
+            });
+            return;
+        }
+        if(!state.isAdmin) { state.stars -= cost; localStorage.setItem('alpha_stars', state.stars); UI.updateUI(); }
+        state.isHammerMode = !state.isHammerMode;
+        document.getElementById('grid-container').classList.toggle('hammer-mode');
+    },
+    useRefresh: () => {
+        const cost = 1;
+        if(state.stars < cost && !state.isAdmin) {
+            triggerAdForItem(cost, () => {
+                UI.updateUI(); nextTurn();
+            });
+            return;
+        }
+        if(!state.isAdmin) { state.stars -= cost; localStorage.setItem('alpha_stars', state.stars); }
+        UI.updateUI(); nextTurn();
+    },
+    revive: () => {
+        if(state.stars < 5 && !state.isAdmin) return alert('Need 5 Stars! Play more or visit shop.');
+        if(!state.isAdmin) { state.stars -= 5; localStorage.setItem('alpha_stars', state.stars); }
+        for(let i=0; i<state.gridSize; i++) state.grid[i] = null; 
+        document.getElementById('popup-over').style.display = 'none';
+        UI.renderGrid(); UI.updateUI(); nextTurn();
+    }
+};
+
+// 광고를 보고 아이템을 즉시 실행하는 함수
+function triggerAdForItem(cost, actionCallback) {
+    const adStatus = AdManager.canWatchAd();
+    if (!adStatus.canWatch) {
+        if (adStatus.reason === 'cooldown') {
+            const min = Math.ceil(adStatus.remaining / 60000);
+            alert(`Ad is cooling down. Try again in ${min} min.`);
+        } else {
+            alert(adStatus.reason);
+        }
+        return;
+    }
+
+    if(confirm("Not enough stars! Watch an ad to get 2 Stars and use item?")) {
+        // 즉시 창 열기 (브라우저 차단 방지)
+        window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
+        
+        // 광고 시청 처리 및 비용 차감
+        setTimeout(() => {
+            AdManager.recordAdWatch();
+            state.stars += 2; // 광고 보상
+            state.stars -= cost; // 아이템 가격 차감
+            localStorage.setItem('alpha_stars', state.stars);
+            actionCallback(); // 아이템 효과 발동
+            alert("Thanks for watching! Item applied.");
+        }, 2000);
+    }
+}
