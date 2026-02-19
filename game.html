@@ -37,13 +37,21 @@
     <div id="popup-over" class="popup-overlay">
         <div class="popup-box">
             <h2 style="color:#e74c3c;">GAME OVER</h2>
-            <p>공간이 부족합니다!</p>
-            <p>최고기록: <strong id="over-best" style="color:var(--accent)">A</strong></p>
-            <button class="btn btn-primary" onclick="gameLogic.revive()">5★ 한 줄 지우기</button>
-            <button class="btn" onclick="location.href='index.html'">메인으로</button>
+            <p>기록: <strong id="over-best" style="color:var(--accent); font-size:1.5rem;">A</strong></p>
+            
+            <div id="save-area">
+                <input type="text" id="username-input" class="input-name" placeholder="닉네임 입력 (최대 8자)" maxlength="8">
+                <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" id="btn-save-score">기록 저장하기</button>
+            </div>
+            <div id="save-msg" style="display:none; color:#2ecc71; margin-bottom:10px;">저장 완료!</div>
+
+            <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+
+            <button class="btn" style="width:100%; background:#444;" onclick="gameLogic.revive()">5★ 한 줄 지우기</button>
+            <button class="btn" style="width:100%; background:#222;" onclick="location.href='index.html'">메인으로</button>
         </div>
     </div>
 
-    <script src="game.js"></script>
+    <script type="module" src="game.js"></script>
 </body>
 </html>
