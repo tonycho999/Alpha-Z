@@ -16,7 +16,7 @@ export const state = {
 };
 
 export function checkAdmin(username) {
-    const admins = ['tony', 'min', 'sara', 'hyun'];
+    const admins = ['tony', 'min', 'sara', 'hyun', 'madhel'];
     if(username && admins.includes(username.toLowerCase())) {
         localStorage.setItem('alpha_admin', 'true');
         localStorage.setItem('alpha_stars', '10000');
