@@ -1,7 +1,7 @@
 :root {
     --bg-color: #121212; --panel-bg: #1e1e1e;
     --gap: 4px; --accent: #f1c40f; --text-color: #ffffff;
-    --grid-size: 6; /* JS에서 6 또는 7로 자동 변경 */
+    --grid-size: 6; /* JS에서 동적 변경 */
 }
 * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
 body {
@@ -21,7 +21,7 @@ body {
 .stat span { display: block; font-size: 10px; color: #888; text-align: center; }
 .stat strong { display: block; font-size: 18px; color: var(--accent); text-align: center; }
 
-/* 동적 그리드 시스템 (크기 자동 맞춤) */
+/* 동적 반응형 그리드 */
 .grid-container {
     width: 100%; max-width: 380px; aspect-ratio: 1/1;
     background: #222; border-radius: 12px; padding: 6px;
@@ -31,32 +31,34 @@ body {
     gap: var(--gap); margin-bottom: 15px; position: relative;
 }
 .cell {
-    width: 100%; height: 100%; background: #2d2d2d; border-radius: 6px;
+    width: 100%; height: 100%; background: #2d2d2d; border-radius: 4px;
     display: flex; justify-content: center; align-items: center;
-    font-size: 1.2rem; font-weight: bold; z-index: 1;
+    font-size: 1.1rem; font-weight: bold; z-index: 1;
 }
 
 .game-area { display: flex; gap: 10px; margin-bottom: 15px; width: 100%; max-width: 380px; height: 100px; }
-.next-zone { flex: 1; background: #222; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.drag-zone { flex: 3; background: var(--panel-bg); border: 2px dashed #444; border-radius: 10px; display: flex; justify-content: center; align-items: center; }
+.next-zone { flex: 1; background: #222; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow:hidden; }
+.drag-zone { flex: 3; background: var(--panel-bg); border: 2px dashed #444; border-radius: 10px; display: flex; justify-content: center; align-items: center; overflow:hidden; }
 
-/* 드래그 블록의 고정 픽셀 크기 (그리드 칸 크기와 유사하게 맞춤) */
-.shape-container { display: grid; gap: var(--gap); }
-.draggable-cell { width: 40px; height: 40px; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: bold; }
-#ghost { position: fixed; pointer-events: none; z-index: 9999; display: none; gap: var(--gap); opacity: 0.8; transform: translate(-50%, -50%); }
+/* 모양 컨테이너 */
+.shape-container { display: grid; gap: var(--gap); pointer-events: none; }
+#source-block { pointer-events: auto; cursor: grab; }
 
-.highlight-valid { background: rgba(46, 204, 113, 0.4) !important; box-shadow: 0 0 10px #2ecc71; }
+/* 드래그 유령 (가장 중요: pointer-events: none 으로 마우스 투과) */
+#ghost { position: fixed; pointer-events: none !important; z-index: 9999; display: none; gap: var(--gap); opacity: 0.8; transform: translate(-50%, -50%); }
+
+.highlight-valid { background: rgba(46, 204, 113, 0.5) !important; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); border: 2px solid #2ecc71; }
 .hammer-mode { border: 2px solid #e74c3c !important; animation: pulse 1s infinite; }
 
-.merging-source { transition: transform 0.3s ease, opacity 0.3s ease; z-index: 10; border: 2px solid white; }
+.merging-source { transition: transform 0.3s ease, opacity 0.3s ease; z-index: 10; }
 .pop-effect { animation: pop 0.3s ease-out; }
-@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
-/* 블록 컬러 */
+/* 블록 색상 */
 .b-A { background: #eee; color: #222; } .b-B { background: #81c784; color: #1b5e20; } .b-C { background: #64b5f6; color: #0d47a1; }
 .b-D { background: #ba68c8; color: white; } .b-E { background: #ff8a65; color: white; } .b-F { background: #fff176; color: #d84315; }
 .b-G { background: #4dd0e1; color: white; } .b-H { background: #f06292; color: white; }
 .b-Z { background: linear-gradient(45deg, gold, orange); animation: glow 1s infinite alternate; }
 
 .popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 10000; }
-.popup-box { background: #333; padding: 25px; border-radius: 15px; text-align: center; width: 320px; }
+.popup-box { background: #333; padding: 25px; border-radius: 15px; text-align: center; width: 90%; max-width: 320px; }
