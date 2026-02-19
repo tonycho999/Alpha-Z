@@ -1,5 +1,11 @@
 import { state } from "./game-data.js";
 
+// 동적으로 현재 화면에 렌더링된 셀의 사이즈를 가져옴
+function getActualCellSize() {
+    const sample = document.querySelector('.grid-container .cell');
+    return sample ? sample.getBoundingClientRect().width : 40;
+}
+
 export function renderGrid() {
     for(let i=0; i<state.gridSize * state.gridSize; i++) {
         const cell = document.getElementById(`cell-${i}`);
@@ -19,13 +25,15 @@ export function renderSource(block, elementId) {
     if(!el) return;
     el.innerHTML = '';
     
-    // 드래그 존에서는 고정크기 40px 사용
-    el.style.gridTemplateColumns = `repeat(${block.shape.w}, 40px)`;
-    el.style.gridTemplateRows = `repeat(${block.shape.h}, 40px)`;
+    // Grid 셀 크기와 똑같이 맞춰서 드래그 위화감 없앰
+    const size = elementId === 'next-preview' ? 30 : getActualCellSize();
+    el.style.gridTemplateColumns = `repeat(${block.shape.w}, ${size}px)`;
+    el.style.gridTemplateRows = `repeat(${block.shape.h}, ${size}px)`;
     
     block.items.forEach((char, i) => {
         const b = document.createElement('div');
-        b.className = `draggable-cell b-${char}`;
+        b.className = `cell b-${char}`;
+        b.style.fontSize = elementId === 'next-preview' ? '0.9rem' : '1.2rem';
         b.textContent = char;
         b.style.gridColumnStart = block.shape.map[i][1] + 1;
         b.style.gridRowStart = block.shape.map[i][0] + 1;
@@ -36,13 +44,20 @@ export function renderSource(block, elementId) {
 export function setupDrag(onDrop) {
     const source = document.getElementById('source-block');
     const ghost = document.getElementById('ghost');
+    if(!source) return;
+
     let isDragging = false;
 
     const start = (e) => {
         if(state.isLocked || state.isHammerMode) return;
         e.preventDefault(); isDragging = true;
-        ghost.innerHTML = source.innerHTML; ghost.style.display = 'grid';
+        
+        // 고스트 크기 동기화
+        ghost.innerHTML = source.innerHTML; 
+        ghost.style.display = 'grid';
         ghost.style.gridTemplateColumns = source.style.gridTemplateColumns;
+        ghost.style.gridTemplateRows = source.style.gridTemplateRows;
+        
         moveGhost(e); source.style.opacity = '0';
     };
 
@@ -50,7 +65,7 @@ export function setupDrag(onDrop) {
         if(!isDragging) return;
         moveGhost(e);
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
-        const idx = getClosestIndex(e);
+        const idx = getExactHoveredCell(e);
         if(idx !== -1) onDrop(idx, true);
     };
 
@@ -58,7 +73,7 @@ export function setupDrag(onDrop) {
         if(!isDragging) return;
         isDragging = false; ghost.style.display = 'none'; source.style.opacity = '1';
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
-        const idx = getClosestIndex(e);
+        const idx = getExactHoveredCell(e);
         if(idx !== -1) onDrop(idx, false);
     };
 
@@ -69,20 +84,21 @@ export function setupDrag(onDrop) {
 
 function moveGhost(e) {
     const ptr = e.touches ? e.touches[0] : e;
-    document.getElementById('ghost').style.left = ptr.clientX + 'px';
-    document.getElementById('ghost').style.top = ptr.clientY + 'px';
+    const ghost = document.getElementById('ghost');
+    ghost.style.left = ptr.clientX + 'px';
+    ghost.style.top = ptr.clientY + 'px';
 }
 
-function getClosestIndex(e) {
+// 가장 완벽한 타겟팅 방식: 마우스 포인터 밑에 있는 요소를 직접 찾음
+function getExactHoveredCell(e) {
     const ptr = e.changedTouches ? e.changedTouches[0] : (e.touches ? e.touches[0] : e);
-    let minDist = 9999, targetIdx = -1;
-    for(let i=0; i<state.gridSize * state.gridSize; i++) {
-        const cell = document.getElementById(`cell-${i}`);
-        const rect = cell.getBoundingClientRect();
-        const dist = Math.hypot((rect.left+rect.width/2) - ptr.clientX, (rect.top+rect.height/2) - ptr.clientY);
-        if(dist < 40 && dist < minDist) { minDist = dist; targetIdx = i; }
+    const elements = document.elementsFromPoint(ptr.clientX, ptr.clientY);
+    for (let el of elements) {
+        if (el.classList.contains('cell') && el.parentElement.id === 'grid-container') {
+            return parseInt(el.id.replace('cell-', ''));
+        }
     }
-    return targetIdx;
+    return -1;
 }
 
 export function updateUI() {
