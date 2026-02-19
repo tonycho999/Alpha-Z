@@ -2,7 +2,6 @@ import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
-// 현재 난이도에 따른 최하위 블록 단계 계산 (E->A정지, G->B정지 ...)
 export function getMinIdx() {
     let limitIdx = ALPHABET.indexOf('O');
     if(state.diff === 'EASY') limitIdx = ALPHABET.indexOf('S');
@@ -14,11 +13,10 @@ export function getMinIdx() {
 
 export function createRandomBlock() {
     let pool = SHAPES_3; 
-    // 초보, 상급은 1,2,3 막대 모두 나옴
     if(state.diff === 'EASY' || state.diff === 'HARD') {
         const r = Math.random();
-        if(r < 0.25) pool = SHAPES_1;
-        else if(r < 0.55) pool = SHAPES_2;
+        if(r < 0.3) pool = SHAPES_1;
+        else if(r < 0.6) pool = SHAPES_2;
     }
     const shape = pool[Math.floor(Math.random() * pool.length)];
     const minIdx = getMinIdx();
@@ -26,7 +24,7 @@ export function createRandomBlock() {
 
     for(let i=0; i<shape.map.length; i++) {
         let char;
-        do { // 중복 방지
+        do { 
             const offset = (Math.random() > 0.6 ? 1 : 0) + (Math.random() > 0.85 ? 1 : 0);
             char = ALPHABET[minIdx + offset] || 'A';
         } while (items.length > 0 && char === items[items.length - 1]);
@@ -74,7 +72,7 @@ export async function saveScoreToDB(username) {
     try {
         const q = query(collection(db, "leaderboard"), where("username", "==", username));
         const snapshot = await getDocs(q);
-        if (!snapshot.empty) return { success: false, msg: "이미 존재하는 이름입니다." };
+        if (!snapshot.empty) return { success: false, msg: "Name already exists!" };
 
         await addDoc(collection(db, "leaderboard"), {
             username, bestChar: state.best, scoreIndex: ALPHABET.indexOf(state.best),
@@ -82,5 +80,5 @@ export async function saveScoreToDB(username) {
         });
         localStorage.setItem('alpha_username', username);
         return { success: true };
-    } catch (e) { return { success: false, msg: "DB 오류" }; }
+    } catch (e) { return { success: false, msg: "DB Error" }; }
 }
