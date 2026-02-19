@@ -1,4 +1,4 @@
-import { state, ALPHABET, initGridSize } from "./game-data.js";
+import { state, ALPHABET, initGridSize, checkAdmin } from "./game-data.js";
 import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
 
@@ -6,9 +6,10 @@ window.onload = () => {
     const params = new URLSearchParams(window.location.search);
     state.diff = params.get('diff') || 'NORMAL';
     document.getElementById('ui-diff').textContent = state.diff;
-    state.stars = parseInt(localStorage.getItem('alpha_stars')) || 0;
     
     initGridSize(state.diff);
+    if(state.isAdmin) state.stars = 10000;
+    else state.stars = parseInt(localStorage.getItem('alpha_stars')) || 0;
     
     const container = document.getElementById('grid-container');
     container.innerHTML = '';
@@ -25,11 +26,14 @@ window.onload = () => {
 
     document.getElementById('btn-check-save').onclick = async () => {
         const name = document.getElementById('username-input').value.trim();
-        if(!name) return alert('이름 입력 필수');
+        if(!name) return alert('Enter username!');
+        checkAdmin(name);
+        
         const res = await Core.saveScoreToDB(name);
         if(res.success) {
             document.getElementById('area-new-user').style.display='none';
             document.getElementById('save-msg').style.display='block';
+            UI.updateUI();
         } else alert(res.msg);
     };
 
@@ -43,8 +47,7 @@ window.onload = () => {
 function handleCellClick(idx) {
     if(state.isHammerMode && state.grid[idx]) {
         state.grid[idx] = null;
-        state.stars -= 2;
-        localStorage.setItem('alpha_stars', state.stars);
+        if(!state.isAdmin) { state.stars -= 2; localStorage.setItem('alpha_stars', state.stars); }
         state.isHammerMode = false;
         document.getElementById('grid-container').classList.remove('hammer-mode');
         UI.renderGrid(); UI.updateUI();
@@ -55,7 +58,6 @@ function nextTurn() {
     state.currentBlock = state.nextBlock;
     state.nextBlock = Core.createRandomBlock();
     
-    // 리사이즈 될때마다 소스 블록 크기를 갱신하기 위한 약간의 딜레이
     setTimeout(() => {
         UI.renderSource(state.currentBlock, 'source-block');
         UI.renderSource(state.nextBlock, 'next-preview');
@@ -110,7 +112,7 @@ async function placeBlock(indices) {
     while(checkAgain) {
         checkAgain = false;
         
-        // 1. 합치기
+        // 1. Merge Process
         let merged = false;
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
             if(state.grid[i]) {
@@ -123,7 +125,7 @@ async function placeBlock(indices) {
         }
         if(merged) { checkAgain = true; continue; }
 
-        // 2. [신규 기능] 자동 업그레이드 (더 이상 나오지 않는 알파벳 교체)
+        // 2. Auto Upgrade low level blocks
         const minIdx = Core.getMinIdx();
         let upgraded = false;
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
@@ -134,10 +136,7 @@ async function placeBlock(indices) {
                 if(cell) { cell.classList.add('merging-source'); setTimeout(()=>cell.classList.remove('merging-source'),300); }
             }
         }
-        if(upgraded) {
-            UI.renderGrid(); await wait(300);
-            checkAgain = true; // 업그레이드 후 합쳐질 게 있는지 다시 스캔
-        }
+        if(upgraded) { UI.renderGrid(); await wait(300); checkAgain = true; }
     }
     
     state.isLocked = false;
@@ -146,45 +145,61 @@ async function placeBlock(indices) {
 
 async function processMerge(idx, cluster) {
     const char = state.grid[idx];
-    const nextIdx = ALPHABET.indexOf(char) + (cluster.length - 1); // AAA=C, AAAA=D 적용
+    const nextIdx = ALPHABET.indexOf(char) + (cluster.length - 1);
     const next = ALPHABET[nextIdx] || char;
 
     const centerEl = document.getElementById(`cell-${idx}`);
     for(let t of cluster) {
         if(t===idx) continue;
         const el = document.getElementById(`cell-${t}`);
-        el.classList.add('merging-source');
-        el.style.transform = `translate(${centerEl.offsetLeft - el.offsetLeft}px, ${centerEl.offsetTop - el.offsetTop}px)`;
-        el.style.opacity = '0';
+        if(el) {
+            el.classList.add('merging-source');
+            el.style.transform = `translate(${centerEl.offsetLeft - el.offsetLeft}px, ${centerEl.offsetTop - el.offsetTop}px)`;
+            el.style.opacity = '0';
+        }
     }
     await wait(400);
 
     state.grid[idx] = next;
     cluster.forEach(n => { if(n !== idx) state.grid[n] = null; });
     
-    if(nextIdx >= ALPHABET.indexOf('O')) {
-        state.stars++; localStorage.setItem('alpha_stars', state.stars);
-    }
     if(nextIdx > ALPHABET.indexOf(state.best)) state.best = next;
+    
+    if(nextIdx >= ALPHABET.indexOf('O')) {
+        if(!state.isAdmin) {
+            state.stars++; localStorage.setItem('alpha_stars', state.stars);
+        }
+        
+        // Show Ad Popup once when reaching 'O'
+        if(next === 'O' && !state.hasReachedO) {
+            state.hasReachedO = true;
+            if(!state.isAdmin) {
+                alert("🎉 Congratulations! You reached 'O'! \nA sponsor ad will open in a new tab to support us. (+1 Star)");
+                window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
+            } else {
+                alert("🎉 Congratulations Admin! You reached 'O'!");
+            }
+        }
+    }
     
     UI.renderGrid(); UI.updateUI(); await wait(200);
 }
 
 window.gameLogic = {
     useHammer: () => {
-        if(state.stars < 2) return alert('스타가 부족합니다 (2성 필요)');
+        if(state.stars < 2 && !state.isAdmin) return alert('Need 2 Stars!');
         state.isHammerMode = !state.isHammerMode;
         document.getElementById('grid-container').classList.toggle('hammer-mode');
     },
     useRefresh: () => {
-        if(state.stars < 1) return alert('스타가 부족합니다 (1성 필요)');
-        state.stars -= 1; localStorage.setItem('alpha_stars', state.stars);
+        if(state.stars < 1 && !state.isAdmin) return alert('Need 1 Star!');
+        if(!state.isAdmin) { state.stars -= 1; localStorage.setItem('alpha_stars', state.stars); }
         UI.updateUI(); nextTurn();
     },
     revive: () => {
-        if(state.stars < 5) return alert('스타 부족');
-        state.stars -= 5; localStorage.setItem('alpha_stars', state.stars);
-        for(let i=0; i<state.gridSize; i++) state.grid[i] = null; // 최상단 1줄 삭제
+        if(state.stars < 5 && !state.isAdmin) return alert('Need 5 Stars!');
+        if(!state.isAdmin) { state.stars -= 5; localStorage.setItem('alpha_stars', state.stars); }
+        for(let i=0; i<state.gridSize; i++) state.grid[i] = null; 
         document.getElementById('popup-over').style.display = 'none';
         UI.renderGrid(); UI.updateUI(); nextTurn();
     }
