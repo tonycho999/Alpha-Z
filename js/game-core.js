@@ -1,8 +1,8 @@
 import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
-// addDoc 대신 doc, setDoc, getDoc을 가져옵니다.
 import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
+// ... (getMinIdx, createRandomBlock, canPlaceAnywhere, getCluster 함수는 기존 유지) ...
 export function getMinIdx() {
     let limitIdx = ALPHABET.indexOf('O');
     if(state.diff === 'EASY') limitIdx = ALPHABET.indexOf('S');
@@ -69,8 +69,8 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
-// [수정됨] 문서 ID를 유저네임으로 지정하여 중복 방지 및 최고 점수 갱신 로직 적용
-export async function saveScoreToDB(username) {
+// [수정됨] isNewUser 파라미터 추가하여 신규 가입 시 중복 체크 수행
+export async function saveScoreToDB(username, isNewUser = false) {
     if (!username || username.trim() === "") return { success: false, msg: "Please enter a name." };
     
     const docId = username.trim(); 
@@ -78,6 +78,11 @@ export async function saveScoreToDB(username) {
     try {
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
+
+        // [핵심 로직] 신규 등록인데 이미 문서가 존재하면 -> 중복 에러 처리
+        if (isNewUser && docSnap.exists()) {
+            return { success: false, msg: "🚫 Username already taken. Please choose another." };
+        }
 
         const newScoreIndex = ALPHABET.indexOf(state.best);
 
@@ -90,16 +95,17 @@ export async function saveScoreToDB(username) {
             timestamp: serverTimestamp()
         };
 
+        // 기존 데이터가 있다면 점수 비교 (기존 유저 업데이트 시)
         if (docSnap.exists()) {
             const existingData = docSnap.data();
-            // 기존 점수가 더 높거나 같으면 DB 업데이트를 하지 않고 성공 처리 (기존 기록 유지)
+            // 기존 점수가 더 높거나 같으면 덮어쓰지 않음
             if (newScoreIndex <= existingData.scoreIndex) {
                 localStorage.setItem('alpha_username', docId);
                 return { success: true, msg: "Score preserved (Higher score exists)." };
             }
         }
 
-        // 문서가 없거나(신규), 새 점수가 더 높으면 덮어쓰기(setDoc)
+        // 문서 생성 또는 점수 갱신
         await setDoc(docRef, newScoreData);
         
         localStorage.setItem('alpha_username', docId);
