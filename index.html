@@ -3,39 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="google-site-verification" content="jpV9ytZrmyOE3ncVmwd9y67IjH7vbZ_W5f1p-c7R940" />
-
     <title>Alpha-Z | Addictive Alphabet Merge Puzzle</title>
-    <meta name="description" content="Merge alphabets, save space, and reach Z! Play Alpha-Z, a highly addictive free puzzle game online.">
-    <meta name="keywords" content="Alpha-Z, puzzle game, alphabet merge, 2048 alternative, brain game, free online game">
-    <meta name="robots" content="index, follow">
     
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="apple-touch-icon" href="/icon-180.png">
-    
-    <link rel="stylesheet" href="/style.css">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="apple-touch-icon" href="./icon-180.png">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="manifest" href="./manifest.json">
 
     <style>
         #hand-container {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px auto;
-            width: 100%;
-            max-width: 400px;
-            min-height: 90px;
-            align-items: center;
+            display: flex; justify-content: center; gap: 10px; margin: 20px auto;
+            width: 100%; max-width: 400px; min-height: 90px; align-items: center;
         }
         .hand-slot {
-            width: 33%;
-            height: 90px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            border: 1px dashed rgba(255, 255, 255, 0.1);
+            width: 33%; height: 90px; display: flex; justify-content: center; align-items: center;
+            background: rgba(255, 255, 255, 0.05); border-radius: 10px; border: 1px dashed rgba(255, 255, 255, 0.1);
         }
         .hidden { display: none !important; }
     </style>
@@ -46,7 +28,7 @@
 
         <div style="position: relative; width: 100%; max-width: 500px; text-align: center;">
             <h1 style="font-size: 3.5rem; color: var(--accent); margin-bottom: 20px; text-shadow: 0 0 20px rgba(241,196,15,0.4);">Alpha-Z</h1>
-            <button id="btn-sound" style="position: absolute; top: 10px; right: 20px; font-size: 1.5rem; background: none; border: none; cursor: pointer; z-index: 10; color: white;">🔊</button>
+            <button id="btn-sound" onclick="toggleSound()" style="position: absolute; top: 10px; right: 20px; font-size: 1.5rem; background: none; border: none; cursor: pointer; z-index: 10; color: white;">🔊</button>
         </div>
 
         <div style="margin-bottom:20px; color:var(--accent); font-weight:bold; font-size:1.2rem;">
@@ -60,10 +42,9 @@
                 <button class="btn btn-primary" style="width:100%;" onclick="startGame('HARD')">HARD (7x7)</button>
                 <button class="btn btn-primary" style="width:100%;" onclick="startGame('HELL')">HELL (7x7)</button>
             </div>
-            
             <div style="display:flex; gap:10px; margin-top:20px; justify-content:center; width:100%; max-width:300px; margin-left:auto; margin-right:auto;">
-                <button class="btn" style="flex:1; background:#444;" onclick="location.href='/shop.html'">🛒 SHOP</button>
-                <button class="btn" style="flex:1; background:#444;" onclick="location.href='/leaderboard.html'">🏆 RANK</button>
+                <button class="btn" style="flex:1; background:#444;" onclick="location.href='shop.html'">🛒 SHOP</button>
+                <button class="btn" style="flex:1; background:#444;" onclick="location.href='leaderboard.html'">🏆 RANK</button>
             </div>
         </div>
 
@@ -71,11 +52,8 @@
             <div style="text-align:right; margin-bottom:5px;">
                 <button class="btn" style="font-size:0.8rem; padding:5px 10px; background:#555;" onclick="location.reload()">⬅ MENU</button>
             </div>
-
             <div id="grid-container" class="grid-container"></div>
-            
             <div id="ghost" class="ghost-block"></div>
-
             <div id="hand-container">
                 <div id="hand-0" class="hand-slot"></div>
                 <div id="hand-1" class="hand-slot"></div>
@@ -83,11 +61,17 @@
             </div>
         </div>
 
-        <div id="ad-container" style="margin-top: 30px; background:#000; padding:5px; border-radius:8px;">
-            <script>
-              atOptions = { 'key' : '8806e983d7b1aa394a76278f45c55249', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
+        <div id="ad-container" style="margin-top: 30px; background:#000; padding:5px; border-radius:8px; min-height: 250px;">
+             <script type="text/javascript">
+                atOptions = {
+                    'key' : '78fb5625f558f9e3c9b37b431fe339cb',
+                    'format' : 'iframe',
+                    'height' : 250,
+                    'width' : 300,
+                    'params' : {}
+                };
             </script>
-            <script src="https://www.highperformanceformat.com/8806e983d7b1aa394a76278f45c55249/invoke.js"></script>
+            <script type="text/javascript" src="//www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb"></script>
         </div>
     </div>
 
@@ -95,7 +79,7 @@
         <div class="popup-box">
              <div id="desktop-qr-sec" style="display: none; text-align: center; margin-bottom: 15px;">
                 <h3 style="color: #4CAF50; margin-top: 0; margin-bottom: 10px;">📱 Play on Mobile!</h3>
-                <img src="/alpha-z_QR.png" alt="QR Code" style="width: 140px; height: 140px; border-radius: 10px; border: 3px solid white; margin-bottom: 10px;">
+                <img src="alpha-z_QR.png" alt="QR Code" style="width: 140px; height: 140px; border-radius: 10px; border: 3px solid white; margin-bottom: 10px;">
                 <p style="font-size: 0.9rem; color: #ddd; line-height: 1.4; margin:0;">Scan the QR code with your phone.<br>This game is best played on mobile!</p>
                 <hr style="border:0; border-top:1px dashed #555; margin: 15px 0;">
             </div>
@@ -134,6 +118,7 @@
     </div>
 
     <script>
+        // 전역 함수 등록
         window.startGame = function(diff) {
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
@@ -145,8 +130,7 @@
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // [수정] 경로 앞에 / 추가
-                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW failed', err));
             });
         }
         let deferredPrompt;
@@ -159,7 +143,8 @@
             deferredPrompt.prompt(); deferredPrompt = null;
         });
     </script>
-    <script type="module" src="/js/game-main.js?v=1.81"></script>
-    <script type="module" src="/js/index.js"></script>
+    
+    <script type="module" src="./js/game-main.js?v=2.5"></script>
+    <script type="module" src="./js/index.js"></script>
 </body>
 </html>
