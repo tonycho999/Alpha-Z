@@ -118,3 +118,73 @@ body.game-mode .screen {
     box-shadow: 0 0 15px #ffffff !important; /* 빛나는 효과 추가 */
     z-index: 10 !important;
 }
+
+
+/* 리더보드 전용 디자인 */
+.leaderboard-container {
+    width: 100%;
+    max-width: 500px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rank-item {
+    display: flex;
+    align-items: center;
+    background: #1e1e1e;
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
+    border: 1px solid #333;
+}
+
+.rank-item:hover { transform: scale(1.02); }
+
+/* 상위 3인 특별 스타일 */
+.rank-1 { 
+    background: linear-gradient(135deg, #f1c40f 0%, #d4af37 100%); 
+    border: 1px solid #fff;
+    color: #000;
+}
+.rank-2 { background: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%); color: #000; }
+.rank-3 { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: #fff; }
+
+.rank-number {
+    font-size: 1.5rem;
+    font-weight: 900;
+    width: 40px;
+    text-align: center;
+    margin-right: 15px;
+}
+
+.rank-name {
+    flex: 1;
+    font-size: 1.1rem;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rank-stats {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.rank-best {
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.rank-stars {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+/* 상위권 메달 아이콘 */
+.medal { font-size: 1.5rem; }
