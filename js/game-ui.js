@@ -1,21 +1,29 @@
 import { state } from "./game-data.js";
 
+// [중요] 실제 셀 크기를 실시간으로 계산 (반응형 대응)
 export function getActualCellSize() {
     const grid = document.getElementById('grid-container');
     if (!grid) return 40;
+    
+    // 패딩을 뺀 실제 콘텐츠 영역의 크기 구하기
     const rect = grid.getBoundingClientRect();
-    const size = rect.width / state.gridSize;
-    return size > 0 ? size : 40;
+    const style = window.getComputedStyle(grid);
+    const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+    
+    // 실제 사용 가능한 너비 / 칸 수
+    const actualWidth = rect.width - paddingX;
+    return actualWidth / state.gridSize;
 }
 
 export function renderGrid() { 
     const gridEl = document.getElementById('grid-container');
     if (!gridEl) return;
 
+    // 그리드 행/열 개수 업데이트
     gridEl.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
     gridEl.style.gridTemplateRows = `repeat(${state.gridSize}, 1fr)`;
 
-    // 셀 생성 (없는 경우에만)
+    // 셀 DOM 생성 (개수가 다를 때만 새로 만듦)
     if (gridEl.children.length !== state.gridSize * state.gridSize) {
         gridEl.innerHTML = '';
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
@@ -26,11 +34,12 @@ export function renderGrid() {
         }
     }
 
-    // 셀 렌더링
+    // 셀 내용 채우기
     for(let i=0; i<state.gridSize * state.gridSize; i++) {
         let cell = document.getElementById(`cell-${i}`);
         if (!cell) continue;
         
+        // 기존 하이라이트/애니메이션 제거하고 초기화
         const hasHighlight = cell.classList.contains('highlight-valid');
         cell.className = 'cell'; 
         if (hasHighlight) cell.classList.add('highlight-valid');
@@ -44,10 +53,12 @@ export function renderGrid() {
             cell.textContent = char; 
             cell.classList.add(`b-${char}`);
             if(char==='Z') cell.classList.add('b-Z');
+            cell.classList.add('pop-effect');
         }
     }
 }
 
+// 하단 3개 핸드 슬롯 그리기
 export function renderHand() {
     for (let i = 0; i < 3; i++) {
         const slot = document.getElementById(`hand-${i}`);
@@ -58,7 +69,8 @@ export function renderHand() {
         
         const block = state.hand[i];
         if (block) {
-            const size = 28; 
+            // 핸드에 있는 블록은 작게 보여줌 (미리보기)
+            const size = 25; 
             const gridDiv = document.createElement('div');
             gridDiv.style.display = 'grid';
             gridDiv.style.gridTemplateColumns = `repeat(${block.shape.w}, ${size}px)`;
@@ -70,9 +82,9 @@ export function renderHand() {
                 const b = document.createElement('div');
                 b.className = `cell b-${char}`;
                 b.textContent = char;
-                b.style.fontSize = '0.9rem';
-                b.style.width = size + 'px';
-                b.style.height = size + 'px';
+                b.style.fontSize = '0.9rem'; // 작은 폰트
+                
+                // 블록 모양대로 배치
                 b.style.gridColumnStart = block.shape.map[idx][1] + 1;
                 b.style.gridRowStart = block.shape.map[idx][0] + 1;
                 gridDiv.appendChild(b);
@@ -82,8 +94,8 @@ export function renderHand() {
     }
 }
 
-// 드래그 오프셋 (손가락보다 얼마나 위로 띄울지)
-const DRAG_Y_OFFSET = 80;
+// [설정] 드래그 시 블록을 손가락 위로 얼마나 띄울지 (px)
+const DRAG_Y_OFFSET = 90;
 
 export function setupDrag(onDrop) {
     const ghost = document.getElementById('ghost');
@@ -92,6 +104,7 @@ export function setupDrag(onDrop) {
         const slot = document.getElementById(`hand-${i}`);
         if(!slot) continue;
         
+        // 중복 이벤트 방지
         slot.onmousedown = null;
         slot.ontouchstart = null;
 
@@ -101,74 +114,91 @@ export function setupDrag(onDrop) {
             if(state.isLocked) return;
             state.dragIndex = i; 
             
-            // 고스트 생성
+            // 1. 고스트 블록 생성 (실제 크기로)
             const cellSize = getActualCellSize();
             const block = state.hand[i];
             
             ghost.innerHTML = '';
+            // [중요] fixed로 설정하여 좌표계 통일
+            ghost.style.position = 'fixed'; 
             ghost.style.display = 'grid';
             ghost.style.gridTemplateColumns = `repeat(${block.shape.w}, ${cellSize}px)`;
             ghost.style.gridTemplateRows = `repeat(${block.shape.h}, ${cellSize}px)`;
-            ghost.style.gap = '2px';
+            ghost.style.gap = '3px'; // style.css의 gap과 일치시켜야 함
             
             block.items.forEach((char, idx) => {
                 const b = document.createElement('div');
                 b.className = `cell b-${char}`;
                 b.textContent = char;
-                b.style.fontSize = '1.5rem';
+                b.style.fontSize = '1.5rem'; // 커진 폰트
                 b.style.gridColumnStart = block.shape.map[idx][1] + 1;
                 b.style.gridRowStart = block.shape.map[idx][0] + 1;
                 ghost.appendChild(b);
             });
 
-            slot.style.opacity = '0'; // 슬롯 숨김
+            // 원본 슬롯은 투명하게
+            slot.style.opacity = '0'; 
 
+            // 좌표 추출 함수 (마우스/터치 공용)
             const getPos = (ev) => {
                 const t = ev.changedTouches ? ev.changedTouches[0] : (ev.touches ? ev.touches[0] : ev);
                 return { x: t.clientX, y: t.clientY };
             };
             
+            // 2. 드래그 시작 위치 설정
             const pos = getPos(e);
             moveGhost(pos.x, pos.y);
 
+            // 3. 움직임 처리 함수
             function moveGhost(x, y) {
                 const w = ghost.offsetWidth;
                 const h = ghost.offsetHeight;
+                
+                // 손가락 중심에 오게 하되, Y축으로 조금 위로 띄움 (내 손에 가리지 않게)
                 ghost.style.left = (x - w/2) + 'px';
                 ghost.style.top = (y - h/2 - DRAG_Y_OFFSET) + 'px'; 
                 
-                // 미리보기
+                // [마그네틱 로직] 현재 위치에 해당하는 그리드 인덱스 찾기
+                // ghost가 아니라 '손가락 위치'를 기준으로 판단하는 것이 더 직관적임
                 const idx = getMagnetGridIndex(x, y - DRAG_Y_OFFSET);
+                
+                // 기존 하이라이트 제거
                 document.querySelectorAll('.highlight-valid').forEach(c => c.classList.remove('highlight-valid'));
+                
+                // 유효한 위치라면 하이라이트 표시 (Preview)
                 if (idx !== -1) {
                     onDrop(idx, true); 
                 }
             }
 
             const moveHandler = (me) => {
-                if(me.cancelable) me.preventDefault();
+                if(me.cancelable) me.preventDefault(); // 스크롤 방지
                 const p = getPos(me);
                 moveGhost(p.x, p.y);
             };
 
             const endHandler = (ee) => {
+                // 이벤트 제거
                 window.removeEventListener('mousemove', moveHandler);
                 window.removeEventListener('touchmove', moveHandler);
                 window.removeEventListener('mouseup', endHandler);
                 window.removeEventListener('touchend', endHandler);
 
                 const p = getPos(ee);
+                // 최종 드롭 위치 계산
                 const idx = getMagnetGridIndex(p.x, p.y - DRAG_Y_OFFSET);
                 
                 let success = false;
                 if (idx !== -1) {
-                    success = onDrop(idx, false); // 진짜 드롭
+                    // 실제 드롭 시도
+                    success = onDrop(idx, false); 
                 }
 
                 ghost.style.display = 'none';
                 if (!success) {
-                    slot.style.opacity = '1'; // 실패하면 복귀
+                    slot.style.opacity = '1'; // 실패 시 원본 복귀
                 }
+                // 하이라이트 제거
                 document.querySelectorAll('.highlight-valid').forEach(c => c.classList.remove('highlight-valid'));
             };
 
@@ -183,21 +213,43 @@ export function setupDrag(onDrop) {
     }
 }
 
+// [핵심] 마그네틱 좌표 계산 (범위 보정 포함)
 export function getMagnetGridIndex(x, y) {
     const grid = document.getElementById('grid-container');
     if (!grid) return -1;
+    
     const rect = grid.getBoundingClientRect();
-    // 약간의 여유 범위(padding)을 두어 터치 보정
-    if (x < rect.left - 20 || x > rect.right + 20 || y < rect.top - 20 || y > rect.bottom + 20) return -1;
-    
-    const size = getActualCellSize();
-    // 좌표를 그리드 내부로 클램핑(Clamp)
-    const relX = Math.max(0, Math.min(x - rect.left, rect.width - 1));
-    const relY = Math.max(0, Math.min(y - rect.top, rect.height - 1));
-    
-    const c = Math.floor(relX / size);
-    const r = Math.floor(relY / size);
 
+    // 1. 그리드 영역을 너무 많이 벗어났는지 확인 (여유 범위 50px)
+    // 너무 멀리 가면 드롭 취소로 간주
+    if (x < rect.left - 50 || x > rect.right + 50 || y < rect.top - 50 || y > rect.bottom + 50) {
+        return -1;
+    }
+
+    const cellSize = getActualCellSize();
+    
+    // 테두리 패딩(padding) 값 가져오기
+    const style = window.getComputedStyle(grid);
+    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+    const paddingTop = parseFloat(style.paddingTop) || 0;
+
+    // 2. 좌표를 그리드 내부 로컬 좌표로 변환
+    let relX = x - rect.left - paddingLeft;
+    let relY = y - rect.top - paddingTop;
+
+    // 3. [마그네틱 효과의 핵심] Clamp (범위 제한)
+    // 손가락이 그리드 경계선 살짝 밖이어도, 가장 가까운 끝 칸으로 인식하게 함
+    // 예: 왼쪽으로 -10px 벗어나도 0번 인덱스로 인식
+    const maxPos = cellSize * state.gridSize - 1; // 그리드 내부 최대 픽셀값
+    
+    relX = Math.max(0, Math.min(relX, maxPos));
+    relY = Math.max(0, Math.min(relY, maxPos));
+    
+    // 4. 인덱스 계산
+    const c = Math.floor(relX / cellSize);
+    const r = Math.floor(relY / cellSize);
+
+    // 유효 범위 체크 (Clamp를 했으므로 거의 항상 통과하지만 안전장치)
     if (r >= 0 && r < state.gridSize && c >= 0 && c < state.gridSize) {
         return r * state.gridSize + c;
     }
