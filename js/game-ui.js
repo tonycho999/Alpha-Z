@@ -1,21 +1,33 @@
 import { state } from "./game-data.js";
 
-// ... (getActualCellSize, renderGrid 함수는 기존 그대로 유지) ...
+export function getActualCellSize() {
+    const grid = document.getElementById('grid-container');
+    if (!grid) return 45;
+    const rect = grid.getBoundingClientRect();
+    const style = window.getComputedStyle(grid);
+    return (rect.width - (parseFloat(style.paddingLeft)||0) - (parseFloat(style.paddingRight)||0)) / state.gridSize;
+}
+
 export function renderGrid() { 
-    // ... (기존 코드와 동일) ...
+    const size = getActualCellSize();
+    const gridEl = document.getElementById('grid-container');
+    
+    // 그리드 스타일 동적 적용 (모바일 대응)
+    gridEl.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
+    gridEl.style.gridTemplateRows = `repeat(${state.gridSize}, 1fr)`;
+
     for(let i=0; i<state.gridSize * state.gridSize; i++) {
-        const cell = document.getElementById(`cell-${i}`);
-        if(!cell) continue;
+        let cell = document.getElementById(`cell-${i}`);
+        if (!cell) continue; // 안전장치
         
+        // 기존 클래스 초기화 (highlight 제외)
         const hasHighlight = cell.classList.contains('highlight-valid');
-        
         cell.className = 'cell'; 
         if (hasHighlight) cell.classList.add('highlight-valid');
         
         cell.textContent = ''; 
         cell.style.transform = ''; 
         cell.style.opacity = '1';
-        cell.style.border = ''; 
 
         const char = state.grid[i];
         if(char) {
@@ -27,43 +39,39 @@ export function renderGrid() {
     }
 }
 
-// [수정] 핸드(3개 블록) 렌더링 함수
+// [핵심] 하단 3개 블록(Hand) 그리기
 export function renderHand() {
     const handContainer = document.getElementById('hand-container');
     if (!handContainer) return;
 
-    // 슬롯 0, 1, 2 순회
     for (let i = 0; i < 3; i++) {
         const slot = document.getElementById(`hand-${i}`);
         const block = state.hand[i];
         
-        slot.innerHTML = ''; // 초기화
-        slot.style.opacity = '1'; // 투명도 복구
+        slot.innerHTML = ''; // 비우기
+        slot.style.opacity = '1';
 
         if (block) {
-            // 블록이 있으면 그림
-            // 핸드에 있는 블록은 조금 작게 보여주기 위해 size 조정 (예: 25px)
-            // 하지만 드래그 시작하면 원래 크기(getActualCellSize)로 커져야 함 -> setupDrag에서 처리
-            const size = 30; // 핸드에서의 미리보기 크기
+            // 미리보기용 작은 사이즈
+            const size = 28; 
             
             const gridDiv = document.createElement('div');
             gridDiv.style.display = 'grid';
             gridDiv.style.gridTemplateColumns = `repeat(${block.shape.w}, ${size}px)`;
             gridDiv.style.gridTemplateRows = `repeat(${block.shape.h}, ${size}px)`;
-            gridDiv.style.gap = '1px';
-            // 중앙 정렬
-            gridDiv.style.margin = '0 auto'; 
+            gridDiv.style.gap = '2px';
+            gridDiv.style.pointerEvents = 'none'; // 드래그 방해 금지
 
             block.items.forEach((char, idx) => {
                 const b = document.createElement('div');
                 b.className = `cell b-${char}`;
                 b.textContent = char;
-                b.style.fontSize = '1rem';
+                b.style.fontSize = '0.9rem';
                 b.style.width = size + 'px';
                 b.style.height = size + 'px';
+                // 블록 모양대로 배치
                 b.style.gridColumnStart = block.shape.map[idx][1] + 1;
                 b.style.gridRowStart = block.shape.map[idx][0] + 1;
-                b.style.boxShadow = "inset 0px -3px 0px rgba(0,0,0,0.2)";
                 gridDiv.appendChild(b);
             });
             slot.appendChild(gridDiv);
@@ -71,65 +79,57 @@ export function renderHand() {
     }
 }
 
-
-// [수정] 3개 슬롯에 대한 드래그 설정
+// [핵심] 3개 슬롯 드래그 설정
 const VISUAL_OFFSET_Y = 120; 
 
 export function setupDrag(onDrop) {
     const ghost = document.getElementById('ghost');
     
-    // 3개 슬롯 각각에 이벤트 리스너 등록
     for (let i = 0; i < 3; i++) {
         const slot = document.getElementById(`hand-${i}`);
-        // 기존 리스너 제거 (중복 방지)
-        slot.onmousedown = slot.ontouchstart = null;
+        slot.onmousedown = slot.ontouchstart = null; // 중복 방지
 
-        // 블록이 없으면 드래그 불가
-        if (!state.hand[i]) continue;
+        if (!state.hand[i]) continue; // 빈 슬롯은 패스
 
         const start = (e) => {
             if(state.isLocked || state.isHammerMode) return;
             
-            // 현재 드래그 중인 인덱스 저장
-            state.dragIndex = i;
+            state.dragIndex = i; // 현재 몇 번째 블록인지 저장
             
-            // 1. 고스트 생성 (현재 보드 크기에 맞춰 리사이징)
-            const currentCellSize = getActualCellSize(); // js/game-ui.js 상단에 있는 함수
+            // 고스트(따라다니는 블록) 생성
+            const currentCellSize = getActualCellSize();
             const block = state.hand[i];
 
             ghost.innerHTML = '';
             ghost.style.display = 'grid';
             ghost.style.gridTemplateColumns = `repeat(${block.shape.w}, ${currentCellSize}px)`;
             ghost.style.gridTemplateRows = `repeat(${block.shape.h}, ${currentCellSize}px)`;
+            ghost.style.gap = '2px';
             
             block.items.forEach((char, idx) => {
                 const b = document.createElement('div');
                 b.className = `cell b-${char}`;
                 b.textContent = char;
-                b.style.fontSize = '1.3rem'; // 드래그 중엔 폰트 키움
+                b.style.fontSize = '1.5rem';
                 b.style.gridColumnStart = block.shape.map[idx][1] + 1;
                 b.style.gridRowStart = block.shape.map[idx][0] + 1;
                 ghost.appendChild(b);
             });
 
-            // 원본 슬롯 숨김
-            slot.style.opacity = '0';
+            slot.style.opacity = '0'; // 원본 숨김
 
-            // 위치 잡기 및 이벤트 연결
-            const rect = ghost.getBoundingClientRect();
             const getPos = (ev) => {
                 const t = ev.changedTouches ? ev.changedTouches[0] : (ev.touches ? ev.touches[0] : ev);
                 return { x: t.clientX, y: t.clientY };
             };
             
             const pos = getPos(e);
-            updateGhostAndCheck(pos.x, pos.y, rect.width, rect.height, onDrop, false);
+            updateGhostAndCheck(pos.x, pos.y, ghost.offsetWidth, ghost.offsetHeight, onDrop, false);
 
             const moveHandler = (me) => {
                 if(me.cancelable) me.preventDefault();
                 const p = getPos(me);
-                const r = ghost.getBoundingClientRect();
-                updateGhostAndCheck(p.x, p.y, r.width, r.height, onDrop, false);
+                updateGhostAndCheck(p.x, p.y, ghost.offsetWidth, ghost.offsetHeight, onDrop, false);
             };
 
             const endHandler = (ee) => {
@@ -139,16 +139,12 @@ export function setupDrag(onDrop) {
                 window.removeEventListener('touchend', endHandler);
 
                 const p = getPos(ee);
-                const r = ghost.getBoundingClientRect();
-                
-                // 드롭 시도
-                const success = updateGhostAndCheck(p.x, p.y, r.width, r.height, onDrop, true);
+                // 드롭 시도 (true 리턴 시 성공)
+                const success = updateGhostAndCheck(p.x, p.y, ghost.offsetWidth, ghost.offsetHeight, onDrop, true);
 
                 ghost.style.display = 'none';
-                
-                // 실패했으면 원본 다시 보이기
                 if (!success) {
-                    slot.style.opacity = '1';
+                    slot.style.opacity = '1'; // 실패하면 원본 복귀
                 }
                 clearHighlights();
             };
@@ -163,51 +159,51 @@ export function setupDrag(onDrop) {
     }
 }
 
-// ... (clearHighlights, updateGhostAndCheck, getMagnetGridIndex, getActualCellSize 등 유지) ...
-// 주의: updateGhostAndCheck에서 성공 여부(true/false)를 반환하도록 수정하면 좋습니다.
-// 하지만 기존 로직(onDrop 호출)을 그대로 써도 됩니다. 
-
 function clearHighlights() {
-    const cells = document.querySelectorAll('.grid-container .cell');
-    cells.forEach(c => c.classList.remove('highlight-valid'));
+    document.querySelectorAll('.highlight-valid').forEach(c => c.classList.remove('highlight-valid'));
 }
 
 function updateGhostAndCheck(fingerX, fingerY, w, h, onDrop, isDropAction) {
     const ghost = document.getElementById('ghost');
-    const visualLeft = fingerX - (w / 2);
-    const visualTop = fingerY - VISUAL_OFFSET_Y - (h / 2);
-
-    ghost.style.left = visualLeft + 'px';
-    ghost.style.top = visualTop + 'px';
+    ghost.style.left = (fingerX - w/2) + 'px';
+    ghost.style.top = (fingerY - h/2 - VISUAL_OFFSET_Y) + 'px';
 
     const idx = getMagnetGridIndex(fingerX, fingerY - VISUAL_OFFSET_Y);
 
-    if (!isDropAction) {
-        clearHighlights();
-    }
+    if (!isDropAction) clearHighlights();
 
     if (idx !== -1) {
-        // DropAction이면 결과를 리턴
         if (isDropAction) {
-             return onDrop(idx, false); // handleDropAttempt 호출
+             return onDrop(idx, false); 
         } else {
-             onDrop(idx, true); // 미리보기(Highlight)만
+             onDrop(idx, true); // 미리보기만
         }
     }
-    return false; // 유효하지 않은 위치
+    return false;
 }
 
-// [중요] getActualCellSize 함수가 export 되어 있어야 하거나, 파일 상단에 있어야 합니다.
-function getActualCellSize() {
+export function getMagnetGridIndex(x, y) {
     const grid = document.getElementById('grid-container');
-    if (!grid) return 45;
+    if (!grid) return -1;
     const rect = grid.getBoundingClientRect();
-    const style = window.getComputedStyle(grid);
-    return (rect.width - (parseFloat(style.paddingLeft)||0) - (parseFloat(style.paddingRight)||0)) / state.gridSize;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return -1;
+
+    const size = getActualCellSize();
+    const relX = x - rect.left;
+    const relY = y - rect.top;
+    
+    const c = Math.floor(relX / size);
+    const r = Math.floor(relY / size);
+
+    if (r >= 0 && r < state.gridSize && c >= 0 && c < state.gridSize) {
+        return r * state.gridSize + c;
+    }
+    return -1;
 }
 
-// ... (getMagnetGridIndex, updateUI 등 유지) ...
+export function renderSource() {} // 사용 안 함
 export function updateUI() {
-    document.getElementById('ui-stars').textContent = state.stars;
-    // document.getElementById('ui-best').textContent = state.best; // 필요 시
+    const starEl = document.getElementById('idx-stars');
+    if(starEl) starEl.textContent = state.stars;
 }
