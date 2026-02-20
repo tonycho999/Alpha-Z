@@ -1,48 +1,41 @@
+// js/game-audio.js
 export const AudioMgr = {
     isMuted: false,
     sounds: {},
 
     init() {
-        const fileNames = ['drop', 'merge', 'over'];
-        
-        fileNames.forEach(name => {
-            // [경로] ./assets/ 로 통일
-            const audio = new Audio(`./assets/${name}.mp3`);
-            audio.volume = 0.5;
+        // [사용자님 코드 원복] 단순하고 확실한 방법
+        this.sounds = {
+            drop: new Audio('assets/drop.mp3'),
+            merge: new Audio('assets/merge.mp3'),
+            over: new Audio('assets/over.mp3')
+        };
 
-            // 디버깅용 로그
-            audio.addEventListener('error', (e) => {
-                console.error(`❌ Audio Not Found: ./assets/${name}.mp3`, e);
-            });
-
-            this.sounds[name] = audio;
+        // 초기 음량 설정 (0.5)
+        Object.values(this.sounds).forEach(s => {
+            s.volume = 0.5; 
+            // 모바일에서 지연 없이 재생되도록 미리 로드 설정
+            s.preload = 'auto';
         });
 
+        // [추가] 버튼 클릭 소리는 'drop' 소리를 재사용
         this.sounds['click'] = this.sounds['drop'];
 
+        // 저장된 설정 불러오기
         const savedMute = localStorage.getItem('alpha_muted');
-        this.isMuted = (savedMute === 'true');
+        if (savedMute === 'true') {
+            this.isMuted = true;
+        }
         this.updateIcon();
     },
 
-    // 게임 시작 시 오디오 엔진 깨우기
-    resumeContext() {
-        if(this.sounds['drop']) {
-            const dummy = this.sounds['drop'];
-            const originalVol = dummy.volume;
-            
-            dummy.volume = 0; // 소리 끄고
-            dummy.play().then(() => {
-                dummy.pause();
-                dummy.currentTime = 0;
-                dummy.volume = originalVol; // 볼륨 복구
-            }).catch(() => {});
-        }
-    },
-
+    // [추가된 기능] 화면의 모든 버튼 클릭 감지 (이게 있어야 버튼 소리가 남)
     setupGlobalClicks() {
         document.addEventListener('click', (e) => {
+            // 클릭한 요소가 버튼, 링크, 혹은 핸드 슬롯인지 확인
             const target = e.target.closest('button, .btn, a, .hand-slot');
+            
+            // 소리 버튼이 아니고, 클릭 가능한 요소라면 소리 재생
             if (target && target.id !== 'btn-sound') {
                 this.play('click');
             }
@@ -50,13 +43,23 @@ export const AudioMgr = {
     },
 
     play(name) {
-        if (this.isMuted) return;
-        const audio = this.sounds[name];
-        if (audio) {
-            try {
-                audio.currentTime = 0;
-                audio.play().catch(() => {});
-            } catch(e) {}
+        if (this.isMuted || !this.sounds[name]) return;
+        
+        const sound = this.sounds[name];
+        
+        // [수정] 복제 대신 시간 초기화 방식 (가장 안정적)
+        try {
+            sound.currentTime = 0;
+            const playPromise = sound.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    // 사용자가 아직 화면을 터치하지 않았을 때 발생하는 에러는 무시
+                    // console.log('Audio play prevented');
+                });
+            }
+        } catch(e) {
+            console.error(e);
         }
     },
 
@@ -64,7 +67,8 @@ export const AudioMgr = {
         this.isMuted = !this.isMuted;
         localStorage.setItem('alpha_muted', this.isMuted);
         this.updateIcon();
-        if(!this.isMuted) this.play('click');
+        // 켤 때 확인음 재생
+        if (!this.isMuted) this.play('click');
     },
 
     updateIcon() {
