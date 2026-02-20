@@ -1,6 +1,6 @@
 import { state } from "./game-data.js";
 
-// 셀 크기 계산 (기본값 방어코드 포함)
+// 셀 크기 계산
 function getActualCellSize() {
     const sample = document.querySelector('.grid-container .cell');
     return sample ? sample.getBoundingClientRect().width : 45;
@@ -42,9 +42,9 @@ export function renderSource(block, elementId) {
 }
 
 // ==========================================
-// [수정 완료] 드래그 & 드롭 좌표 정밀 보정
+// [수정 완료] 보이는 위치 그대로 판정 (WYSIWYG)
 // ==========================================
-const TOUCH_OFFSET_Y = 100; // 손가락보다 100px 위에 블록 표시 (시야 확보)
+const TOUCH_OFFSET_Y = 100; // 손가락과 블록 사이의 시각적 거리
 
 export function setupDrag(onDrop) {
     const source = document.getElementById('source-block');
@@ -67,7 +67,7 @@ export function setupDrag(onDrop) {
         
         const ghostRect = ghost.getBoundingClientRect();
         
-        // 2. 위치 잡기
+        // 2. 초기 위치 잡기
         const pos = getClientPos(e);
         updateGhostPosition(pos.x, pos.y, ghostRect.width, ghostRect.height);
         
@@ -80,17 +80,21 @@ export function setupDrag(onDrop) {
         e.preventDefault(); 
         
         const pos = getClientPos(e);
-        const ghostRect = ghost.getBoundingClientRect();
         
-        // 시각적 위치 업데이트
-        updateGhostPosition(pos.x, pos.y, ghostRect.width, ghostRect.height);
+        // [중요] 1. 먼저 고스트 블록을 이동시킴
+        // 고스트의 크기(scale된 크기)를 매번 체크하여 정확도 향상
+        const currentGhostRect = ghost.getBoundingClientRect();
+        updateGhostPosition(pos.x, pos.y, currentGhostRect.width, currentGhostRect.height);
 
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
         
-        // [판정] 시각적으로 보이는 블록의 중심점을 기준으로 판정
-        const visualCenterX = pos.x;
-        const visualCenterY = pos.y - TOUCH_OFFSET_Y; 
+        // [핵심 수정] 2. 이동된 고스트의 "실제 화면상 중심 좌표"를 구함
+        // 계산식이 아니라, 현재 화면에 그려진 박스의 좌표를 그대로 가져옴
+        const updatedRect = ghost.getBoundingClientRect();
+        const visualCenterX = updatedRect.left + (updatedRect.width / 2);
+        const visualCenterY = updatedRect.top + (updatedRect.height / 2);
 
+        // 3. 그 좌표로 그리드 판정
         const idx = getMathGridIndex(visualCenterX, visualCenterY);
         if(idx !== -1) onDrop(idx, true);
     };
@@ -98,9 +102,10 @@ export function setupDrag(onDrop) {
     const end = (e) => {
         if (source.style.opacity !== '0') return;
         
-        const pos = getClientPos(e);
-        const visualCenterX = pos.x;
-        const visualCenterY = pos.y - TOUCH_OFFSET_Y;
+        // 드롭 시점에도 "현재 화면에 떠 있는 고스트의 위치"를 기준으로 판정
+        const finalRect = ghost.getBoundingClientRect();
+        const visualCenterX = finalRect.left + (finalRect.width / 2);
+        const visualCenterY = finalRect.top + (finalRect.height / 2);
 
         ghost.style.display = 'none'; 
         source.style.opacity = '1';
@@ -116,18 +121,22 @@ export function setupDrag(onDrop) {
     window.ontouchend = window.onmouseup = end;
 }
 
-// 블록을 손가락 위로 띄우고 중앙 정렬
+// 블록 시각적 위치 업데이트
 function updateGhostPosition(clientX, clientY, width, height) {
     const ghost = document.getElementById('ghost');
-    // 블록의 정중앙이 (손가락X, 손가락Y - 100px) 위치에 오도록 배치
+    
+    // transform: scale(1.1) 때문에 getBoundingClientRect의 width/height는 커져 있음
+    // 하지만 style.left/top은 scale 전 기준일 수 있으므로 보정
+    
     const centeredX = clientX - (width / 2);
+    // 높이만큼 위로 올리고, 추가 오프셋 적용
     const centeredY = clientY - TOUCH_OFFSET_Y - (height / 2);
 
     ghost.style.left = centeredX + 'px';
     ghost.style.top = centeredY + 'px';
 }
 
-// [핵심 보정 로직] 패딩(padding)을 고려한 정확한 그리드 인덱스 계산
+// 그리드 인덱스 계산 (패딩 보정 포함)
 function getMathGridIndex(checkX, checkY) {
     const grid = document.getElementById('grid-container');
     if(!grid) return -1;
@@ -135,26 +144,21 @@ function getMathGridIndex(checkX, checkY) {
     const rect = grid.getBoundingClientRect();
     const style = window.getComputedStyle(grid);
 
-    // CSS에 설정된 padding 값을 가져와서 계산에서 제외함 (오차 해결의 열쇠!)
     const paddingLeft = parseFloat(style.paddingLeft) || 0;
     const paddingTop = parseFloat(style.paddingTop) || 0;
 
-    // 실제 셀들이 있는 내부 영역의 시작점
     const contentStartX = rect.left + paddingLeft;
     const contentStartY = rect.top + paddingTop;
     
-    // 내부 영역의 실제 크기
     const contentWidth = rect.width - paddingLeft - (parseFloat(style.paddingRight) || 0);
     const contentHeight = rect.height - paddingTop - (parseFloat(style.paddingBottom) || 0);
 
-    // 좌표 변환 (그리드 내부 기준 상대 좌표)
     const relativeX = checkX - contentStartX;
     const relativeY = checkY - contentStartY;
 
-    // 범위 체크 (약간의 여유 5px 허용)
+    // 약간의 여유 범위
     if (relativeX < -5 || relativeY < -5 || relativeX > contentWidth + 5 || relativeY > contentHeight + 5) return -1;
 
-    // 셀 크기 계산 (Gap 포함된 평균 크기)
     const cellSizeX = contentWidth / state.gridSize;
     const cellSizeY = contentHeight / state.gridSize;
     
