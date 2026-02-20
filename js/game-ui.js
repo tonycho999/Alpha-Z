@@ -58,8 +58,8 @@ export function renderSource(block, elementId) {
 
 // 보정 설정 (사용자 요청 반영: 좌측 상단 시프트)
 const VISUAL_OFFSET_Y = 120; 
-const LOGIC_SHIFT_X = -50; 
-const LOGIC_SHIFT_Y = -40; 
+const LOGIC_SHIFT_X = -20; 
+const LOGIC_SHIFT_Y = -20; 
 
 export function setupDrag(onDrop) {
     const source = document.getElementById('source-block');
