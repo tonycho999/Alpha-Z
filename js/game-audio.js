@@ -1,24 +1,26 @@
+// js/game-audio.js
+
 export const AudioMgr = {
     isMuted: false,
     sounds: {},
-    audioCtx: null, // 웹 오디오 컨텍스트 (필요시 사용)
 
     init() {
-        // [수정] ./ (점 슬래시)를 사용하여 현재 폴더 기준 assets를 찾음
         const fileNames = ['drop', 'merge', 'over'];
         
+        // [사용자님 요청 코드 적용] 가장 단순하고 확실한 방법
         fileNames.forEach(name => {
-            const path = `./assets/${name}.mp3`; // 상대 경로로 변경
-            const audio = new Audio(path);
-            audio.preload = 'auto'; // 미리 로드
+            const audio = new Audio(`assets/${name}.mp3`);
+            audio.volume = 0.5; // 볼륨 50%
             
+            // 로드 에러 확인용 (경로가 틀리면 콘솔에 뜸)
             audio.addEventListener('error', (e) => {
-                console.warn(`⚠️ Audio not found: ${path}`);
+                console.error(`❌ Audio load failed: assets/${name}.mp3`, e);
             });
+            
             this.sounds[name] = audio;
         });
 
-        // 클릭음 연결
+        // 클릭음은 drop 소리 재사용
         this.sounds['click'] = this.sounds['drop'];
 
         const savedMute = localStorage.getItem('alpha_muted');
@@ -28,46 +30,39 @@ export const AudioMgr = {
         this.updateIcon();
     },
 
-    // [추가] 브라우저가 오디오를 막았을 때 뚫어주는 함수
-    resumeContext() {
-        // HTML5 Audio 태그 방식은 특별한 resume이 필요 없지만,
-        // 사용자 인터랙션 직후에 빈 소리를 한 번 재생해서 깨워줌
-        if(this.sounds['click']) {
-            const dummy = this.sounds['click'].cloneNode(true);
-            dummy.volume = 0;
-            dummy.play().catch(e => {}); 
-        }
-    },
-
+    // [버튼 소리 해결] 화면의 아무 곳이나 클릭하면 체크
     setupGlobalClicks() {
-        document.body.addEventListener('click', (e) => {
-            const target = e.target.closest('button, .btn, a, .hand-slot');
+        document.addEventListener('click', (e) => {
+            // 클릭한 요소가 버튼(.btn), 링크(a), 혹은 핸드 슬롯인지 확인
+            const target = e.target.closest('.btn, button, a, .hand-slot');
+            
+            // 사운드 토글 버튼이 아니고, 뭔가 클릭 가능한 요소라면 소리 재생
             if (target && target.id !== 'btn-sound') {
                 this.play('click');
             }
-        }, true);
+        });
     },
 
     play(name) {
         if (this.isMuted) return;
         
-        const sound = this.sounds[name];
-        if (!sound) return;
+        const audio = this.sounds[name];
+        if (!audio) return;
 
-        // 소리가 겹치도록 복제해서 재생
         try {
-            const clone = sound.cloneNode(true);
-            clone.volume = 0.5;
-            const playPromise = clone.play();
+            // [단순화] 복제하지 않고 기존 오디오를 0초로 돌려서 재생
+            // 연속 클릭 시 소리가 씹히는 걸 방지하고 성능도 더 좋음
+            audio.currentTime = 0;
             
+            const playPromise = audio.play();
             if (playPromise !== undefined) {
                 playPromise.catch(error => {
-                    // 아직 사용자가 화면을 터치하지 않아서 막힌 경우 (정상)
-                    // console.log("Audio autoplay blocked");
+                    // 브라우저가 막은 경우 (아직 화면 터치 안함) -> 에러 아님, 무시
+                    // console.log("Autoplay prevented");
                 });
             }
         } catch (e) {
-            // 무시
+            console.error("Play error:", e);
         }
     },
 
@@ -75,7 +70,7 @@ export const AudioMgr = {
         this.isMuted = !this.isMuted;
         localStorage.setItem('alpha_muted', this.isMuted);
         this.updateIcon();
-        if(!this.isMuted) this.play('click');
+        if (!this.isMuted) this.play('click');
     },
 
     updateIcon() {
