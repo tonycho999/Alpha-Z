@@ -1,5 +1,6 @@
 import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// addDoc 대신 doc, setDoc, getDoc을 가져옵니다.
+import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
 export function getMinIdx() {
@@ -68,17 +69,44 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
+// [수정됨] 문서 ID를 유저네임으로 지정하여 중복 방지 및 최고 점수 갱신 로직 적용
 export async function saveScoreToDB(username) {
-    try {
-        const q = query(collection(db, "leaderboard"), where("username", "==", username));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) return { success: false, msg: "Name already exists!" };
+    if (!username || username.trim() === "") return { success: false, msg: "Please enter a name." };
+    
+    const docId = username.trim(); 
 
-        await addDoc(collection(db, "leaderboard"), {
-            username, bestChar: state.best, scoreIndex: ALPHABET.indexOf(state.best),
-            difficulty: state.diff, stars: state.stars, timestamp: serverTimestamp()
-        });
-        localStorage.setItem('alpha_username', username);
+    try {
+        const docRef = doc(db, "leaderboard", docId);
+        const docSnap = await getDoc(docRef);
+
+        const newScoreIndex = ALPHABET.indexOf(state.best);
+
+        const newScoreData = {
+            username: docId,
+            bestChar: state.best,
+            scoreIndex: newScoreIndex,
+            difficulty: state.diff,
+            stars: state.stars,
+            timestamp: serverTimestamp()
+        };
+
+        if (docSnap.exists()) {
+            const existingData = docSnap.data();
+            // 기존 점수가 더 높거나 같으면 DB 업데이트를 하지 않고 성공 처리 (기존 기록 유지)
+            if (newScoreIndex <= existingData.scoreIndex) {
+                localStorage.setItem('alpha_username', docId);
+                return { success: true, msg: "Score preserved (Higher score exists)." };
+            }
+        }
+
+        // 문서가 없거나(신규), 새 점수가 더 높으면 덮어쓰기(setDoc)
+        await setDoc(docRef, newScoreData);
+        
+        localStorage.setItem('alpha_username', docId);
         return { success: true };
-    } catch (e) { return { success: false, msg: "DB Error" }; }
+
+    } catch (e) { 
+        console.error("Save Error:", e);
+        return { success: false, msg: "Error saving score." }; 
+    }
 }
