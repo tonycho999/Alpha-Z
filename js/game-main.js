@@ -3,6 +3,7 @@ import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
 
 window.onload = () => {
+    // ... (기존 코드 유지) ...
     const params = new URLSearchParams(window.location.search);
     state.diff = params.get('diff') || 'NORMAL';
     document.getElementById('ui-diff').textContent = state.diff;
@@ -68,9 +69,10 @@ function nextTurn() {
         document.getElementById('popup-over').style.display = 'flex';
         document.getElementById('over-best').textContent = state.best;
         
-        // 이미 부활을 썼다면 버튼 숨기기
         const reviveBtn = document.getElementById('btn-revive-ad');
-        if(state.hasRevived) {
+        
+        // [수정] 어드민 계정이거나 이미 부활을 썼다면 부활 버튼 숨김 (어드민 연장 기능 삭제)
+        if(state.isAdmin || state.hasRevived) {
             reviveBtn.style.display = 'none';
         } else {
             reviveBtn.style.display = 'flex'; 
@@ -82,29 +84,33 @@ function nextTurn() {
     }
 }
 
-// [수정됨] 덮어쓰기 로직 제거 -> 일반적인 빈칸 찾기 로직으로 복귀
+// ... (handleDropAttempt, placeBlock, processMerge 기존 유지) ...
+
+// 아래 함수들은 수정사항 없으므로 그대로 두거나, 
+// handleDropAttempt에서 빨간색 테두리 대신 초록색 테두리 등을 원하시면 수정 가능. 
+// 여기서는 Block Blast 스타일 적용을 위해 UI.js에서 처리를 많이 했으므로 
+// main.js의 handleDropAttempt는 로직만 유지합니다.
+
 function handleDropAttempt(targetIdx, isPreview) {
     const size = state.gridSize;
     const r = Math.floor(targetIdx / size), c = targetIdx % size;
     const shape = state.currentBlock.shape;
     let finalIndices = null;
 
-    // 일반적인 배치 로직 (빈칸인지 확인)
-    for (let i = 0; i < shape.map.length; i++) {
-        const anchorR = r - shape.map[i][0], anchorC = c - shape.map[i][1];
-        let possible = true, temp = [];
-        for (let j = 0; j < shape.map.length; j++) {
-            const tr = anchorR + shape.map[j][0], tc = anchorC + shape.map[j][1];
-            const tidx = tr * size + tc;
-            
-            // 경계 밖이거나, 이미 블록이 있으면 배치 불가
-            if (tr < 0 || tr >= size || tc < 0 || tc >= size || state.grid[tidx] !== null) { 
-                possible = false; 
-                break; 
+    if (state.isReviveTurn) {
+        if (r >= 0 && r < size && c >= 0 && c < size) finalIndices = [targetIdx];
+    } else {
+        for (let i = 0; i < shape.map.length; i++) {
+            const anchorR = r - shape.map[i][0], anchorC = c - shape.map[i][1];
+            let possible = true, temp = [];
+            for (let j = 0; j < shape.map.length; j++) {
+                const tr = anchorR + shape.map[j][0], tc = anchorC + shape.map[j][1];
+                const tidx = tr * size + tc;
+                if (tr < 0 || tr >= size || tc < 0 || tc >= size || state.grid[tidx] !== null) { possible = false; break; }
+                temp.push(tidx);
             }
-            temp.push(tidx);
+            if (possible) { finalIndices = temp; break; }
         }
-        if (possible) { finalIndices = temp; break; }
     }
 
     if(!finalIndices) return false;
@@ -113,8 +119,8 @@ function handleDropAttempt(targetIdx, isPreview) {
         finalIndices.forEach(i => {
             const el = document.getElementById(`cell-${i}`);
             el.classList.add('highlight-valid');
-            // 부활 턴일 때 시각적 강조
-            if(state.isReviveTurn) el.style.borderColor = '#4CAF50'; // 초록색 (안전함)
+            // 부활 턴일 때 강조
+            if(state.isReviveTurn) el.style.boxShadow = '0 0 10px #4CAF50'; 
         });
         return true;
     } else {
@@ -126,7 +132,6 @@ function handleDropAttempt(targetIdx, isPreview) {
 async function placeBlock(indices) {
     state.isLocked = true;
     
-    // 부활 턴 종료
     if(state.isReviveTurn) {
         state.isReviveTurn = false;
         document.getElementById('popup-over').style.display = 'none';
@@ -139,7 +144,6 @@ async function placeBlock(indices) {
     let checkAgain = true;
     while(checkAgain) {
         checkAgain = false;
-        
         let merged = false;
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
             if(state.grid[i]) {
@@ -203,11 +207,14 @@ async function processMerge(idx, cluster) {
             }
         }
     }
-    
     UI.renderGrid(); UI.updateUI(); await wait(200);
 }
 
-// 아이템 전역 로직
+// ... (gameLogic, triggerAdForItem, executeUpgrade, wait, doReviveAction 등은 기존 로직 유지) ...
+// (위 코드가 길어서 생략된 부분은 이전에 작성해드린 game-main.js의 하단부를 그대로 쓰시면 됩니다.)
+// 단, doReviveAction 등은 이전 답변의 코드를 그대로 사용하세요.
+
+// 아래는 편의를 위해 gameLogic 부분만 다시 적어드립니다.
 window.gameLogic = {
     useHammer: () => {
         const cost = 2;
@@ -246,15 +253,12 @@ window.gameLogic = {
         if(!state.isAdmin) { state.stars -= cost; localStorage.setItem('alpha_stars', state.stars); UI.updateUI(); }
         executeUpgrade();
     },
-    // 광고 보고 만능 블록(1x1) 얻기
     tryReviveWithAd: () => {
         if(state.hasRevived) return; 
-
-        if(state.isAdmin) { doReviveAction(); return; }
+        if(state.isAdmin) return; // 어드민 실행 불가 (버튼이 없지만 안전장치)
 
         if(confirm("Watch ad to get a 1x1 'A' Block? \nIt fits in any empty space!")) {
             window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
-            
             setTimeout(() => {
                 AdManager.recordAdWatch();
                 doReviveAction();
@@ -264,45 +268,27 @@ window.gameLogic = {
     }
 };
 
-// [수정됨] 부활 실행: 1x1 'A' 지급 + (중요) 빈칸 없으면 하나 만들어주기
 function doReviveAction() {
     state.hasRevived = true;
     state.isReviveTurn = true; 
+    state.currentBlock = { shape: { w:1, h:1, map:[[0,0]] }, items: ['A'] };
 
-    // 1. 현재 블록을 1x1 'A'로 교체
-    state.currentBlock = {
-        shape: { w:1, h:1, map:[[0,0]] },
-        items: ['A'] 
-    };
-
-    // 2. [안전장치] 만약 보드가 100% 꽉 찼다면, 1x1 블록도 못 놓는다.
-    // 따라서 가장 등급이 낮은 블록 1개를 찾아서 지워준다.
     const hasEmptySpace = state.grid.includes(null);
     if (!hasEmptySpace) {
         let lowestIdx = -1;
         let lowestCharIdx = 999;
-        
-        // 가장 낮은 알파벳 찾기
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
             if(state.grid[i]) {
                 const cIdx = ALPHABET.indexOf(state.grid[i]);
-                if(cIdx < lowestCharIdx) {
-                    lowestCharIdx = cIdx;
-                    lowestIdx = i;
-                }
+                if(cIdx < lowestCharIdx) { lowestCharIdx = cIdx; lowestIdx = i; }
             }
         }
-
-        // 지우기
         if(lowestIdx !== -1) {
             state.grid[lowestIdx] = null;
-            UI.renderGrid(); // 화면 갱신
-            // 알림
+            UI.renderGrid();
             setTimeout(() => alert("Board was full! \nOne lowest block removed to make space."), 100);
         }
     }
-
-    // UI 갱신
     UI.renderSource(state.currentBlock, 'source-block');
     document.getElementById('popup-over').style.display = 'none';
 }
@@ -313,19 +299,14 @@ function triggerAdForItem(cost, actionCallback) {
         if (adStatus.reason === 'cooldown') {
             const min = Math.ceil(adStatus.remaining / 60000);
             alert(`Ad is cooling down. Try again in ${min} min.`);
-        } else {
-            alert(adStatus.reason);
-        }
+        } else { alert(adStatus.reason); }
         return;
     }
-
     if(confirm("Not enough stars! Watch an ad to get 2 Stars and use item?")) {
         window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
-        
         setTimeout(() => {
             AdManager.recordAdWatch();
-            state.stars += 2;
-            state.stars -= cost;
+            state.stars += 2; state.stars -= cost;
             localStorage.setItem('alpha_stars', state.stars);
             actionCallback(); 
             alert("Thanks for watching! Item applied.");
@@ -336,7 +317,6 @@ function triggerAdForItem(cost, actionCallback) {
 async function executeUpgrade() {
     if (state.isLocked || state.isHammerMode) return;
     state.isLocked = true;
-    
     let lowestIdx = 999;
     for (let i = 0; i < state.gridSize * state.gridSize; i++) {
         if (state.grid[i]) {
@@ -344,12 +324,9 @@ async function executeUpgrade() {
             if (charIdx < lowestIdx) lowestIdx = charIdx;
         }
     }
-
     if (lowestIdx === 999) { state.isLocked = false; return; }
-
     const lowestChar = ALPHABET[lowestIdx];
     const nextChar = ALPHABET[lowestIdx + 1] || lowestChar;
-
     let upgraded = false;
     for (let i = 0; i < state.gridSize * state.gridSize; i++) {
         if (state.grid[i] === lowestChar) {
@@ -362,11 +339,9 @@ async function executeUpgrade() {
             }
         }
     }
-
     if (upgraded) {
         UI.renderGrid();
         await wait(300);
-        
         let checkAgain = true;
         while(checkAgain) {
             checkAgain = false;
@@ -381,7 +356,6 @@ async function executeUpgrade() {
                 }
             }
             if(merged) { checkAgain = true; continue; }
-
             const minIdx = Core.getMinIdx();
             let autoUpgraded = false;
             for(let i=0; i<state.gridSize*state.gridSize; i++) {
