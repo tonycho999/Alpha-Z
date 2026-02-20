@@ -20,37 +20,23 @@
 <body class="main-bg">
     <div class="screen">
         <h2 style="color:var(--accent); margin-top: 20px;">ITEM SHOP</h2>
-        
         <div style="margin-bottom:20px; font-size:1.2rem; font-weight:bold;">
             MY STARS: <span id="shop-stars" style="color:gold;">0</span>
         </div>
 
         <div style="width:100%; max-width:350px;">
-            
             <div class="item-card">
-                <div class="item-info">
-                    <span class="item-name">🔨 HAMMER</span>
-                    <span class="item-desc">Remove 1 block</span>
-                </div>
+                <div class="item-info"><span class="item-name">🔨 HAMMER</span><span class="item-desc">Remove 1 block</span></div>
                 <button class="btn btn-primary" onclick="buyItem('hammer', 1)">1 ⭐</button>
             </div>
-
             <div class="item-card">
-                <div class="item-info">
-                    <span class="item-name">↩️ UNDO</span>
-                    <span class="item-desc">Revert last turn</span>
-                </div>
+                <div class="item-info"><span class="item-name">↩️ UNDO</span><span class="item-desc">Revert last turn</span></div>
                 <button class="btn btn-primary" onclick="buyItem('undo', 2)">2 ⭐</button>
             </div>
-
             <div class="item-card">
-                <div class="item-info">
-                    <span class="item-name">🆙 UPGRADE</span>
-                    <span class="item-desc">Upgrade lowest block</span>
-                </div>
+                <div class="item-info"><span class="item-name">🆙 UPGRADE</span><span class="item-desc">Upgrade lowest block</span></div>
                 <button class="btn btn-primary" onclick="buyItem('upgrade', 5)">5 ⭐</button>
             </div>
-
         </div>
 
         <hr style="border:0; border-top:1px dashed #444; width:100%; max-width:350px; margin: 20px 0;">
@@ -63,7 +49,7 @@
             <button id="btn-ad-reward" class="btn btn-primary" style="width:100%;">Loading...</button>
         </div>
 
-        <button class="btn" style="background:#555; width:100%; max-width:350px;" onclick="location.href='index.html'">⬅ BACK TO GAME</button>
+        <button class="btn" style="background:#555; width:100%; max-width:350px;" onclick="location.href='/'">⬅ BACK TO GAME</button>
     </div>
 
     <script type="module">
@@ -71,36 +57,43 @@
 
         const starEl = document.getElementById('shop-stars');
         const btn = document.getElementById('btn-ad-reward');
-
-        // 별 개수 불러오기
         let currentStars = parseInt(localStorage.getItem('alpha_stars')) || 0;
-        function updateStars() {
-            if(starEl) starEl.textContent = currentStars;
-        }
+        
+        // 관리자 확인
+        const isAdmin = localStorage.getItem('alpha_admin') === 'true';
+
+        function updateStars() { if(starEl) starEl.textContent = currentStars; }
         updateStars();
 
-        // [아이템 구매 함수]
         window.buyItem = function(type, cost) {
             if(currentStars >= cost) {
                 if(confirm(`Buy ${type} for ${cost} Stars?`)) {
                     currentStars -= cost;
                     localStorage.setItem('alpha_stars', currentStars);
-                    
-                    // 아이템 개수 저장 (hammer, undo, upgrade)
-                    let currentCount = parseInt(localStorage.getItem(`alpha_${type}`)) || 0;
-                    localStorage.setItem(`alpha_${type}`, currentCount + 1);
-                    
+                    let cnt = parseInt(localStorage.getItem(`alpha_${type}`)) || 0;
+                    localStorage.setItem(`alpha_${type}`, cnt + 1);
                     updateStars();
-                    alert(`Purchased ${type}! (Owned: ${currentCount + 1})`);
+                    alert(`Purchased ${type}!`);
                 }
-            } else {
-                alert("Not enough stars!");
-            }
+            } else { alert("Not enough stars!"); }
         };
 
-        // 광고 버튼 로직
         if(btn) {
-            if(AdManager.canWatchAd()) {
+            // [관리자 처리]
+            if(isAdmin) {
+                btn.textContent = "👑 Get Free Stars (Admin)";
+                btn.style.background = "#9b59b6";
+                btn.onclick = () => {
+                    // AdManager가 내부에서 isAdmin 체크하여 광고 없이 onSuccess 호출
+                    AdManager.showRewardAd(() => {
+                        currentStars += 2;
+                        localStorage.setItem('alpha_stars', currentStars);
+                        updateStars();
+                    });
+                };
+            } 
+            // [일반 유저]
+            else if(AdManager.canWatchAd()) {
                 btn.textContent = "📺 Watch Ad (+2 ⭐)";
                 btn.onclick = () => {
                     AdManager.showRewardAd(() => {
