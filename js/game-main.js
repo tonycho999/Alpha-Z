@@ -5,12 +5,32 @@ import * as Flow from "./game-flow.js";
 import "./game-items.js"; 
 import { AudioMgr } from "./game-audio.js"; 
 
+// [핵심] 게임 시작 함수를 window 객체에 등록 (HTML에서 호출 가능하게)
+window.initGame = (diff) => {
+    // 1. 난이도 설정
+    state.diff = diff || 'NORMAL';
+    initGridSize(state.diff);
+    
+    // 2. 그리드 생성
+    const container = document.getElementById('grid-container');
+    container.innerHTML = '';
+    for(let i=0; i<state.gridSize*state.gridSize; i++) {
+        const div = document.createElement('div');
+        div.className = 'cell'; div.id = `cell-${i}`;
+        div.onclick = () => Flow.handleCellClick(i);
+        container.appendChild(div);
+    }
+
+    // 3. 게임 시작 (핸드 채우기)
+    Flow.checkHandAndRefill();
+    UI.updateUI();
+};
+
 window.onload = () => {
     // 1. 오디오 초기화
     AudioMgr.init();
     AudioMgr.setupGlobalClicks();
 
-    // 브라우저 오디오 정책 해결
     const unlockAudio = () => {
         const dummy = new Audio();
         dummy.play().catch(() => {});
@@ -25,44 +45,24 @@ window.onload = () => {
         soundBtn.onclick = () => AudioMgr.toggleMute();
     }
 
-    // 2. 난이도 및 데이터 로드
-    const params = new URLSearchParams(window.location.search);
-    state.diff = params.get('diff') || 'NORMAL';
-    const uiDiff = document.getElementById('ui-diff'); // 없으면 무시됨
-    if(uiDiff) uiDiff.textContent = state.diff;
-    
-    initGridSize(state.diff);
-    
+    // 2. 스타 및 어드민 로드
     if(state.isAdmin) state.stars = 10000;
     else state.stars = parseInt(localStorage.getItem('alpha_stars')) || 0;
     
-    // 3. 그리드 생성
-    const container = document.getElementById('grid-container');
-    container.innerHTML = '';
-    for(let i=0; i<state.gridSize*state.gridSize; i++) {
-        const div = document.createElement('div');
-        div.className = 'cell'; div.id = `cell-${i}`;
-        div.onclick = () => Flow.handleCellClick(i);
-        container.appendChild(div);
-    }
-
-    // 4. [변경] 게임 시작 로직 (3개 블록 생성 모드)
-    // 기존: state.nextBlock = ...; Flow.nextTurn();
-    // 변경: 핸드 체크 및 리필 함수 호출
-    Flow.checkHandAndRefill();
-    
+    // UI 업데이트 (별 개수 등)
     UI.updateUI();
 
-    // 5. 저장 버튼 이벤트
+    // [중요] 게임은 여기서 바로 시작하지 않음! 
+    // HTML의 버튼(startGame)을 눌러야 window.initGame()이 호출되어 시작됨.
+
+    // 3. 저장 버튼 이벤트
     const btnCheckSave = document.getElementById('btn-check-save');
     if (btnCheckSave) {
         btnCheckSave.onclick = async () => {
             const nameInput = document.getElementById('username-input');
             const name = nameInput ? nameInput.value.trim() : '';
-            
             if(!name) return alert('Enter username!');
             checkAdmin(name);
-            
             const res = await Core.saveScoreToDB(name, true);
             if(res.success) {
                 document.getElementById('area-new-user').style.display='none';
@@ -73,7 +73,6 @@ window.onload = () => {
             }
         };
     }
-
     const btnJustSave = document.getElementById('btn-just-save');
     if (btnJustSave) {
         btnJustSave.onclick = () => {
