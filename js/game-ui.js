@@ -1,6 +1,5 @@
 import { state } from "./game-data.js";
 
-// 셀 크기 실시간 계산
 function getActualCellSize() {
     const grid = document.getElementById('grid-container');
     if (!grid) return 45;
@@ -57,15 +56,24 @@ export function renderSource(block, elementId) {
 }
 
 // ==========================================
-// [동적 보정] 칸 크기에 비례하여 위치 보정
+// [설정] 난이도(Grid Size)별 오프셋 개별 정의
 // ==========================================
-const VISUAL_OFFSET_Y = 120; // 시각적으로 띄우는 높이 (고정)
+const VISUAL_OFFSET_Y = 120; // 시각적으로 띄우는 높이 (공통)
 
-// [비율 설정] 
-// 1.0 = 1칸만큼 이동, 1.5 = 1.5칸만큼 이동
-// 이 값을 조절하면 모든 난이도에서 동일하게 적용됩니다.
-const SHIFT_RATIO_X = -1.2; // 왼쪽으로 1.2칸 이동
-const SHIFT_RATIO_Y = -1.2; // 위쪽으로 1.2칸 이동
+// 값이 클수록 왼쪽(X), 위쪽(Y)으로 더 많이 이동합니다.
+// 7x7은 칸이 크니까 더 많이 이동시켜야 중앙이 맞을 수 있습니다.
+const OFFSET_CONFIG = {
+    // [Key: gridSize] : { x: 왼쪽이동픽셀, y: 위쪽이동픽셀 }
+    
+    // 9x9 (HARD): 칸이 작음 -> 적당히 이동
+    9: { x: -60, y: -60 }, 
+
+    // 8x8 (NORMAL): 중간
+    8: { x: -70, y: -70 }, 
+
+    // 7x7 (EASY): 칸이 큼 -> 더 많이 이동해야 왼쪽 귀퉁이에 맞음
+    7: { x: -85, y: -80 }  
+};
 
 export function setupDrag(onDrop) {
     const source = document.getElementById('source-block');
@@ -137,19 +145,16 @@ function clearHighlights() {
 function updateGhostAndCheck(fingerX, fingerY, w, h, onDrop, isDropAction) {
     const ghost = document.getElementById('ghost');
 
-    // 1. 시각적 위치 (손가락 위로 띄움)
+    // 1. 시각적 위치
     ghost.style.left = (fingerX - w / 2) + 'px';
     ghost.style.top = (fingerY - VISUAL_OFFSET_Y - h / 2) + 'px';
 
-    // 2. [핵심 수정] 판정 지점을 '현재 칸 크기'에 비례해서 계산
-    const cellSize = getActualCellSize();
-    
-    // 칸 크기에 비례하여 오프셋을 계산하므로 9x9, 7x7 모두 동일한 감각 유지
-    const logicShiftX = cellSize * SHIFT_RATIO_X; 
-    const logicShiftY = cellSize * SHIFT_RATIO_Y;
+    // 2. [핵심 수정] 현재 그리드 사이즈에 맞는 오프셋 값 가져오기
+    // 기본값은 -60으로 설정 (혹시 모를 오류 방지)
+    const config = OFFSET_CONFIG[state.gridSize] || { x: -60, y: -60 };
 
-    const logicX = fingerX + logicShiftX;
-    const logicY = fingerY - VISUAL_OFFSET_Y + logicShiftY;
+    const logicX = fingerX + config.x;
+    const logicY = fingerY - VISUAL_OFFSET_Y + config.y;
 
     if (!isDropAction) {
         clearHighlights();
