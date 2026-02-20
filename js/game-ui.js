@@ -1,5 +1,6 @@
 import { state } from "./game-data.js";
 
+// 셀 크기 실시간 계산
 function getActualCellSize() {
     const grid = document.getElementById('grid-container');
     if (!grid) return 45;
@@ -15,8 +16,6 @@ export function renderGrid() {
         const cell = document.getElementById(`cell-${i}`);
         if(!cell) continue;
         
-        const char = state.grid[i];
-        // [수정] 하이라이트 클래스가 있다면 보존
         const hasHighlight = cell.classList.contains('highlight-valid');
         
         cell.className = 'cell'; 
@@ -25,8 +24,9 @@ export function renderGrid() {
         cell.textContent = ''; 
         cell.style.transform = ''; 
         cell.style.opacity = '1';
-        cell.style.border = ''; // CSS 클래스에서 제어하도록 비워둠
+        cell.style.border = ''; 
 
+        const char = state.grid[i];
         if(char) {
             cell.textContent = char; 
             cell.classList.add(`b-${char}`);
@@ -56,17 +56,22 @@ export function renderSource(block, elementId) {
     });
 }
 
-// 보정 설정 (사용자 요청 반영: 좌측 상단 시프트)
-const VISUAL_OFFSET_Y = 120; 
-const LOGIC_SHIFT_X = -25; 
-const LOGIC_SHIFT_Y = -25; 
+// ==========================================
+// [동적 보정] 칸 크기에 비례하여 위치 보정
+// ==========================================
+const VISUAL_OFFSET_Y = 120; // 시각적으로 띄우는 높이 (고정)
+
+// [비율 설정] 
+// 1.0 = 1칸만큼 이동, 1.5 = 1.5칸만큼 이동
+// 이 값을 조절하면 모든 난이도에서 동일하게 적용됩니다.
+const SHIFT_RATIO_X = -1.2; // 왼쪽으로 1.2칸 이동
+const SHIFT_RATIO_Y = -1.2; // 위쪽으로 1.2칸 이동
 
 export function setupDrag(onDrop) {
     const source = document.getElementById('source-block');
     const ghost = document.getElementById('ghost');
     if(!source) return;
 
-    // 핸들러 클린업
     source.onmousedown = source.ontouchstart = null;
 
     const getPos = (e) => {
@@ -87,7 +92,6 @@ export function setupDrag(onDrop) {
         updateGhostAndCheck(pos.x, pos.y, rect.width, rect.height, onDrop, false);
         source.style.opacity = '0';
 
-        // 전역 이벤트 바인딩
         const moveHandler = (me) => move(me);
         const endHandler = (ee) => end(ee);
 
@@ -108,6 +112,7 @@ export function setupDrag(onDrop) {
             if(source.style.opacity !== '0') return;
             const p = getPos(ee);
             const r = ghost.getBoundingClientRect();
+            
             updateGhostAndCheck(p.x, p.y, r.width, r.height, onDrop, true);
 
             ghost.style.display = 'none';
@@ -132,11 +137,19 @@ function clearHighlights() {
 function updateGhostAndCheck(fingerX, fingerY, w, h, onDrop, isDropAction) {
     const ghost = document.getElementById('ghost');
 
+    // 1. 시각적 위치 (손가락 위로 띄움)
     ghost.style.left = (fingerX - w / 2) + 'px';
     ghost.style.top = (fingerY - VISUAL_OFFSET_Y - h / 2) + 'px';
 
-    const logicX = fingerX + LOGIC_SHIFT_X;
-    const logicY = fingerY - VISUAL_OFFSET_Y + LOGIC_SHIFT_Y;
+    // 2. [핵심 수정] 판정 지점을 '현재 칸 크기'에 비례해서 계산
+    const cellSize = getActualCellSize();
+    
+    // 칸 크기에 비례하여 오프셋을 계산하므로 9x9, 7x7 모두 동일한 감각 유지
+    const logicShiftX = cellSize * SHIFT_RATIO_X; 
+    const logicShiftY = cellSize * SHIFT_RATIO_Y;
+
+    const logicX = fingerX + logicShiftX;
+    const logicY = fingerY - VISUAL_OFFSET_Y + logicShiftY;
 
     if (!isDropAction) {
         clearHighlights();
@@ -145,7 +158,6 @@ function updateGhostAndCheck(fingerX, fingerY, w, h, onDrop, isDropAction) {
     const idx = getMathGridIndex(logicX, logicY);
 
     if (idx !== -1) {
-        // [중요] onDrop 내에서 highlight-valid 클래스를 붙여주는 로직이 정상 작동해야 함
         onDrop(idx, !isDropAction);
     }
 }
