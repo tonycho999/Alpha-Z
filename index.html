@@ -9,6 +9,14 @@
     <style>
         .hidden { display: none !important; }
         .best-badge { background: #333; padding: 5px 15px; border-radius: 20px; color: #f1c40f; border: 1px solid #555; }
+        
+        /* Intro Popup Styles */
+        .intro-list { text-align: left; margin: 15px 0; font-size: 0.95rem; color: #ddd; line-height: 1.6; }
+        .intro-list li { margin-bottom: 8px; }
+        .qr-container { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin: 10px 0; }
+        .qr-container img { width: 140px; height: 140px; display: block; }
+        .checkbox-container { display: flex; align-items: center; justify-content: center; margin-top: 15px; gap: 8px; cursor: pointer; color: #aaa; font-size: 0.9rem; }
+        .checkbox-container input { width: 18px; height: 18px; accent-color: var(--accent); }
     </style>
 </head>
 <body class="main-bg">
@@ -83,6 +91,35 @@
          </div>
     </div>
 
+    <div id="intro-popup" class="popup-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:20000; justify-content:center; align-items:center;">
+        <div class="popup-box" style="background:#222; border:1px solid var(--accent); padding:25px; border-radius:20px; text-align:center; max-width: 350px; width: 90%;">
+            <h2 style="color:var(--accent); margin-bottom: 15px;">HOW TO PLAY</h2>
+            
+            <ul class="intro-list">
+                <li>👆 <strong>Drag & Drop</strong> blocks onto the grid.</li>
+                <li>🧩 <strong>Connect 3</strong> or more identical letters.</li>
+                <li>✨ They <strong>Merge</strong> into the next letter (A -> B -> C).</li>
+                <li>🎯 Aim for the highest letter "Z"!</li>
+            </ul>
+
+            <div id="intro-pc" style="display:none;">
+                <div class="qr-container">
+                    <img src="./alpha-z_QR.png" alt="Scan QR Code">
+                </div>
+                <p style="color:#aaa; font-size:0.9rem; margin-top:5px;">Scan to install on Mobile<br>for the best experience!</p>
+            </div>
+
+            <div id="intro-mobile" style="display:none;">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="dont-show-check">
+                    Don't show this again
+                </label>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="closeIntro()">START GAME</button>
+        </div>
+    </div>
+
     <script>
         let isMuted = localStorage.getItem('alpha_muted') === 'true';
         updateMuteIcon();
@@ -105,8 +142,48 @@
             document.body.classList.add('game-mode');
             if (window.initGame) window.initGame(diff);
         };
+
+        // --- New Intro Popup Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const introPopup = document.getElementById('intro-popup');
+            const pcContent = document.getElementById('intro-pc');
+            const mobileContent = document.getElementById('intro-mobile');
+
+            // Logic:
+            // 1. Mobile: Check localStorage. If checked, don't show.
+            // 2. PC: Always show (no localStorage check).
+            
+            if (isMobile) {
+                const dontShow = localStorage.getItem('alpha_intro_done');
+                if (!dontShow) {
+                    pcContent.style.display = 'none';
+                    mobileContent.style.display = 'block';
+                    introPopup.style.display = 'flex';
+                }
+            } else {
+                // PC Mode
+                pcContent.style.display = 'block';
+                mobileContent.style.display = 'none';
+                introPopup.style.display = 'flex';
+            }
+        });
+
+        window.closeIntro = function() {
+            const checkbox = document.getElementById('dont-show-check');
+            const introPopup = document.getElementById('intro-popup');
+            
+            if (window.playBtnSound) window.playBtnSound();
+
+            // Save preference only if checkbox is visible and checked
+            if (checkbox && checkbox.offsetParent !== null && checkbox.checked) {
+                localStorage.setItem('alpha_intro_done', 'true');
+            }
+
+            introPopup.style.display = 'none';
+        }
     </script>
-    <script type="module" src="./js/game-main.js?v=2.58"></script>
+    <script type="module" src="./js/game-main.js?v=2.59"></script>
     <script type="module" src="./js/index.js"></script>
 </body>
 </html>
