@@ -1,70 +1,67 @@
-export const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+// js/game-data.js
 
-export const SHAPES_1 = [ {w:1, h:1, map:[[0,0]]} ];
-export const SHAPES_2 = [ {w:2, h:1, map:[[0,0],[0,1]]}, {w:1, h:2, map:[[0,0],[1,0]]} ];
-export const SHAPES_3 = [
-    { w:3, h:1, map:[[0,0],[0,1],[0,2]] }, { w:1, h:3, map:[[0,0],[1,0],[2,0]] },
-    { w:2, h:2, map:[[0,0],[1,0],[1,1]] }, { w:2, h:2, map:[[0,0],[0,1],[1,0]] },
-    { w:2, h:2, map:[[0,0],[0,1],[1,1]] }, { w:2, h:2, map:[[0,1],[1,1],[1,0]] }
+export const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// [핵심] 블록 모양 데이터 (이게 없으면 게임이 멈춥니다)
+// 1칸짜리 블록
+export const SHAPES_1 = [
+    { id: '1a', map: [[0,0]], w:1, h:1 }
 ];
 
+// 2칸짜리 블록 (가로, 세로)
+export const SHAPES_2 = [
+    { id: '2h', map: [[0,0], [0,1]], w:2, h:1 }, // 가로
+    { id: '2v', map: [[0,0], [1,0]], w:1, h:2 }  // 세로
+];
+
+// 3칸짜리 블록 (일자, ㄱ자)
+export const SHAPES_3 = [
+    { id: '3h', map: [[0,0], [0,1], [0,2]], w:3, h:1 }, // 가로 3
+    { id: '3v', map: [[0,0], [1,0], [2,0]], w:1, h:3 }, // 세로 3
+    { id: '3Lt', map: [[0,0], [0,1], [1,0]], w:2, h:2 }, // ㄱ (top-left)
+    { id: '3Lb', map: [[0,0], [1,0], [1,1]], w:2, h:2 }, // ㄴ (bottom-left)
+    { id: '3Rt', map: [[0,0], [0,1], [1,1]], w:2, h:2 }, // r (top-right)
+    { id: '3Rb', map: [[0,0], [1,0], [0,1]], w:2, h:2 }  // ㅢ (역ㄱ) - 수정됨
+];
+// (필요하다면 4칸, 5칸짜리도 추가 가능)
+
 export const state = {
-    grid: [], gridSize: 7,
-    stars: 0, best: 'A', diff: 'NORMAL',
-    currentBlock: null, nextBlock: null,
-    isLocked: false, isHammerMode: false, isAdmin: false, hasReachedO: false,
-    hasRevived: false, // [추가] 부활 사용 여부
-    isReviveTurn: false // [추가] 부활 직후 특수 턴 여부
+    gridSize: 8,      // 기본값
+    grid: [],         // 보드 상태 (null 또는 'A', 'B'...)
+    
+    hand: [null, null, null], // 하단 3개 블록
+    dragIndex: -1,    // 현재 드래그 중인 핸드 슬롯 번호
+    
+    score: 0,
+    stars: 0,
+    best: 'A',
+    
+    isLocked: false,     // 애니메이션 중 조작 잠금
+    isReviveTurn: false, // 부활 모드인지
+    hasRevived: false,   // 부활 사용 여부
+    hasReachedO: false,  // O 달성 여부
+    
+    isAdmin: false,
+    diff: 'NORMAL',
+    
+    isHammerMode: false,
+    nextBlock: null // (구버전 호환용, 안씀)
 };
 
-export const AdManager = {
-    canWatchAd() {
-        if(state.isAdmin) return { canWatch: true }; 
-        const today = new Date().toDateString();
-        const lastDate = localStorage.getItem('alpha_ad_date');
-        let count = parseInt(localStorage.getItem('alpha_ad_count')) || 0;
+// 난이도별 그리드 사이즈 설정
+export function initGridSize(diff) {
+    if(diff === 'EASY') state.gridSize = 9;
+    else if(diff === 'NORMAL') state.gridSize = 8;
+    else state.gridSize = 7; // HARD, HELL
 
-        if (lastDate !== today) { count = 0; localStorage.setItem('alpha_ad_count', count); }
-        if (count >= 20) return { canWatch: false, reason: 'Daily Limit Reached' };
-
-        const lastTime = parseInt(localStorage.getItem('alpha_ad_time')) || 0;
-        const elapsed = Date.now() - lastTime;
-        const cooldown = 10 * 60 * 1000; 
-
-        if (elapsed < cooldown) return { canWatch: false, reason: 'cooldown', remaining: cooldown - elapsed };
-        return { canWatch: true };
-    },
-    recordAdWatch() {
-        if(state.isAdmin) return;
-        const today = new Date().toDateString();
-        let count = parseInt(localStorage.getItem('alpha_ad_count')) || 0;
-        if (localStorage.getItem('alpha_ad_date') !== today) count = 0;
-
-        localStorage.setItem('alpha_ad_date', today);
-        localStorage.setItem('alpha_ad_count', count + 1);
-        localStorage.setItem('alpha_ad_time', Date.now());
-    }
-};
-
-export function checkAdmin(username) {
-    const admins = ['tony', 'min', 'sara', 'hyun', 'madhel'];
-    if(username && admins.includes(username.toLowerCase())) {
-        localStorage.setItem('alpha_admin', 'true');
-        localStorage.setItem('alpha_stars', '10000');
-        state.stars = 10000; state.isAdmin = true;
-        return true;
-    }
-    return false;
+    state.grid = new Array(state.gridSize * state.gridSize).fill(null);
 }
 
-export function initGridSize(diff) {
-    if (diff === 'EASY') state.gridSize = 9;
-    else if (diff === 'NORMAL') state.gridSize = 8;
-    else state.gridSize = 7; 
-    
-    state.grid = Array(state.gridSize * state.gridSize).fill(null);
-    document.documentElement.style.setProperty('--grid-size', state.gridSize);
-    state.isAdmin = localStorage.getItem('alpha_admin') === 'true';
-    state.hasRevived = false; // 초기화
-    state.isReviveTurn = false; // 초기화
+export function checkAdmin(name) {
+    if(name === 'tony' || name === 'admin') { 
+        state.isAdmin = true; 
+        return true; 
+    }
+    state.isAdmin = false; 
+    return false;
 }
