@@ -68,7 +68,38 @@
             <button class="btn btn-primary" style="width:100%; margin-top: 15px;" onclick="closeTute()">GAME START</button>
         </div>
     </div>
+    <script>
+        // 1. 서비스 워커 등록 (PWA 필수)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered!', reg))
+                    .catch(err => console.log('SW failed', err));
+            });
+        }
 
+        // 2. 설치 버튼 로직
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // 설치 가능한 상태가 되면 버튼을 보여줌
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response: ${outcome}`);
+            deferredPrompt = null;
+            // 설치 후 버튼 숨기기 (선택 사항)
+            // installBtn.style.display = 'none'; 
+        });
+    </script>
+    
     <script type="module" src="./js/index.js"></script>
 </body>
 </html>
