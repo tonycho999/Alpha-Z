@@ -20,17 +20,42 @@ export const state = {
     isAdmin: false, diff: 'NORMAL', isHammerMode: false, nextBlock: null 
 };
 
-// [광고 관리자]
+// [관리자 체크]
+export function checkAdmin(username) {
+    const admins = ['tony', 'min', 'sara', 'hyun', 'madhel'];
+    
+    if(username && admins.includes(username.toLowerCase())) {
+        localStorage.setItem('alpha_admin', 'true');
+        // 별 10000개 지급 (최초 1회만 하거나 매번 하거나 선택 가능, 여기선 매번 갱신)
+        localStorage.setItem('alpha_stars', '10000');
+        state.stars = 10000; 
+        state.isAdmin = true;
+        return true;
+    }
+    return false;
+}
+
+// [광고 관리자 - 핵심 수정]
 export const AdManager = {
+    // 광고 시청 가능 여부
     canWatchAd: function() { return true; },
 
-    // 보상형 광고 (팝업용)
+    // 보상형 광고 로직
     showRewardAd: function(onSuccess) {
+        // 1. 관리자 여부 확인
+        const isAdminLocal = localStorage.getItem('alpha_admin') === 'true';
+        
+        if(state.isAdmin || isAdminLocal) {
+            // [관리자] 광고 창 띄우지 않음! 바로 성공 처리.
+            alert("👑 Admin Pass: 광고 없이 보상을 획득합니다.");
+            onSuccess(); 
+            return;
+        }
+
+        // 2. 일반 유저
         if(confirm("📺 Watch Ad to get reward?")) {
-            // [고정] 사용자님 광고 링크
             window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
-            
-            // 3초 후 보상 지급
+            // 3초 후 보상 지급 시뮬레이션
             setTimeout(() => {
                 onSuccess();
             }, 3000);
@@ -43,9 +68,4 @@ export function initGridSize(diff) {
     else if(diff === 'NORMAL') state.gridSize = 8;
     else state.gridSize = 7; 
     state.grid = new Array(state.gridSize * state.gridSize).fill(null);
-}
-
-export function checkAdmin(name) {
-    if(name === 'tony' || name === 'admin') { state.isAdmin = true; return true; }
-    state.isAdmin = false; return false;
 }
