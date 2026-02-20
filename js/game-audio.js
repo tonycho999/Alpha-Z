@@ -1,5 +1,3 @@
-// js/game-audio.js
-
 export const AudioMgr = {
     isMuted: false,
     sounds: {},
@@ -7,16 +5,15 @@ export const AudioMgr = {
     init() {
         const fileNames = ['drop', 'merge', 'over'];
         
-        // [사용자님 요청 코드 적용] 가장 단순하고 확실한 방법
         fileNames.forEach(name => {
+            // [경로 설정] assets 폴더가 index.html과 같은 위치에 있어야 함
             const audio = new Audio(`assets/${name}.mp3`);
-            audio.volume = 0.5; // 볼륨 50%
-            
-            // 로드 에러 확인용 (경로가 틀리면 콘솔에 뜸)
+            audio.volume = 0.5;
+
             audio.addEventListener('error', (e) => {
                 console.error(`❌ Audio load failed: assets/${name}.mp3`, e);
             });
-            
+
             this.sounds[name] = audio;
         });
 
@@ -30,13 +27,32 @@ export const AudioMgr = {
         this.updateIcon();
     },
 
-    // [버튼 소리 해결] 화면의 아무 곳이나 클릭하면 체크
+    // [핵심 해결] 이 함수가 없어서 에러가 났었습니다. 추가해주세요!
+    resumeContext() {
+        // 브라우저의 오디오 정책을 풀기 위해 빈 소리를 한 번 재생 시도
+        try {
+            if (this.sounds['drop']) {
+                const dummy = this.sounds['drop'];
+                const originalVol = dummy.volume;
+                
+                dummy.volume = 0; // 소리 안 나게
+                const p = dummy.play();
+                if (p !== undefined) {
+                    p.then(() => {
+                        dummy.pause();
+                        dummy.currentTime = 0;
+                        dummy.volume = originalVol;
+                    }).catch(() => {});
+                }
+            }
+        } catch(e) {
+            console.log("Audio resume skipped");
+        }
+    },
+
     setupGlobalClicks() {
         document.addEventListener('click', (e) => {
-            // 클릭한 요소가 버튼(.btn), 링크(a), 혹은 핸드 슬롯인지 확인
-            const target = e.target.closest('.btn, button, a, .hand-slot');
-            
-            // 사운드 토글 버튼이 아니고, 뭔가 클릭 가능한 요소라면 소리 재생
+            const target = e.target.closest('button, .btn, a, .hand-slot');
             if (target && target.id !== 'btn-sound') {
                 this.play('click');
             }
@@ -50,15 +66,11 @@ export const AudioMgr = {
         if (!audio) return;
 
         try {
-            // [단순화] 복제하지 않고 기존 오디오를 0초로 돌려서 재생
-            // 연속 클릭 시 소리가 씹히는 걸 방지하고 성능도 더 좋음
             audio.currentTime = 0;
-            
             const playPromise = audio.play();
             if (playPromise !== undefined) {
                 playPromise.catch(error => {
-                    // 브라우저가 막은 경우 (아직 화면 터치 안함) -> 에러 아님, 무시
-                    // console.log("Autoplay prevented");
+                    // console.log("Play blocked (interaction needed)");
                 });
             }
         } catch (e) {
