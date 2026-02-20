@@ -1,24 +1,22 @@
 import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
-import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { db } from "./js/firebase-config.js";
+// Firestore 함수들
+import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, where, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// [중요] 이 파일이 서버에 없으면 "MIME type" 에러가 납니다. 업로드를 꼭 확인하세요.
+import { db } from "./firebase-config.js";
 
 // [수정 2] 난이도별 자동 승급(삭제) 규칙
 export function getMinIdx() {
     const bestIdx = ALPHABET.indexOf(state.best);
-    
-    // F(Index 5) 미만이면 삭제 없음
     if (bestIdx < 5) return 0; 
 
-    // 공식: (최고등급인덱스 - 3) / 2
     let calcMin = Math.floor((bestIdx - 3) / 2);
 
-    // [난이도별 상한선 제한]
     let limitChar = 'T';
     if (state.diff === 'HELL') limitChar = 'N';
     else if (state.diff === 'NORMAL' || state.diff === 'HARD') limitChar = 'R';
 
     const maxAllowedMin = Math.floor((ALPHABET.indexOf(limitChar) - 3) / 2);
-    
     return Math.min(calcMin, maxAllowedMin);
 }
 
@@ -93,43 +91,60 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
+// [핵심] DB 저장 함수 (Firestore 설정에 맞춤)
 export async function saveScoreToDB(username, isNewUser = false) {
-    // [DB 연결 체크]
+    // 1. DB 연결 확인 (가장 중요한 부분)
     if (!db) {
-        console.error("Firebase DB is not connected.");
-        return { success: false, msg: "DB Connection Failed (Check firebase-config.js)" };
+        console.error("❌ Firebase Config Error: db 객체가 로드되지 않았습니다.");
+        return { success: false, msg: "Server File Missing: firebase-config.js" };
     }
 
     if (!username || username.trim() === "") return { success: false, msg: "Please enter a name." };
+    
     const docId = username.trim(); 
     try {
+        // 컬렉션 참조 (leaderboard)
+        const collectionRef = collection(db, "leaderboard");
+        
+        // 데이터 준비 (스크린샷 필드명 준수)
+        const charIdx = ALPHABET.indexOf(state.best);
+        const newScoreData = {
+            username: docId,
+            bestChar: state.best,     // 예: "G"
+            difficulty: state.diff,   // 예: "HELL"
+            scoreIndex: charIdx,      // 예: 6 (정렬용)
+            stars: state.stars,       // 예: 10000
+            timestamp: serverTimestamp(),
+            platform: 'web'
+        };
+
+        // 문서 추가 (addDoc 사용 - ID 자동생성 방지하고 이름으로 하려면 setDoc, 여기선 setDoc 유지)
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
+
+        // 신규 유저 중복 체크
+        if (isNewUser && docSnap.exists()) {
+            return { success: false, msg: "🚫 Username already taken." };
+        }
         
-        // 신규 유저인데 이미 닉네임이 있는 경우
-        if (isNewUser && docSnap.exists()) return { success: false, msg: "🚫 Username already taken." };
-        
-        const newScoreIndex = ALPHABET.indexOf(state.best);
-        const newScoreData = {
-            username: docId, bestChar: state.best, scoreIndex: newScoreIndex,
-            difficulty: state.diff, stars: state.stars, timestamp: serverTimestamp()
-        };
-        
-        // 기존 유저 점수 갱신 로직
+        // 기존 유저 점수 비교
         if (docSnap.exists()) {
             const existingData = docSnap.data();
-            // 기존 점수가 더 높으면 갱신 안 함 (서버 비용 절약)
-            if (newScoreIndex < existingData.scoreIndex) {
-                 return { success: true, msg: "Score preserved (Existing score is higher)." };
+            // 점수(scoreIndex)가 더 낮으면 갱신 안 함
+            if (charIdx < existingData.scoreIndex) {
+                 return { success: true, msg: "Score preserved (Higher score exists)." };
             }
         }
         
+        // 저장 실행
         await setDoc(docRef, newScoreData);
+        
         localStorage.setItem('alpha_username', docId);
+        console.log("✅ 저장 완료:", docId);
         return { success: true };
+
     } catch (e) { 
-        console.error("DB Save Error:", e);
-        // 에러 메시지를 상세하게 반환하도록 수정
+        console.error("🔥 DB Save Error:", e);
         return { success: false, msg: e.message || "Error saving score." }; 
     }
 }
