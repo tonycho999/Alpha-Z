@@ -1,8 +1,8 @@
 import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
-import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// [수정] collection, query, orderBy, limit, getDocs 추가됨
+import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
-// ... (getMinIdx, createRandomBlock, canPlaceAnywhere, getCluster 함수는 기존 유지) ...
 export function getMinIdx() {
     let limitIdx = ALPHABET.indexOf('O');
     if(state.diff === 'EASY') limitIdx = ALPHABET.indexOf('S');
@@ -69,7 +69,7 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
-// [수정됨] isNewUser 파라미터 추가하여 신규 가입 시 중복 체크 수행
+// 점수 저장 함수 (중복 체크 포함)
 export async function saveScoreToDB(username, isNewUser = false) {
     if (!username || username.trim() === "") return { success: false, msg: "Please enter a name." };
     
@@ -79,7 +79,7 @@ export async function saveScoreToDB(username, isNewUser = false) {
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
 
-        // [핵심 로직] 신규 등록인데 이미 문서가 존재하면 -> 중복 에러 처리
+        // 신규 등록인데 이미 문서가 존재하면 -> 중복 에러 처리
         if (isNewUser && docSnap.exists()) {
             return { success: false, msg: "🚫 Username already taken. Please choose another." };
         }
@@ -95,24 +95,48 @@ export async function saveScoreToDB(username, isNewUser = false) {
             timestamp: serverTimestamp()
         };
 
-        // 기존 데이터가 있다면 점수 비교 (기존 유저 업데이트 시)
+        // 기존 데이터가 있다면 점수 비교
         if (docSnap.exists()) {
             const existingData = docSnap.data();
-            // 기존 점수가 더 높거나 같으면 덮어쓰지 않음
             if (newScoreIndex <= existingData.scoreIndex) {
                 localStorage.setItem('alpha_username', docId);
                 return { success: true, msg: "Score preserved (Higher score exists)." };
             }
         }
 
-        // 문서 생성 또는 점수 갱신
         await setDoc(docRef, newScoreData);
-        
         localStorage.setItem('alpha_username', docId);
         return { success: true };
 
     } catch (e) { 
         console.error("Save Error:", e);
         return { success: false, msg: "Error saving score." }; 
+    }
+}
+
+// [추가됨] 리더보드 데이터 가져오기 함수 (leaderboard.html에서 사용)
+export async function getLeaderboardData() {
+    try {
+        const leaderboardRef = collection(db, "leaderboard");
+        
+        // 정렬: 점수(알파벳) 높은 순 -> 별 많은 순 -> 50명 제한
+        const q = query(
+            leaderboardRef, 
+            orderBy("scoreIndex", "desc"), 
+            orderBy("stars", "desc"), 
+            limit(50)
+        );
+
+        const querySnapshot = await getDocs(q);
+        const ranks = [];
+        
+        querySnapshot.forEach((doc) => {
+            ranks.push(doc.data());
+        });
+
+        return ranks;
+    } catch (e) {
+        console.error("Error fetching leaderboard:", e);
+        return [];
     }
 }
