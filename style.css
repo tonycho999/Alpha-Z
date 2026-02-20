@@ -1,6 +1,7 @@
 :root {
     --bg-color: #121212; --panel-bg: #1e1e1e;
-    --gap: 5px; --accent: #f1c40f; --text-color: #ffffff;
+    --gap: 6px; 
+    --accent: #f1c40f; --text-color: #ffffff;
     --grid-size: 7;
 }
 * { box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -9,81 +10,102 @@ body {
     margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
     display: flex; flex-direction: column; align-items: center;
-    justify-content: center; min-height: 100vh; overflow-x: hidden; overflow-y: auto;
+    /* [복구] 기본은 다시 중앙 정렬 */
+    justify-content: center; 
+    min-height: 100vh; overflow-x: hidden; overflow-y: auto;
 }
-body.main-bg { background: linear-gradient(135deg, #0a3a1f, #121212); }
+body.main-bg { background: #121212; }
 
 .screen { 
     display: flex; flex-direction: column; align-items: center; 
-    justify-content: center; width: 100%; min-height: 100vh; 
+    /* [복구] 기본은 다시 중앙 정렬 */
+    justify-content: center; 
+    width: 100%; min-height: 100vh; 
     padding: 10px; box-sizing: border-box;
 }
+
+/* ========================================= */
+/* [신규] 게임 화면 전용 스타일 (상단 정렬) */
+/* ========================================= */
+body.game-mode {
+    justify-content: flex-start; /* 위로 붙이기 */
+    padding-top: 10px;
+}
+body.game-mode .screen {
+    justify-content: flex-start; /* 위로 붙이기 */
+}
+/* ========================================= */
 
 .admin-no-ad { display: none !important; }
 
 .btn {
-    padding: 10px; margin: 3px; background: #333; color: white; border: 2px solid #555;
-    border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center;
-    display: flex; justify-content: center; align-items: center; gap: 5px; font-size: 0.9rem;
-    transition: all 0.2s;
+    padding: 12px; margin: 4px; background: #333; color: white; border: none;
+    border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center;
+    display: flex; justify-content: center; align-items: center; gap: 5px; font-size: 0.95rem;
+    transition: transform 0.1s, background 0.2s;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
 }
-.btn:active { transform: scale(0.95); }
-.btn-primary { background: var(--accent); color: #000; border: none; }
-.btn:disabled, .btn-disabled { background: #222 !important; color: #666 !important; border-color: #333 !important; cursor: not-allowed; transform: none !important; }
+.btn:active { transform: translateY(4px); box-shadow: none; }
+.btn-primary { background: var(--accent); color: #000; }
+.btn:disabled, .btn-disabled { background: #222 !important; color: #555 !important; box-shadow: none !important; cursor: not-allowed; transform: none !important; }
 
-.header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; padding: 10px 15px; background: #222; border-radius: 12px; margin-bottom: 10px; }
-.stat span { display: block; font-size: 11px; color: #888; text-align: center; }
-.stat strong { display: block; font-size: 18px; color: var(--accent); text-align: center; }
+.header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; padding: 10px 15px; background: #222; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+.stat span { display: block; font-size: 11px; color: #888; text-align: center; margin-bottom: 2px; }
+.stat strong { display: block; font-size: 20px; color: var(--accent); text-align: center; }
 
 .grid-container {
-    width: 92vw; max-width: 480px; aspect-ratio: 1/1;
-    background: #222; border-radius: 12px; padding: 6px;
+    width: 92vw; max-width: 450px; aspect-ratio: 1/1;
+    background: #1a1a1a; border-radius: 16px; padding: 8px;
     display: grid; grid-template-columns: repeat(var(--grid-size), 1fr);
     grid-template-rows: repeat(var(--grid-size), 1fr);
-    gap: var(--gap); margin-bottom: 10px; position: relative;
-}
-.cell {
-    width: 100%; height: 100%; background: #2d2d2d; border-radius: 6px;
-    display: flex; justify-content: center; align-items: center;
-    font-size: 1.2rem; font-weight: bold; z-index: 1;
+    gap: var(--gap); margin-bottom: 20px; position: relative;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
 }
 
-.game-area { display: flex; gap: 10px; margin-bottom: 10px; width: 100%; max-width: 500px; height: 95px; }
-.next-zone { flex: 1; background: #222; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #444; }
-.drag-zone { flex: 3; background: var(--panel-bg); border: 2px dashed #444; border-radius: 10px; display: flex; justify-content: center; align-items: center; }
+.cell {
+    width: 100%; height: 100%; background: #282828; border-radius: 8px;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 1.4rem; font-weight: 800; z-index: 1;
+    box-shadow: inset 0px -4px 0px rgba(0,0,0,0.2), inset 0px 2px 0px rgba(255,255,255,0.1);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.game-area { display: flex; gap: 15px; margin-bottom: 20px; width: 100%; max-width: 500px; height: 110px; }
+.next-zone { flex: 1; background: #222; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+.drag-zone { flex: 2.5; background: transparent; display: flex; justify-content: center; align-items: center; }
 
 .shape-container { display: grid; gap: var(--gap); pointer-events: none; }
-#source-block { pointer-events: auto; cursor: grab; }
-#ghost { position: fixed; pointer-events: none !important; z-index: 9999; display: none; gap: var(--gap); opacity: 0.8; transform: translate(-50%, calc(-50% - 60px)); }
+#source-block { pointer-events: auto; cursor: grab; transition: transform 0.1s; }
+#source-block:active { transform: scale(0.95); }
 
-.highlight-valid { background: rgba(46, 204, 113, 0.4) !important; border: 2px solid #2ecc71; }
-.hammer-mode { border: 2px solid #e74c3c !important; animation: pulse 1s infinite; }
-.merging-source { transition: transform 0.3s ease, opacity 0.3s ease; }
-.pop-effect { animation: pop 0.3s ease-out; }
-@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-
-/* 개선 및 추가된 컬러 팔레트 (어두운 배경 완전 제거) */
-.b-A { background: #eeeeee; color: #222; } .b-B { background: #81c784; color: #1b5e20; } .b-C { background: #64b5f6; color: #0d47a1; }
-.b-D { background: #ba68c8; color: white; } .b-E { background: #ff8a65; color: white; } .b-F { background: #fff176; color: #d84315; }
-.b-G { background: #4dd0e1; color: #006064; } .b-H { background: #f06292; color: white; } 
-.b-I { background: #aed581; color: #33691e; } .b-J { background: #7986cb; color: white; } .b-K { background: #e57373; color: white; }
-.b-L { background: #4db6ac; color: white; } .b-M { background: #dce775; color: #827717; } .b-N { background: #9575cd; color: white; }
-.b-O { background: #f0f4c3; color: #827717; } .b-P { background: #4fc3f7; color: #01579b; } .b-Q { background: #81c784; color: #1b5e20; }
-.b-R { background: #ffb74d; color: #e65100; } .b-S { background: #f48fb1; color: #880e4f; } .b-T { background: #80cbc4; color: #004d40; }
-.b-Z { background: linear-gradient(45deg, #f1c40f, #e67e22); color: white; animation: glow 1s infinite alternate; }
-
-.popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; }
-.popup-box { 
-    background: #222; border: 1px solid #444; padding: 25px; 
-    border-radius: 15px; text-align: center; width: 100%; max-width: 350px; 
-    /* 아래 두 줄 추가: 팝업이 길어지면 스크롤 생성 */
-    max-height: 90vh; 
-    overflow-y: auto; 
+#ghost { 
+    position: fixed; pointer-events: none !important; z-index: 9999; 
+    display: none; gap: var(--gap); opacity: 0.9; 
+    transform: scale(1.1);
+    filter: drop-shadow(0px 15px 15px rgba(0,0,0,0.4));
 }
 
-/* Leaderboard */
-.rank-tabs { display: flex; width: 100%; max-width: 400px; gap: 5px; margin-bottom: 15px; }
-.tab-btn { flex: 1; padding: 10px; font-size: 0.8rem; background: #333; border: none; color: #888; border-radius: 5px; cursor: pointer; }
-.tab-btn.active { background: var(--accent); color: #000; font-weight: bold; }
-.leaderboard-list { width: 100%; max-width: 400px; max-height: 50vh; overflow-y: auto; background: #1a1a1a; border: 1px solid #444; border-radius: 10px; padding: 10px; }
-.rank-item { display: flex; justify-content: space-between; padding: 12px 10px; border-bottom: 1px solid #333; }
+.highlight-valid { background: rgba(255, 255, 255, 0.15) !important; border: 2px solid rgba(255,255,255,0.5); border-radius: 8px; }
+.hammer-mode { border: 2px solid #e74c3c !important; animation: pulse 1s infinite; }
+.pop-effect { animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+/* 블록 컬러 */
+.b-A { background: #FF5252; color: white; } 
+.b-B { background: #448AFF; color: white; } 
+.b-C { background: #69F0AE; color: #004d40; }
+.b-D { background: #FFAB40; color: white; } 
+.b-E { background: #E040FB; color: white; } 
+.b-F { background: #40C4FF; color: white; }
+.b-G { background: #FFD740; color: #3e2723; } 
+.b-H { background: #FF4081; color: white; } 
+.b-I { background: #536DFE; color: white; } 
+.b-J { background: #1DE9B6; color: #004d40; } 
+.b-K { background: #7C4DFF; color: white; }
+.b-L { background: #FF6E40; color: white; } 
+.b-M { background: #CDDC39; color: #33691e; } 
+.b-N { background: #607D8B; color: white; }
+.b-Z { background: linear-gradient(135deg, #FFD700, #FF8F00); color: white; box-shadow: 0 0 15px #FFD700; animation: glow 1s infinite alternate; }
+
+.popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; }
+.popup-box { background: #222; border: 1px solid #444; padding: 25px; border-radius: 20px; text-align: center; width: 100%; max-width: 350px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
