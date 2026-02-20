@@ -5,19 +5,28 @@ export const AudioMgr = {
     sounds: {},
 
     init() {
+        // [중요] 파일명 대소문자까지 정확해야 합니다!
         const fileNames = ['drop', 'merge', 'over'];
         
         fileNames.forEach(name => {
-            const audio = new Audio(`assets/${name}.mp3`);
-            // 로드 실패 시 에러 로그
-            audio.addEventListener('error', (e) => {
-                console.error(`❌ Audio load failed: assets/${name}.mp3`, e);
+            // assets 폴더가 index.html과 같은 위치에 있어야 함
+            const path = `assets/${name}.mp3`;
+            const audio = new Audio(path);
+            
+            // 로드 성공 시 로그
+            audio.addEventListener('canplaythrough', () => {
+                // console.log(`✅ Loaded: ${path}`);
             });
+
+            // 로드 실패 시 로그 (이게 뜨면 파일 경로 문제)
+            audio.addEventListener('error', (e) => {
+                console.error(`❌ FILE MISSING: ${path} (Check folder name & file name)`);
+            });
+
             this.sounds[name] = audio;
         });
 
-        // [안전 장치] 'drop' 소리가 로드되면 'click'에도 할당
-        // drop 소리가 없으면 빈 Audio 객체라도 넣어서 에러 방지
+        // drop 소리가 없으면 click 소리도 안 남 -> 안전장치
         this.sounds['click'] = this.sounds['drop'] || new Audio();
 
         const savedMute = localStorage.getItem('alpha_muted');
@@ -27,47 +36,37 @@ export const AudioMgr = {
         this.updateIcon();
     },
 
-    // [핵심 수정] 캡처링(Capture) 모드로 클릭 감지
     setupGlobalClicks() {
-        // 세 번째 인자 'true'가 핵심입니다. (이벤트 캡처링)
-        // 다른 스크립트가 클릭 이벤트를 막아도, 여기서 먼저 감지하고 소리를 냅니다.
         document.body.addEventListener('click', (e) => {
-            // 클릭된 요소가 버튼(.btn, button, a) 혹은 그 내부 요소인지 확인
-            const target = e.target.closest('button, .btn, a, .cell');
-            
-            // 1. 타겟이 존재하고
-            // 2. 사운드 토글 버튼이 아니고 (걔는 별도 소리 없음)
-            // 3. 게임 보드판의 셀(cell)이 아니면 (셀은 drop 소리가 따로 나므로 중복 방지)
-            if (target && target.id !== 'btn-sound' && !target.classList.contains('cell')) {
-                // console.log('🖱️ Button clicked!', target); // 디버깅용 로그
+            const target = e.target.closest('button, .btn, a, .hand-slot');
+            if (target && target.id !== 'btn-sound') {
                 this.play('click');
             }
-        }, true); 
+        }, true);
     },
 
     play(name) {
         if (this.isMuted) return;
         
-        const originalSound = this.sounds[name];
-        if (!originalSound) {
-            console.warn(`⚠️ Sound not found: ${name}`);
+        const sound = this.sounds[name];
+        if (!sound) {
+            // 파일 자체가 로드 안 된 경우
             return;
         }
 
-        // 소리 복제 후 재생 (연속 클릭 대응)
         try {
-            const soundClone = originalSound.cloneNode(true);
-            soundClone.volume = 0.5;
+            // 소리가 겹쳐도 나게 하기 위해 복제
+            const clone = sound.cloneNode(true);
+            clone.volume = 0.5;
             
-            const playPromise = soundClone.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    // 브라우저 정책으로 막힌 경우 (화면 터치 전)
-                    // console.log('🔇 Play blocked: User interaction needed.');
+            const promise = clone.play();
+            if (promise !== undefined) {
+                promise.catch(error => {
+                    // 브라우저가 막은 경우는 조용히 무시 (화면 터치 전)
                 });
             }
         } catch (e) {
-            console.error("Audio play error:", e);
+            console.error("Audio Play Error:", e);
         }
     },
 
@@ -75,7 +74,6 @@ export const AudioMgr = {
         this.isMuted = !this.isMuted;
         localStorage.setItem('alpha_muted', this.isMuted);
         this.updateIcon();
-        // 음소거 해제 시 피드백 소리 재생
         if (!this.isMuted) this.play('click');
     },
 
