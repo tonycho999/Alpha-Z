@@ -1,5 +1,4 @@
 import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
-// [수정 1] where 추가됨
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
@@ -95,11 +94,19 @@ export function getCluster(startIdx) {
 }
 
 export async function saveScoreToDB(username, isNewUser = false) {
+    // [DB 연결 체크]
+    if (!db) {
+        console.error("Firebase DB is not connected.");
+        return { success: false, msg: "DB Connection Failed (Check firebase-config.js)" };
+    }
+
     if (!username || username.trim() === "") return { success: false, msg: "Please enter a name." };
     const docId = username.trim(); 
     try {
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
+        
+        // 신규 유저인데 이미 닉네임이 있는 경우
         if (isNewUser && docSnap.exists()) return { success: false, msg: "🚫 Username already taken." };
         
         const newScoreIndex = ALPHABET.indexOf(state.best);
@@ -107,27 +114,32 @@ export async function saveScoreToDB(username, isNewUser = false) {
             username: docId, bestChar: state.best, scoreIndex: newScoreIndex,
             difficulty: state.diff, stars: state.stars, timestamp: serverTimestamp()
         };
+        
+        // 기존 유저 점수 갱신 로직
         if (docSnap.exists()) {
             const existingData = docSnap.data();
             // 기존 점수가 더 높으면 갱신 안 함 (서버 비용 절약)
             if (newScoreIndex < existingData.scoreIndex) {
-                 return { success: true, msg: "Score preserved." };
+                 return { success: true, msg: "Score preserved (Existing score is higher)." };
             }
         }
+        
         await setDoc(docRef, newScoreData);
         localStorage.setItem('alpha_username', docId);
         return { success: true };
-    } catch (e) { return { success: false, msg: "Error saving score." }; }
+    } catch (e) { 
+        console.error("DB Save Error:", e);
+        // 에러 메시지를 상세하게 반환하도록 수정
+        return { success: false, msg: e.message || "Error saving score." }; 
+    }
 }
 
 // [수정 4] 난이도별 랭킹 가져오기
 export async function getLeaderboardData(targetDiff) {
+    if (!db) return [];
     try {
         const leaderboardRef = collection(db, "leaderboard");
         
-        // 1. targetDiff(난이도)와 일치하는 데이터만 가져옴
-        // 2. 점수(scoreIndex) 내림차순
-        // 3. 별(stars) 내림차순
         const q = query(
             leaderboardRef, 
             where("difficulty", "==", targetDiff), 
@@ -142,7 +154,6 @@ export async function getLeaderboardData(targetDiff) {
         return ranks;
     } catch (e) { 
         console.error("Error fetching leaderboard:", e);
-        // 에러 발생 시(색인 없음 등) 빈 배열 반환
         return []; 
     }
 }
