@@ -8,143 +8,127 @@
     <link rel="icon" type="image/png" href="./favicon.png">
     <link rel="apple-touch-icon" href="./icon-180.png">
     <link rel="stylesheet" href="./style.css">
-    <link rel="manifest" href="./manifest.json">
-
+    
     <style>
-        #hand-container {
-            display: flex; justify-content: center; gap: 10px; margin: 20px auto;
-            width: 100%; max-width: 400px; min-height: 90px; align-items: center;
-        }
-        .hand-slot {
-            width: 33%; height: 90px; display: flex; justify-content: center; align-items: center;
-            background: rgba(255, 255, 255, 0.05); border-radius: 10px; border: 1px dashed rgba(255, 255, 255, 0.1);
-        }
         .hidden { display: none !important; }
+        /* 최고 기록 표시 디자인 */
+        .best-badge {
+            background: #333; padding: 5px 15px; border-radius: 20px;
+            color: #f1c40f; font-weight: bold; border: 1px solid #555;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
     </style>
 </head>
 <body class="main-bg">
     <div class="screen">
-        <button id="install-btn" class="btn btn-primary" style="display:none; width:250px; margin-bottom: 20px;">📱 Install App</button>
-
         <div style="position: relative; width: 100%; max-width: 500px; text-align: center;">
-            <h1 style="font-size: 3.5rem; color: var(--accent); margin-bottom: 20px; text-shadow: 0 0 20px rgba(241,196,15,0.4);">Alpha-Z</h1>
-            <button id="btn-sound" onclick="toggleSound()" style="position: absolute; top: 10px; right: 20px; font-size: 1.5rem; background: none; border: none; cursor: pointer; z-index: 10; color: white;">🔊</button>
-        </div>
-
-        <div style="margin-bottom:20px; color:var(--accent); font-weight:bold; font-size:1.2rem;">
-            MY STARS: <span id="idx-stars">0</span>
+            <h1 style="font-size: 3.5rem; color: var(--accent); margin-bottom: 10px; text-shadow: 0 0 20px rgba(241,196,15,0.4);">Alpha-Z</h1>
+            <button id="btn-sound" onclick="toggleMute()" style="position: absolute; top: 10px; right: 20px; font-size: 1.5rem; background: none; border: none; cursor: pointer; z-index: 10; color: white;">🔊</button>
         </div>
 
         <div id="start-screen">
-            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; max-width: 300px; margin: 0 auto;">
-                <button class="btn btn-primary" style="width:100%;" onclick="startGame('EASY')">EASY (9x9)</button>
-                <button class="btn btn-primary" style="width:100%;" onclick="startGame('NORMAL')">NORMAL (8x8)</button>
-                <button class="btn btn-primary" style="width:100%;" onclick="startGame('HARD')">HARD (7x7)</button>
-                <button class="btn btn-primary" style="width:100%;" onclick="startGame('HELL')">HELL (7x7)</button>
+            <div style="margin-bottom:20px; color:var(--accent); font-weight:bold; font-size:1.2rem;">
+                MY STARS: <span id="idx-stars">0</span>
             </div>
-            <div style="display:flex; gap:10px; margin-top:20px; justify-content:center; width:100%; max-width:300px; margin-left:auto; margin-right:auto;">
-                <button class="btn" style="flex:1; background:#444;" onclick="location.href='shop.html'">🛒 SHOP</button>
-                <button class="btn" style="flex:1; background:#444;" onclick="location.href='leaderboard.html'">🏆 RANK</button>
+            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; max-width: 300px; margin: 0 auto;">
+                <button class="btn btn-primary" style="width:100%;" onclick="playBtnSound(); startGame('EASY')">EASY (9x9)</button>
+                <button class="btn btn-primary" style="width:100%;" onclick="playBtnSound(); startGame('NORMAL')">NORMAL (8x8)</button>
+                <button class="btn btn-primary" style="width:100%;" onclick="playBtnSound(); startGame('HARD')">HARD (7x7)</button>
+                <button class="btn btn-primary" style="width:100%;" onclick="playBtnSound(); startGame('HELL')">HELL (7x7)</button>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px; justify-content:center; width:100%; max-width:300px; margin: 0 auto;">
+                <button class="btn" style="flex:1; background:#444;" onclick="playBtnSound(); location.href='shop.html'">🛒 SHOP</button>
+                <button class="btn" style="flex:1; background:#444;" onclick="playBtnSound(); location.href='leaderboard.html'">🏆 RANK</button>
             </div>
         </div>
 
         <div id="game-screen" class="hidden">
-            <div style="text-align:right; margin-bottom:5px;">
-                <button class="btn" style="font-size:0.8rem; padding:5px 10px; background:#555;" onclick="location.reload()">⬅ MENU</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; width:95%; max-width:400px; margin-bottom:10px;">
+                <div class="best-badge">BEST: <span id="game-best-char">A</span></div>
+                <button class="btn" style="font-size:0.8rem; padding:5px 10px; background:#555;" onclick="playBtnSound(); location.reload()">⬅ MENU</button>
             </div>
+
             <div id="grid-container" class="grid-container"></div>
             <div id="ghost" class="ghost-block"></div>
-            <div id="hand-container">
-                <div id="hand-0" class="hand-slot"></div>
-                <div id="hand-1" class="hand-slot"></div>
-                <div id="hand-2" class="hand-slot"></div>
+
+            <div id="hand-container" style="display: flex; justify-content: center; gap: 10px; margin: 10px auto; width: 100%; max-width: 400px; min-height: 90px; align-items: center;">
+                <div id="hand-0" class="hand-slot" style="width: 33%; height: 90px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.1);"></div>
+                <div id="hand-1" class="hand-slot" style="width: 33%; height: 90px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.1);"></div>
+                <div id="hand-2" class="hand-slot" style="width: 33%; height: 90px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.1);"></div>
             </div>
         </div>
 
-        <div id="ad-container" style="margin-top: 30px; background:#000; padding:5px; border-radius:8px; min-height: 250px;">
+        <div id="ad-container" style="margin-top: 20px; background:#000; padding:5px; border-radius:8px; min-height:250px;">
              <script type="text/javascript">
-                atOptions = {
-                    'key' : '78fb5625f558f9e3c9b37b431fe339cb',
-                    'format' : 'iframe',
-                    'height' : 250,
-                    'width' : 300,
-                    'params' : {}
-                };
+                atOptions = { 'key' : '78fb5625f558f9e3c9b37b431fe339cb', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
             </script>
             <script type="text/javascript" src="//www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb"></script>
         </div>
     </div>
 
-    <div id="popup-tute" class="popup-overlay">
-        <div class="popup-box">
-             <div id="desktop-qr-sec" style="display: none; text-align: center; margin-bottom: 15px;">
-                <h3 style="color: #4CAF50; margin-top: 0; margin-bottom: 10px;">📱 Play on Mobile!</h3>
-                <img src="alpha-z_QR.png" alt="QR Code" style="width: 140px; height: 140px; border-radius: 10px; border: 3px solid white; margin-bottom: 10px;">
-                <p style="font-size: 0.9rem; color: #ddd; line-height: 1.4; margin:0;">Scan the QR code with your phone.<br>This game is best played on mobile!</p>
-                <hr style="border:0; border-top:1px dashed #555; margin: 15px 0;">
-            </div>
-            <h2 style="color:var(--accent); margin-top:0;">HOW TO PLAY</h2>
-            <div style="font-size:0.95rem; line-height:1.6; color:#ccc; text-align:left;">
-                <p>1. Drag blocks to the empty spaces.</p>
-                <p>2. Connect same alphabets to merge.</p>
-                <p style="color:#81c784; text-align:center; font-weight:bold;">A + A = B</p>
-                <p style="color:#64b5f6; text-align:center; font-weight:bold;">A + A + A = C (Jump!)</p>
-                <hr style="border:0; border-top:1px solid #444; margin:10px 0;">
-                <p style="text-align:center;">Reach <strong>'O'</strong> to earn <strong>⭐ Stars</strong>!</p>
-            </div>
-            <div id="nomore-container" style="margin-top:15px; font-size:0.85rem; color:#aaa;">
-                <input type="checkbox" id="chk-nomore"> <label for="chk-nomore">Don't show again</label>
-            </div>
-            <button class="btn btn-primary" style="width:100%; margin-top: 15px;" onclick="closeTute()">GOT IT!</button>
-        </div>
+    <div style="display:none;">
+        <audio id="s-drop" src="./assets/drop.mp3" preload="auto"></audio>
+        <audio id="s-merge" src="./assets/merge.mp3" preload="auto"></audio>
+        <audio id="s-over" src="./assets/over.mp3" preload="auto"></audio>
     </div>
-    
-    <div id="popup-over" class="popup-overlay" style="display:none;">
-         <div class="popup-box">
+
+    <div id="popup-over" class="popup-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
+         <div class="popup-box" style="background:#222; border:1px solid #444; padding:25px; border-radius:20px; text-align:center;">
             <h2 style="color:tomato">GAME OVER</h2>
             <p>BEST BLOCK: <span id="over-best" style="font-weight:bold; color:gold;"></span></p>
+            
             <div id="area-new-user" style="display:none; margin-top:15px;">
-                 <input type="text" id="username-input" placeholder="Enter Name (Rank)" style="padding:10px; width:80%; margin-bottom:10px; border-radius:5px; border:none;">
-                 <button id="btn-check-save" class="btn btn-primary">Save Score</button>
+                 <input type="text" id="username-input" placeholder="Name" style="padding:10px;">
+                 <button id="btn-check-save" class="btn btn-primary" onclick="playBtnSound()">Save</button>
             </div>
             <div id="area-exist-user" style="display:none; margin-top:15px;">
-                 <p>Save as <span id="user-badge" style="color:#4CAF50; font-weight:bold;"></span>?</p>
-                 <button id="btn-just-save" class="btn btn-primary">Yes, Save</button>
+                 <p>Save as <span id="user-badge" style="color:#4CAF50;"></span>?</p>
+                 <button id="btn-just-save" class="btn btn-primary" onclick="playBtnSound()">Yes</button>
             </div>
-            <div id="save-msg" style="display:none; color:#4CAF50; margin-top:10px;">Saved!</div>
-            <button id="btn-revive-ad" class="btn" style="width:100%; margin-top:10px; background:#e67e22;">📺 Watch Ad & Revive</button>
-            <button class="btn" style="width:100%; margin-top:10px; background:#555;" onclick="location.reload()">Replay</button>
+            
+            <button class="btn" style="width:100%; margin-top:15px; background:#555;" onclick="playBtnSound(); location.reload()">Replay</button>
          </div>
     </div>
 
     <script>
-        // 전역 함수 등록
+        // [기초] 가장 단순한 오디오 재생 함수
+        let isMuted = localStorage.getItem('alpha_muted') === 'true';
+        updateMuteIcon();
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            localStorage.setItem('alpha_muted', isMuted);
+            updateMuteIcon();
+            if(!isMuted) playBtnSound();
+        }
+
+        function updateMuteIcon() {
+            const btn = document.getElementById('btn-sound');
+            if(btn) {
+                btn.textContent = isMuted ? '🔇' : '🔊';
+                btn.style.opacity = isMuted ? '0.5' : '1';
+            }
+        }
+
+        // 전역에서 부르는 소리 재생 함수
+        window.playBtnSound = function() {
+            if(isMuted) return;
+            const audio = document.getElementById('s-drop');
+            if(audio) { 
+                audio.currentTime = 0; 
+                audio.play().catch(e=>{}); // 에러 무시
+            }
+        }
+
+        // 게임 시작
         window.startGame = function(diff) {
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
-            document.body.classList.add('game-mode'); // CSS 상단정렬 클래스 추가
-            if (window.initGame) {
-                window.initGame(diff);
-            }
+            document.body.classList.add('game-mode');
+            if (window.initGame) window.initGame(diff);
         };
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW failed', err));
-            });
-        }
-        let deferredPrompt;
-        const installBtn = document.getElementById('install-btn');
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'block';
-        });
-        installBtn.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt(); deferredPrompt = null;
-        });
     </script>
-    
-    <script type="module" src="./js/game-main.js?v=2.52"></script>
+    <script type="module" src="./js/game-main.js?v=2.53"></script>
     <script type="module" src="./js/index.js"></script>
 </body>
 </html>
