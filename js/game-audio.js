@@ -6,47 +6,37 @@ export const AudioMgr = {
         const fileNames = ['drop', 'merge', 'over'];
         
         fileNames.forEach(name => {
-            // [경로 설정] assets 폴더가 index.html과 같은 위치에 있어야 함
-            const audio = new Audio(`assets/${name}.mp3`);
+            // [경로] ./assets/ 로 통일
+            const audio = new Audio(`./assets/${name}.mp3`);
             audio.volume = 0.5;
 
+            // 디버깅용 로그
             audio.addEventListener('error', (e) => {
-                console.error(`❌ Audio load failed: assets/${name}.mp3`, e);
+                console.error(`❌ Audio Not Found: ./assets/${name}.mp3`, e);
             });
 
             this.sounds[name] = audio;
         });
 
-        // 클릭음은 drop 소리 재사용
         this.sounds['click'] = this.sounds['drop'];
 
         const savedMute = localStorage.getItem('alpha_muted');
-        if (savedMute === 'true') {
-            this.isMuted = true;
-        }
+        this.isMuted = (savedMute === 'true');
         this.updateIcon();
     },
 
-    // [핵심 해결] 이 함수가 없어서 에러가 났었습니다. 추가해주세요!
+    // 게임 시작 시 오디오 엔진 깨우기
     resumeContext() {
-        // 브라우저의 오디오 정책을 풀기 위해 빈 소리를 한 번 재생 시도
-        try {
-            if (this.sounds['drop']) {
-                const dummy = this.sounds['drop'];
-                const originalVol = dummy.volume;
-                
-                dummy.volume = 0; // 소리 안 나게
-                const p = dummy.play();
-                if (p !== undefined) {
-                    p.then(() => {
-                        dummy.pause();
-                        dummy.currentTime = 0;
-                        dummy.volume = originalVol;
-                    }).catch(() => {});
-                }
-            }
-        } catch(e) {
-            console.log("Audio resume skipped");
+        if(this.sounds['drop']) {
+            const dummy = this.sounds['drop'];
+            const originalVol = dummy.volume;
+            
+            dummy.volume = 0; // 소리 끄고
+            dummy.play().then(() => {
+                dummy.pause();
+                dummy.currentTime = 0;
+                dummy.volume = originalVol; // 볼륨 복구
+            }).catch(() => {});
         }
     },
 
@@ -61,20 +51,12 @@ export const AudioMgr = {
 
     play(name) {
         if (this.isMuted) return;
-        
         const audio = this.sounds[name];
-        if (!audio) return;
-
-        try {
-            audio.currentTime = 0;
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    // console.log("Play blocked (interaction needed)");
-                });
-            }
-        } catch (e) {
-            console.error("Play error:", e);
+        if (audio) {
+            try {
+                audio.currentTime = 0;
+                audio.play().catch(() => {});
+            } catch(e) {}
         }
     },
 
@@ -82,7 +64,7 @@ export const AudioMgr = {
         this.isMuted = !this.isMuted;
         localStorage.setItem('alpha_muted', this.isMuted);
         this.updateIcon();
-        if (!this.isMuted) this.play('click');
+        if(!this.isMuted) this.play('click');
     },
 
     updateIcon() {
