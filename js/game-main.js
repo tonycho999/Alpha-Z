@@ -37,14 +37,13 @@ window.onload = () => {
     // 데이터 로드
     state.stars = parseInt(localStorage.getItem('alpha_stars')) || 0;
     
-    // 관리자 체크
     if(localStorage.getItem('alpha_admin') === 'true') {
         state.isAdmin = true;
     }
     updateAdminUI(); 
     UI.updateUI();
 
-    // 1. [신규 저장] 버튼
+    // 1. [신규 유저] 저장 버튼
     const btnCheckSave = document.getElementById('btn-check-save');
     if (btnCheckSave) {
         btnCheckSave.onclick = async () => {
@@ -62,7 +61,7 @@ window.onload = () => {
                 UI.updateUI(); 
             }
 
-            // DB 저장 시도
+            // DB 저장 시도 (isNewUser = true)
             const res = await Core.saveScoreToDB(name, true);
             
             if(res.success) {
@@ -70,26 +69,25 @@ window.onload = () => {
                 document.getElementById('save-msg').style.display='block';
                 localStorage.setItem('alpha_username', name);
             } else {
-                // [중요] 실패 시 이유 알려주기
                 alert("Save Failed: " + res.msg);
             }
         };
     }
 
-    // 2. [기존 유저 저장] 버튼
+    // 2. [기존 유저] 저장 버튼
     const btnJustSave = document.getElementById('btn-just-save');
     if (btnJustSave) {
         btnJustSave.onclick = async () => {
             if(window.playBtnSound) window.playBtnSound();
             
             const savedName = localStorage.getItem('alpha_username');
-            const res = await Core.saveScoreToDB(savedName, true); // 기존 유저니까 false가 맞지만, 로직상 상관없음 (isNewUser=true로 보내도 됨)
+            // DB 저장 시도 (isNewUser = false)
+            const res = await Core.saveScoreToDB(savedName, false);
             
             if(res.success) {
                 document.getElementById('area-exist-user').style.display='none';
                 document.getElementById('save-msg').style.display='block';
             } else {
-                // [중요] 실패 시 이유 알려주기
                 alert("Save Failed: " + res.msg);
             }
         };
