@@ -8,7 +8,7 @@ import { AudioMgr } from "./game-audio.js";
 // 초기화
 window.initGame = (diff) => {
     state.diff = diff || 'NORMAL';
-    state.isSaved = false; // 새 게임 시작 시 저장 상태 리셋
+    state.isSaved = false; 
     initGridSize(state.diff);
     requestAnimationFrame(() => {
         UI.renderGrid();
@@ -17,7 +17,6 @@ window.initGame = (diff) => {
     });
 };
 
-// 관리자 UI 업데이트
 function updateAdminUI() {
     const isAdmin = (localStorage.getItem('alpha_admin') === 'true') || state.isAdmin;
     if (isAdmin) {
@@ -42,96 +41,98 @@ window.onload = () => {
     updateAdminUI(); 
     UI.updateUI();
 
-    // 1. [팝업 감지] 게임 오버 팝업이 뜰 때 UI 갱신 (MutationObserver 사용)
-    // 팝업이 'display: block' 등으로 바뀔 때 updateGameOverUI를 실행해 버튼 노출 여부를 결정함
+    // 팝업 감시
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.target.id === 'popup-over' && mutation.target.style.display !== 'none') {
-                state.isSaved = false; // 저장 상태 초기화
-                UI.updateGameOverUI(); // ★ 저장 버튼 노출 여부 판단
+                state.isSaved = false;
+                UI.updateGameOverUI(); 
             }
         });
     });
     const popup = document.getElementById('popup-over');
     if(popup) observer.observe(popup, { attributes: true, attributeFilter: ['style'] });
 
-
-    // 2. [버튼 클릭 처리] 이벤트 위임 (Event Delegation)
+    // ============================================================
+    // [핵심 수정] 버튼 클릭 인식 개선 (closest 사용 + 디버깅 알림)
+    // ============================================================
     document.addEventListener('click', async (e) => {
         
-        // --- [상황 A] 신규 유저 저장 ---
-        if (e.target && e.target.id === 'btn-check-save') {
+        // 클릭된 요소가 버튼이거나 버튼 내부라면 버튼을 찾음
+        const targetBtn = e.target.closest('button');
+        if (!targetBtn) return; // 버튼이 아니면 무시
+
+        // 1. [신규 유저] 저장 버튼
+        if (targetBtn.id === 'btn-check-save') {
+            console.log("🖱️ 신규 저장 버튼 클릭됨!"); // 콘솔 확인용
+            // alert("저장 버튼이 눌렸습니다! DB 전송을 시작합니다."); // [확인용 알림]
+
             if(window.playBtnSound) window.playBtnSound();
 
             const nameInput = document.getElementById('username-input');
             const errBox = document.getElementById('save-error');
             const name = nameInput ? nameInput.value.trim() : '';
             
-            // 에러 박스 초기화
             if(errBox) errBox.style.display = 'none';
 
             if(!name) {
                 if(errBox) { errBox.textContent = "Please enter a name."; errBox.style.display = 'block'; }
+                else alert("Please enter a name.");
                 return;
             }
             
-            // 버튼 잠금
-            e.target.disabled = true;
-            e.target.textContent = "Checking...";
+            targetBtn.disabled = true;
+            targetBtn.textContent = "Checking...";
 
-            // 관리자 커맨드 체크
             if (checkAdmin(name)) {
                 updateAdminUI();
-                alert(`Hello Admin ${name}! Ads removed.`);
                 UI.updateUI(); 
             }
 
-            // DB 저장 시도 (isNewUser = true)
+            // DB 저장 호출
             const res = await Core.saveScoreToDB(name, true);
             
-            e.target.disabled = false;
-            e.target.textContent = "Save Record";
+            targetBtn.disabled = false;
+            targetBtn.textContent = "Save Record";
 
             if(res.success) {
-                // 저장 성공 -> 기기에 ID 박제
                 state.isSaved = true;
                 localStorage.setItem('alpha_username', name); 
                 localStorage.setItem('alpha_best_char', state.best);
-                
-                // UI 갱신 (성공 메시지 출력)
                 UI.updateGameOverUI(); 
+                alert("✅ 저장 성공! (Saved Successfully)"); 
             } else {
-                // 실패 (중복 ID 등)
                 if(errBox) {
                     errBox.textContent = res.msg; 
                     errBox.style.display = 'block';
-                } else {
-                    alert(res.msg);
                 }
+                alert("❌ 저장 실패: " + res.msg);
             }
         }
 
-        // --- [상황 B] 기존 유저 저장 (신기록일 때만 버튼 보임) ---
-        if (e.target && e.target.id === 'btn-just-save') {
+        // 2. [기존 유저] 저장 버튼
+        if (targetBtn.id === 'btn-just-save') {
+            console.log("🖱️ 기존 유저 저장 버튼 클릭됨!");
+            
             if(window.playBtnSound) window.playBtnSound();
             
             const savedName = localStorage.getItem('alpha_username');
             
-            e.target.disabled = true;
-            e.target.textContent = "Saving...";
+            targetBtn.disabled = true;
+            targetBtn.textContent = "Saving...";
 
-            // DB 저장 시도 (isNewUser = false)
             const res = await Core.saveScoreToDB(savedName, false);
 
-            e.target.disabled = false;
-            e.target.textContent = "Update Best Score";
+            targetBtn.disabled = false;
+            targetBtn.textContent = "Update Best Score";
             
             if(res.success) {
                 state.isSaved = true;
-                localStorage.setItem('alpha_best_char', state.best); // 내 최고 기록 갱신
+                localStorage.setItem('alpha_best_char', state.best); 
                 UI.updateGameOverUI(); 
+                alert("✅ 업데이트 성공! (Update Successfully)");
             } else {
-                alert("Save Failed: " + res.msg);
+                alert("❌ 저장 실패: " + res.msg);
             }
         }
     });
