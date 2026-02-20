@@ -6,8 +6,16 @@
     <meta name="google-site-verification" content="jpV9ytZrmyOE3ncVmwd9y67IjH7vbZ_W5f1p-c7R940" />
 
     <title>Alpha-Z | Addictive Alphabet Merge Puzzle</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="description" content="Merge alphabets, save space, and reach Z! Play Alpha-Z, a highly addictive free puzzle game online.">
+    <meta name="keywords" content="Alpha-Z, puzzle game, alphabet merge, 2048 alternative, brain game, free online game">
+    <meta name="robots" content="index, follow">
     
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+
     <style>
         #hand-container {
             display: flex;
@@ -29,8 +37,6 @@
             border-radius: 10px;
             border: 1px dashed rgba(255, 255, 255, 0.1);
         }
-        
-        /* 화면 전환용 클래스 */
         .hidden { display: none !important; }
     </style>
 </head>
@@ -86,33 +92,80 @@
     </div>
 
     <div id="popup-tute" class="popup-overlay">
-         <div class="popup-box">
-            <button class="btn btn-primary" style="width:100%; margin-top: 15px;" onclick="closeTute()">CLOSE</button>
-         </div>
+        <div class="popup-box">
+            <div id="desktop-qr-sec" style="display: none; text-align: center; margin-bottom: 15px;">
+                <h3 style="color: #4CAF50; margin-top: 0; margin-bottom: 10px;">📱 Play on Mobile!</h3>
+                <img src="alpha-z_QR.png" alt="QR Code" style="width: 140px; height: 140px; border-radius: 10px; border: 3px solid white; margin-bottom: 10px;">
+                <p style="font-size: 0.9rem; color: #ddd; line-height: 1.4; margin:0;">Scan the QR code with your phone.<br>This game is best played on mobile!</p>
+                <hr style="border:0; border-top:1px dashed #555; margin: 15px 0;">
+            </div>
+
+            <h2 style="color:var(--accent); margin-top:0;">HOW TO PLAY</h2>
+            <div style="font-size:0.95rem; line-height:1.6; color:#ccc; text-align:left;">
+                <p>1. Drag blocks to the empty spaces.</p>
+                <p>2. Connect same alphabets to merge.</p>
+                <p style="color:#81c784; text-align:center; font-weight:bold;">A + A = B</p>
+                <p style="color:#64b5f6; text-align:center; font-weight:bold;">A + A + A = C (Jump!)</p>
+                <hr style="border:0; border-top:1px solid #444; margin:10px 0;">
+                <p style="text-align:center;">Reach <strong>'O'</strong> to earn <strong>⭐ Stars</strong>!</p>
+            </div>
+            
+            <div id="nomore-container" style="margin-top:15px; font-size:0.85rem; color:#aaa;">
+                <input type="checkbox" id="chk-nomore"> <label for="chk-nomore">Don't show again</label>
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-top: 15px;" onclick="closeTute()">GOT IT!</button>
+        </div>
     </div>
     
     <div id="popup-over" class="popup-overlay" style="display:none;">
          <div class="popup-box">
+            <h2 style="color:tomato">GAME OVER</h2>
+            <p>BEST BLOCK: <span id="over-best" style="font-weight:bold; color:gold;"></span></p>
+            
+            <div id="area-new-user" style="display:none; margin-top:15px;">
+                 <input type="text" id="username-input" placeholder="Enter Name (Rank)" style="padding:10px; width:80%; margin-bottom:10px; border-radius:5px; border:none;">
+                 <button id="btn-check-save" class="btn btn-primary">Save Score</button>
+            </div>
+            <div id="area-exist-user" style="display:none; margin-top:15px;">
+                 <p>Save as <span id="user-badge" style="color:#4CAF50; font-weight:bold;"></span>?</p>
+                 <button id="btn-just-save" class="btn btn-primary">Yes, Save</button>
+            </div>
+            <div id="save-msg" style="display:none; color:#4CAF50; margin-top:10px;">Saved!</div>
+
+            <button id="btn-revive-ad" class="btn" style="width:100%; margin-top:10px; background:#e67e22;">📺 Watch Ad & Revive</button>
             <button class="btn" style="width:100%; margin-top:10px; background:#555;" onclick="location.reload()">Replay</button>
          </div>
     </div>
 
     <script>
-        // 전역 함수로 등록 (버튼 클릭 시 호출됨)
+        // 전역 함수: 난이도 버튼 클릭 시 실행
         window.startGame = function(diff) {
-            // 1. 화면 전환
+            // 1. 화면 전환: 시작화면 숨김 -> 게임화면 표시
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             
-            // 2. 게임 모듈에 시작 신호 보내기 (window.gameStart 함수는 js/game-main.js에서 정의됨)
+            // 2. game-main.js의 initGame 호출하여 실제 게임 시작
             if (window.initGame) {
                 window.initGame(diff);
             }
         };
 
-        // (서비스워커 등 유지)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
+            });
+        }
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'block';
+        });
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt(); deferredPrompt = null;
+        });
     </script>
-    <script type="module" src="js/game-main.js?v=1.4"></script>
+    <script type="module" src="js/game-main.js?v=1.5"></script>
     <script type="module" src="./js/index.js"></script>
 </body>
 </html>
