@@ -2,19 +2,18 @@
 
 export const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-// [중요] 블록 모양 데이터 (이게 없으면 블록이 안 나옵니다)
-// 1칸짜리
+// 1칸짜리 블록
 export const SHAPES_1 = [
     { id: '1a', map: [[0,0]], w:1, h:1 }
 ];
 
-// 2칸짜리
+// 2칸짜리 블록
 export const SHAPES_2 = [
     { id: '2h', map: [[0,0], [0,1]], w:2, h:1 }, // 가로
     { id: '2v', map: [[0,0], [1,0]], w:1, h:2 }  // 세로
 ];
 
-// 3칸짜리
+// 3칸짜리 블록
 export const SHAPES_3 = [
     { id: '3h', map: [[0,0], [0,1], [0,2]], w:3, h:1 }, // 가로 3
     { id: '3v', map: [[0,0], [1,0], [2,0]], w:1, h:3 }, // 세로 3
@@ -28,9 +27,9 @@ export const state = {
     gridSize: 8,
     grid: [],
     
-    // [핵심 수정] 이 부분이 없어서 에러가 났던 겁니다!
-    hand: [null, null, null], // 3개의 블록 슬롯
-    dragIndex: -1,            // 드래그 중인 슬롯 번호
+    // [중요] 3개 슬롯 (이게 없으면 에러남)
+    hand: [null, null, null], 
+    dragIndex: -1,
     
     score: 0,
     stars: 0,
@@ -45,10 +44,21 @@ export const state = {
     diff: 'NORMAL',
     
     isHammerMode: false,
-    nextBlock: null // (구버전 호환용)
+    nextBlock: null 
 };
 
-// 난이도별 그리드 사이즈 설정
+// [추가] AdManager (이게 없어서 SyntaxError가 났던 것입니다)
+export const AdManager = {
+    // 광고 보기 시뮬레이션 (나중에 실제 광고 SDK 연동 가능)
+    showRewardAd: function(onSuccess) {
+        // 실제 광고가 준비되지 않았으므로 확인창으로 대체
+        // 확인(OK)을 누르면 광고를 본 것으로 처리
+        if(confirm("📺 Watch Ad to get reward? (Simulated)")) {
+            onSuccess();
+        }
+    }
+};
+
 export function initGridSize(diff) {
     if(diff === 'EASY') state.gridSize = 9;
     else if(diff === 'NORMAL') state.gridSize = 8;
