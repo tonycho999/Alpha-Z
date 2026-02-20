@@ -11,7 +11,6 @@
     
     <style>
         .hidden { display: none !important; }
-        /* 최고 기록 표시 디자인 */
         .best-badge {
             background: #333; padding: 5px 15px; border-radius: 20px;
             color: #f1c40f; font-weight: bold; border: 1px solid #555;
@@ -86,12 +85,12 @@
                  <button id="btn-just-save" class="btn btn-primary" onclick="playBtnSound()">Yes</button>
             </div>
             
+            <button id="btn-revive-ad" class="btn" style="width:100%; margin-top:10px; background:#e67e22;" onclick="playBtnSound()">📺 Watch Ad & Revive</button>
             <button class="btn" style="width:100%; margin-top:15px; background:#555;" onclick="playBtnSound(); location.reload()">Replay</button>
          </div>
     </div>
 
     <script>
-        // [기초] 가장 단순한 오디오 재생 함수
         let isMuted = localStorage.getItem('alpha_muted') === 'true';
         updateMuteIcon();
 
@@ -110,17 +109,15 @@
             }
         }
 
-        // 전역에서 부르는 소리 재생 함수
         window.playBtnSound = function() {
             if(isMuted) return;
             const audio = document.getElementById('s-drop');
             if(audio) { 
                 audio.currentTime = 0; 
-                audio.play().catch(e=>{}); // 에러 무시
+                audio.play().catch(e=>{});
             }
         }
 
-        // 게임 시작
         window.startGame = function(diff) {
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
@@ -128,7 +125,7 @@
             if (window.initGame) window.initGame(diff);
         };
     </script>
-    <script type="module" src="./js/game-main.js?v=2.53"></script>
+    <script type="module" src="./js/game-main.js?v=2.54"></script>
     <script type="module" src="./js/index.js"></script>
 </body>
 </html>
