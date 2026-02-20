@@ -24,13 +24,13 @@ export const state = {
 export const AdManager = {
     canWatchAd: function() { return true; },
 
-    // 보상형 광고 (새 창 띄우기)
+    // 보상형 광고 (팝업용)
     showRewardAd: function(onSuccess) {
         if(confirm("📺 Watch Ad to get reward?")) {
-            // [보상형 광고 링크] (배너랑 다름, 팝업용 링크)
+            // [고정] 사용자님 광고 링크
             window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
             
-            // 3초 후 콜백 실행
+            // 3초 후 보상 지급
             setTimeout(() => {
                 onSuccess();
             }, 3000);
