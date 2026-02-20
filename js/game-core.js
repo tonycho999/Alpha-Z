@@ -1,6 +1,6 @@
 import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { db } from "./firebase-config.js";
+import { db } from "./js/firebase-config.js";
 
 // [수정 2] 난이도별 자동 승급(삭제) 규칙
 export function getMinIdx() {
