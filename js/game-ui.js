@@ -56,23 +56,22 @@ export function renderSource(block, elementId) {
 }
 
 // ==========================================
-// [설정] 난이도(Grid Size)별 오프셋 개별 정의
+// [설정] 블록 왼쪽 위 모서리 기준 미세 조정값
 // ==========================================
-const VISUAL_OFFSET_Y = 120; // 시각적으로 띄우는 높이 (공통)
+const VISUAL_OFFSET_Y = 120; // 손가락 위로 띄우는 높이
 
-// 값이 클수록 왼쪽(X), 위쪽(Y)으로 더 많이 이동합니다.
-// 7x7은 칸이 크니까 더 많이 이동시켜야 중앙이 맞을 수 있습니다.
+// 이제 '손가락'이 아니라 '블록의 왼쪽 위 모서리'가 기준입니다.
+// 값 0, 0 이면 정확히 블록 모서리 위치를 가리킵니다.
+// 조금 더 안쪽(중심)을 가리키게 하려면 양수(+)를 입력하세요.
 const OFFSET_CONFIG = {
-    // [Key: gridSize] : { x: 왼쪽이동픽셀, y: 위쪽이동픽셀 }
-    
-    // 9x9 (HARD): 칸이 작음 -> 적당히 이동
-    9: { x: -60, y: -60 }, 
+    // 9x9 (칸 작음): 반 칸 정도 안쪽으로
+    9: { x: 20, y: 20 }, 
 
-    // 8x8 (NORMAL): 중간
-    8: { x: -70, y: -70 }, 
+    // 8x8 (중간):
+    8: { x: 25, y: 25 }, 
 
-    // 7x7 (EASY): 칸이 큼 -> 더 많이 이동해야 왼쪽 귀퉁이에 맞음
-    7: { x: -85, y: -80 }  
+    // 7x7 (칸 큼):
+    7: { x: 30, y: 30 }  
 };
 
 export function setupDrag(onDrop) {
@@ -145,16 +144,20 @@ function clearHighlights() {
 function updateGhostAndCheck(fingerX, fingerY, w, h, onDrop, isDropAction) {
     const ghost = document.getElementById('ghost');
 
-    // 1. 시각적 위치
-    ghost.style.left = (fingerX - w / 2) + 'px';
-    ghost.style.top = (fingerY - VISUAL_OFFSET_Y - h / 2) + 'px';
+    // 1. 시각적 위치 (손가락 위로 띄움) - 변경 없음
+    const ghostLeft = fingerX - w / 2;
+    const ghostTop = fingerY - VISUAL_OFFSET_Y - h / 2;
 
-    // 2. [핵심 수정] 현재 그리드 사이즈에 맞는 오프셋 값 가져오기
-    // 기본값은 -60으로 설정 (혹시 모를 오류 방지)
-    const config = OFFSET_CONFIG[state.gridSize] || { x: -60, y: -60 };
+    ghost.style.left = ghostLeft + 'px';
+    ghost.style.top = ghostTop + 'px';
 
-    const logicX = fingerX + config.x;
-    const logicY = fingerY - VISUAL_OFFSET_Y + config.y;
+    // 2. [핵심 변경] 판정 기준을 '블록의 왼쪽 위(ghostLeft)'로 변경
+    const config = OFFSET_CONFIG[state.gridSize] || { x: 20, y: 20 };
+
+    // 블록의 왼쪽 위 모서리 + 설정값 = 판정 위치
+    // 이제 블록 너비(w)가 변해도 판정 위치는 항상 블록의 앞머리 쪽에 고정됩니다.
+    const logicX = ghostLeft + config.x;
+    const logicY = ghostTop + config.y;
 
     if (!isDropAction) {
         clearHighlights();
