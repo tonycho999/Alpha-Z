@@ -3,41 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alpha-Z Shop</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Alpha-Z | Shop</title>
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body class="main-bg">
     <div class="screen">
-        <h1 style="color:var(--accent); margin-top:20px;">ITEM SHOP</h1>
-        <div style="margin-bottom:20px; font-size:1.2rem;">
-            My Stars: <strong id="shop-stars" style="color:var(--accent);">0</strong>
+        <h2 style="color:var(--accent); margin-top: 20px;">ITEM SHOP</h2>
+        
+        <div style="margin-bottom:20px; font-size:1.2rem; font-weight:bold;">
+            MY STARS: <span id="shop-stars" style="color:gold;">0</span>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:400px;">
-            <button class="btn" id="shop-ad-btn" onclick="watchAdShop()" style="padding:20px; flex-direction:column; border:none;">
-                <div style="font-size:2rem;">📺</div>
-                <div id="ad-text-status">Watch Ad</div>
-                <div style="color:var(--accent);">+2 Stars</div>
-            </button>
-            <div class="btn" style="padding:20px; flex-direction:column; cursor:default;">
-                <div style="font-size:2rem;">🔄</div>
-                <div>Refresh</div>
-                <div style="color:var(--accent);">1 Star</div>
-            </div>
-            <div class="btn" style="padding:20px; flex-direction:column; cursor:default;">
-                <div style="font-size:2rem;">🔨</div>
-                <div>Hammer</div>
-                <div style="color:var(--accent);">2 Stars</div>
-            </div>
-            <div class="btn" style="padding:20px; flex-direction:column; cursor:default;">
-                <div style="font-size:2rem;">✨</div>
-                <div>Upgrade</div>
-                <div style="color:var(--accent);">5 Stars</div>
-            </div>
+        <div style="background:#222; padding:20px; border-radius:15px; width:100%; max-width:350px; text-align:center; border:1px solid #444; margin-bottom: 20px;">
+            <h3 style="margin-top:0;">📺 Free Stars</h3>
+            <p style="color:#aaa; font-size:0.9rem; margin-bottom:15px;">
+                Watch a short ad and get <span style="color:gold; font-weight:bold;">+30 Stars</span>!
+            </p>
+            <button id="btn-ad-reward" class="btn btn-primary" style="width:100%;">Loading...</button>
         </div>
 
-        <button class="btn" style="margin-top:20px; width:100%; max-width:400px;" onclick="location.href='/'">🏠 Main Menu</button>
+        <button class="btn" style="background:#555; width:100%; max-width:350px;" onclick="location.href='/'">⬅ BACK TO GAME</button>
+
+        <div id="ad-container" style="margin-top: 30px; background:#fff; padding:5px; border-radius:8px; min-height:250px;">
+             <script type="text/javascript">
+                atOptions = { 'key' : '78fb5625f558f9e3c9b37b431fe339cb', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
+            </script>
+            <script type="text/javascript" src="//www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb"></script>
+        </div>
     </div>
-    <script type="module" src="js/shop.js"></script>
+
+    <script type="module">
+        import { AdManager } from "./js/game-data.js";
+
+        const starEl = document.getElementById('shop-stars');
+        const btn = document.getElementById('btn-ad-reward');
+
+        // 별 개수 표시
+        const currentStars = parseInt(localStorage.getItem('alpha_stars')) || 0;
+        if(starEl) starEl.textContent = currentStars;
+
+        // 광고 버튼 로직
+        if(btn) {
+            if(AdManager.canWatchAd()) {
+                btn.textContent = "📺 Watch Ad (+30 ⭐)";
+                btn.onclick = () => {
+                    AdManager.showRewardAd(() => {
+                        // 보상 지급
+                        let s = parseInt(localStorage.getItem('alpha_stars')) || 0;
+                        s += 30;
+                        localStorage.setItem('alpha_stars', s);
+                        if(starEl) starEl.textContent = s;
+                        alert("You got 30 Stars!");
+                    });
+                };
+            } else {
+                btn.disabled = true;
+                btn.textContent = "No Ads Available";
+            }
+        }
+    </script>
 </body>
 </html>
