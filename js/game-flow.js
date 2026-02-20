@@ -1,8 +1,9 @@
 import { state, ALPHABET } from "./game-data.js";
 import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
+import { AudioMgr } from "./game-audio.js"; // [추가]
 
-// ... (handleCellClick, nextTurn, handleDropAttempt 등은 기존 코드 유지) ...
+// ... (handleCellClick 등 기존 코드는 그대로 유지) ...
 export function handleCellClick(idx) {
     if(state.isHammerMode && state.grid[idx]) {
         state.grid[idx] = null;
@@ -22,7 +23,11 @@ export function nextTurn() {
         UI.setupDrag(handleDropAttempt);
     }, 50);
 
+    // 게임 오버 체크
     if(!Core.canPlaceAnywhere(state.currentBlock)) {
+        // [추가] 게임 오버 소리 재생
+        AudioMgr.play('over');
+
         document.getElementById('popup-over').style.display = 'flex';
         document.getElementById('over-best').textContent = state.best;
         const reviveBtn = document.getElementById('btn-revive-ad');
@@ -35,6 +40,7 @@ export function nextTurn() {
 }
 
 export function handleDropAttempt(targetIdx, isPreview) {
+    // ... (기존 로직 그대로 유지) ...
     const size = state.gridSize;
     const r = Math.floor(targetIdx / size), c = targetIdx % size;
     const shape = state.currentBlock.shape;
@@ -73,10 +79,12 @@ export function handleDropAttempt(targetIdx, isPreview) {
     }
 }
 
-// [수정 3] 블록 배치 및 '새로 놓인 블록(newIndices)' 추적
 async function placeBlock(indices) {
     state.isLocked = true;
     
+    // [추가] 블록 놓는 소리 재생
+    AudioMgr.play('drop');
+
     if(state.isReviveTurn) {
         state.isReviveTurn = false;
         document.getElementById('popup-over').style.display = 'none';
@@ -87,20 +95,16 @@ async function placeBlock(indices) {
     UI.renderGrid();
     await wait(300);
 
-    // [중요] 방금 놓은 블록들의 인덱스를 processMerge에 전달 (생존자 판별용)
     const newIndices = indices;
-
     let checkAgain = true;
     while(checkAgain) {
         checkAgain = false;
         
-        // 1. 병합(Merge) 체크
         let merged = false;
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
             if(state.grid[i]) {
                 const cluster = Core.getCluster(i);
                 if(cluster.length >= 2) {
-                    // [중요] newIndices를 함께 전달
                     await processMerge(cluster, newIndices);
                     merged = true; break; 
                 }
@@ -108,7 +112,6 @@ async function placeBlock(indices) {
         }
         if(merged) { checkAgain = true; continue; }
 
-        // 2. 자동 업그레이드 및 미리보기 갱신
         const minIdx = Core.getMinIdx();
         let upgraded = false;
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
@@ -123,10 +126,8 @@ async function placeBlock(indices) {
             }
         }
         if(upgraded) { 
-            // [수정] 업그레이드가 발생하면 미리보기 블록도 새로운 난이도에 맞춰 즉시 교체
             state.nextBlock = Core.createRandomBlock();
             UI.renderSource(state.nextBlock, 'next-preview');
-            
             UI.renderGrid(); 
             await wait(300); 
             checkAgain = true; 
@@ -137,20 +138,15 @@ async function placeBlock(indices) {
     nextTurn();
 }
 
-// [수정 4] '오래된 블록 생존' 원칙이 적용된 병합 로직
-// idx 대신 cluster 배열과 newIndices(방금 놓은 것들)를 받음
 async function processMerge(cluster, newIndices) {
-    // 1. 생존할 블록(Center) 결정 로직
-    // 기본적으로 클러스터 중 '방금 놓지 않은(오래된)' 블록을 찾음
+    // [추가] 합쳐지는 소리 재생
+    AudioMgr.play('merge');
+
     let centerIdx = cluster.find(idx => !newIndices.includes(idx));
-    
-    // 만약 클러스터가 전부 방금 놓은 것들로만 이루어져 있다면(예: 놓자마자 자기들끼리 붙음), 
-    // 그냥 첫 번째 놈을 기준으로 함
     if (centerIdx === undefined) {
         centerIdx = cluster[0];
     }
 
-    // 이하 로직은 centerIdx를 기준으로 병합 수행
     const char = state.grid[centerIdx];
     const nextIdx = ALPHABET.indexOf(char) + (cluster.length - 1);
     const next = ALPHABET[nextIdx] || char;
@@ -161,7 +157,6 @@ async function processMerge(cluster, newIndices) {
         const el = document.getElementById(`cell-${t}`);
         if(el) {
             el.classList.add('merging-source');
-            // 살아남을 블록(centerIdx) 쪽으로 빨려들어가는 애니메이션
             el.style.transform = `translate(${centerEl.offsetLeft - el.offsetLeft}px, ${centerEl.offsetTop - el.offsetTop}px)`;
             el.style.opacity = '0';
         }
