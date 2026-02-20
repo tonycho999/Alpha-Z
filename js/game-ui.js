@@ -1,29 +1,31 @@
 import { state } from "./game-data.js";
 
-// [중요] 실제 셀 크기를 실시간으로 계산 (반응형 대응)
+// [핵심] 정확한 셀 크기 계산 (자석 효과의 기준)
+// 반응형 화면에서 그리드 셀 하나의 실제 픽셀 크기를 구합니다.
 export function getActualCellSize() {
     const grid = document.getElementById('grid-container');
     if (!grid) return 40;
     
-    // 패딩을 뺀 실제 콘텐츠 영역의 크기 구하기
     const rect = grid.getBoundingClientRect();
+    // 패딩을 뺀 '내부' 너비만 사용해야 좌표 계산이 정확합니다.
     const style = window.getComputedStyle(grid);
     const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
     
-    // 실제 사용 가능한 너비 / 칸 수
+    // (전체 너비 - 패딩) / 칸 수
     const actualWidth = rect.width - paddingX;
     return actualWidth / state.gridSize;
 }
 
+// 그리드(보드판) 그리기
 export function renderGrid() { 
     const gridEl = document.getElementById('grid-container');
     if (!gridEl) return;
 
-    // 그리드 행/열 개수 업데이트
+    // CSS Grid 레이아웃 설정
     gridEl.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
     gridEl.style.gridTemplateRows = `repeat(${state.gridSize}, 1fr)`;
 
-    // 셀 DOM 생성 (개수가 다를 때만 새로 만듦)
+    // 셀(DIV)이 부족하면 생성
     if (gridEl.children.length !== state.gridSize * state.gridSize) {
         gridEl.innerHTML = '';
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
@@ -34,15 +36,15 @@ export function renderGrid() {
         }
     }
 
-    // 셀 내용 채우기
+    // 각 셀의 상태(알파벳, 색상) 업데이트
     for(let i=0; i<state.gridSize * state.gridSize; i++) {
         let cell = document.getElementById(`cell-${i}`);
         if (!cell) continue;
         
-        // 기존 하이라이트/애니메이션 제거하고 초기화
+        // 초기화 (기존 클래스 제거)
         const hasHighlight = cell.classList.contains('highlight-valid');
         cell.className = 'cell'; 
-        if (hasHighlight) cell.classList.add('highlight-valid');
+        if (hasHighlight) cell.classList.add('highlight-valid'); // 하이라이트는 유지
         
         cell.textContent = ''; 
         cell.style.transform = ''; 
@@ -51,14 +53,14 @@ export function renderGrid() {
         const char = state.grid[i];
         if(char) {
             cell.textContent = char; 
-            cell.classList.add(`b-${char}`);
+            cell.classList.add(`b-${char}`); // 색상 클래스 (예: b-A, b-B)
             if(char==='Z') cell.classList.add('b-Z');
-            cell.classList.add('pop-effect');
+            cell.classList.add('pop-effect'); // 등장 애니메이션
         }
     }
 }
 
-// 하단 3개 핸드 슬롯 그리기
+// 하단 3개 핸드(블록 슬롯) 그리기
 export function renderHand() {
     for (let i = 0; i < 3; i++) {
         const slot = document.getElementById(`hand-${i}`);
@@ -76,13 +78,13 @@ export function renderHand() {
             gridDiv.style.gridTemplateColumns = `repeat(${block.shape.w}, ${size}px)`;
             gridDiv.style.gridTemplateRows = `repeat(${block.shape.h}, ${size}px)`;
             gridDiv.style.gap = '2px';
-            gridDiv.style.pointerEvents = 'none'; 
+            gridDiv.style.pointerEvents = 'none'; // 드래그 방해 금지
 
             block.items.forEach((char, idx) => {
                 const b = document.createElement('div');
                 b.className = `cell b-${char}`;
                 b.textContent = char;
-                b.style.fontSize = '0.9rem'; // 작은 폰트
+                b.style.fontSize = '0.9rem';
                 
                 // 블록 모양대로 배치
                 b.style.gridColumnStart = block.shape.map[idx][1] + 1;
@@ -97,6 +99,7 @@ export function renderHand() {
 // [설정] 드래그 시 블록을 손가락 위로 얼마나 띄울지 (px)
 const DRAG_Y_OFFSET = 90;
 
+// 드래그 앤 드롭 로직 설정
 export function setupDrag(onDrop) {
     const ghost = document.getElementById('ghost');
     
@@ -119,12 +122,13 @@ export function setupDrag(onDrop) {
             const block = state.hand[i];
             
             ghost.innerHTML = '';
-            // [중요] fixed로 설정하여 좌표계 통일
+            // [중요] fixed로 설정하여 좌표계 통일 (화면 밀림 방지)
             ghost.style.position = 'fixed'; 
             ghost.style.display = 'grid';
             ghost.style.gridTemplateColumns = `repeat(${block.shape.w}, ${cellSize}px)`;
             ghost.style.gridTemplateRows = `repeat(${block.shape.h}, ${cellSize}px)`;
-            ghost.style.gap = '3px'; // style.css의 gap과 일치시켜야 함
+            ghost.style.gap = '3px'; // style.css의 gap과 일치
+            ghost.style.zIndex = '9999'; // 최상단
             
             block.items.forEach((char, idx) => {
                 const b = document.createElement('div');
@@ -136,7 +140,7 @@ export function setupDrag(onDrop) {
                 ghost.appendChild(b);
             });
 
-            // 원본 슬롯은 투명하게
+            // 원본 슬롯은 투명하게 숨김
             slot.style.opacity = '0'; 
 
             // 좌표 추출 함수 (마우스/터치 공용)
@@ -221,7 +225,6 @@ export function getMagnetGridIndex(x, y) {
     const rect = grid.getBoundingClientRect();
 
     // 1. 그리드 영역을 너무 많이 벗어났는지 확인 (여유 범위 50px)
-    // 너무 멀리 가면 드롭 취소로 간주
     if (x < rect.left - 50 || x > rect.right + 50 || y < rect.top - 50 || y > rect.bottom + 50) {
         return -1;
     }
@@ -239,8 +242,7 @@ export function getMagnetGridIndex(x, y) {
 
     // 3. [마그네틱 효과의 핵심] Clamp (범위 제한)
     // 손가락이 그리드 경계선 살짝 밖이어도, 가장 가까운 끝 칸으로 인식하게 함
-    // 예: 왼쪽으로 -10px 벗어나도 0번 인덱스로 인식
-    const maxPos = cellSize * state.gridSize - 1; // 그리드 내부 최대 픽셀값
+    const maxPos = cellSize * state.gridSize - 1; 
     
     relX = Math.max(0, Math.min(relX, maxPos));
     relY = Math.max(0, Math.min(relY, maxPos));
@@ -249,14 +251,20 @@ export function getMagnetGridIndex(x, y) {
     const c = Math.floor(relX / cellSize);
     const r = Math.floor(relY / cellSize);
 
-    // 유효 범위 체크 (Clamp를 했으므로 거의 항상 통과하지만 안전장치)
+    // 유효 범위 체크
     if (r >= 0 && r < state.gridSize && c >= 0 && c < state.gridSize) {
         return r * state.gridSize + c;
     }
     return -1;
 }
 
+// UI 정보 업데이트 (별, 최고 기록 등)
 export function updateUI() {
+    // 1. 별 개수 업데이트
     const starEl = document.getElementById('idx-stars');
     if(starEl) starEl.textContent = state.stars;
+
+    // 2. [추가됨] 현재 게임의 최고 알파벳 표시
+    const bestEl = document.getElementById('game-best-char');
+    if(bestEl) bestEl.textContent = state.best;
 }
