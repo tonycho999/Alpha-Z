@@ -15,6 +15,29 @@
     
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
+
+    <style>
+        #hand-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 400px;
+            min-height: 90px;
+            align-items: center;
+        }
+        .hand-slot {
+            width: 33%;
+            height: 90px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+    </style>
 </head>
 <body class="main-bg">
     <div class="screen">
@@ -30,10 +53,22 @@
             MY STARS: <span id="idx-stars">0</span>
         </div>
 
-        <button class="btn btn-primary" style="width:250px;" onclick="selectDiff('EASY')">EASY (9x9)</button>
-        <button class="btn btn-primary" style="width:250px;" onclick="selectDiff('NORMAL')">NORMAL (8x8)</button>
-        <button class="btn btn-primary" style="width:250px;" onclick="selectDiff('HARD')">HARD (7x7)</button>
-        <button class="btn btn-primary" style="width:250px;" onclick="selectDiff('HELL')">HELL (7x7)</button>
+        <div id="grid-container" class="grid-container"></div>
+        
+        <div id="ghost" class="ghost-block"></div>
+
+        <div id="hand-container">
+            <div id="hand-0" class="hand-slot"></div>
+            <div id="hand-1" class="hand-slot"></div>
+            <div id="hand-2" class="hand-slot"></div>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 400px; margin-top: 10px;">
+            <button class="btn btn-primary" style="width:48%;" onclick="selectDiff('EASY')">EASY (9x9)</button>
+            <button class="btn btn-primary" style="width:48%;" onclick="selectDiff('NORMAL')">NORMAL (8x8)</button>
+            <button class="btn btn-primary" style="width:48%;" onclick="selectDiff('HARD')">HARD (7x7)</button>
+            <button class="btn btn-primary" style="width:48%;" onclick="selectDiff('HELL')">HELL (7x7)</button>
+        </div>
         
         <div style="display:flex; gap:10px; margin-top:15px; width:250px;">
             <button class="btn" style="flex:1; background:#444;" onclick="location.href='shop.html'">🛒 SHOP</button>
@@ -74,36 +109,43 @@
         </div>
     </div>
     
+    <div id="popup-over" class="popup-overlay" style="display:none;">
+         <div class="popup-box">
+            <h2 style="color:tomato">GAME OVER</h2>
+            <p>BEST BLOCK: <span id="over-best" style="font-weight:bold; color:gold;"></span></p>
+            
+            <div id="area-new-user" style="display:none; margin-top:15px;">
+                 <input type="text" id="username-input" placeholder="Enter Name (Rank)" style="padding:10px; width:80%; margin-bottom:10px; border-radius:5px; border:none;">
+                 <button id="btn-check-save" class="btn btn-primary">Save Score</button>
+            </div>
+            <div id="area-exist-user" style="display:none; margin-top:15px;">
+                 <p>Save as <span id="user-badge" style="color:#4CAF50; font-weight:bold;"></span>?</p>
+                 <button id="btn-just-save" class="btn btn-primary">Yes, Save</button>
+            </div>
+            <div id="save-msg" style="display:none; color:#4CAF50; margin-top:10px;">Saved!</div>
+
+            <button id="btn-revive-ad" class="btn" style="width:100%; margin-top:10px; background:#e67e22;">📺 Watch Ad & Revive</button>
+            <button class="btn" style="width:100%; margin-top:10px; background:#555;" onclick="location.reload()">Replay</button>
+         </div>
+    </div>
+
     <script>
-        // 1. 서비스 워커 등록 (PWA 필수)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('SW registered!', reg))
-                    .catch(err => console.log('SW failed', err));
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
             });
         }
-
-        // 2. 설치 버튼 로직
         let deferredPrompt;
         const installBtn = document.getElementById('install-btn');
-
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // 설치 가능한 상태가 되면 버튼을 보여줌
-            installBtn.style.display = 'block';
+            e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'block';
         });
-
         installBtn.addEventListener('click', async () => {
             if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`User response: ${outcome}`);
-            deferredPrompt = null;
+            deferredPrompt.prompt(); deferredPrompt = null;
         });
     </script>
-    <script type="module" src="js/game-main.js?v=1.2"></script>
+    <script type="module" src="js/game-main.js?v=1.3"></script>
     <script type="module" src="./js/index.js"></script>
 </body>
 </html>
