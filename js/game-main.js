@@ -5,52 +5,43 @@ import * as Flow from "./game-flow.js";
 import "./game-items.js"; 
 import { AudioMgr } from "./game-audio.js"; 
 
-// [중요] HTML 버튼에서 스피커를 누를 수 있게 전역 함수로 연결
+// [필수] HTML 버튼 연결용 전역 함수
 window.toggleSound = () => {
     AudioMgr.toggleMute();
 };
 
 window.initGame = (diff) => {
-    // 1. [최우선] 오디오 잠금 해제 (화면이 보이기 전에 권한 획득)
-    if (AudioMgr.resumeContext) {
-        AudioMgr.resumeContext();
-    }
-
-    // 2. 데이터 설정
+    // 1. 데이터 설정
     state.diff = diff || 'NORMAL';
     initGridSize(state.diff);
     
-    // 3. 화면 그리기 (비동기 처리)
+    // 2. 화면 그리기
     requestAnimationFrame(() => {
-        // 그리드 생성 (이때 컨테이너 크기가 잡혀 있어야 함)
         UI.renderGrid();
-        
-        // 게임 로직 시작 (핸드 채우기)
         Flow.checkHandAndRefill();
-        
-        // UI 업데이트
         UI.updateUI();
     });
 };
 
 window.onload = () => {
-    // 1. 오디오 시스템 초기화
+    // 1. 오디오 초기화 (심플 버전)
     AudioMgr.init();
     
-    // 2. 전역 클릭 사운드 설정 (모든 버튼 클릭 시 소리)
+    // 2. [필수] 버튼 소리 켜기
     AudioMgr.setupGlobalClicks();
 
-    // 3. 데이터 로드
+    // 3. 소리 버튼 UI 동기화 (HTML 로딩 지연 대비)
+    const soundBtn = document.getElementById('btn-sound');
+    if(soundBtn) {
+        soundBtn.onclick = () => window.toggleSound();
+        AudioMgr.updateIcon(); // 아이콘 상태 맞추기
+    }
+
+    // 4. 데이터 로드
     if(state.isAdmin) state.stars = 10000;
     else state.stars = parseInt(localStorage.getItem('alpha_stars')) || 0;
     
     UI.updateUI();
-
-    // 4. 사운드 버튼 초기화 (혹시 HTML 로드가 늦었을 경우 대비)
-    const soundBtn = document.getElementById('btn-sound');
-    if(soundBtn) {
-        soundBtn.onclick = () => window.toggleSound();
-    }
 
     // 5. 저장 버튼 이벤트 연결
     const btnCheckSave = document.getElementById('btn-check-save');
