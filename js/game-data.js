@@ -1,5 +1,3 @@
-// js/game-data.js
-
 export const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 export const SHAPES_1 = [{ id: '1a', map: [[0,0]], w:1, h:1 }];
@@ -26,7 +24,7 @@ export function checkAdmin(username) {
     
     if(username && admins.includes(username.toLowerCase())) {
         localStorage.setItem('alpha_admin', 'true');
-        // 별 10000개 지급 (최초 1회만 하거나 매번 하거나 선택 가능, 여기선 매번 갱신)
+        // 별 10000개 지급
         localStorage.setItem('alpha_stars', '10000');
         state.stars = 10000; 
         state.isAdmin = true;
@@ -35,7 +33,7 @@ export function checkAdmin(username) {
     return false;
 }
 
-// [광고 관리자 - 핵심 수정]
+// [광고 관리자]
 export const AdManager = {
     // 광고 시청 가능 여부
     canWatchAd: function() { return true; },
@@ -46,7 +44,7 @@ export const AdManager = {
         const isAdminLocal = localStorage.getItem('alpha_admin') === 'true';
         
         if(state.isAdmin || isAdminLocal) {
-            // [관리자] 광고 창 띄우지 않음! 바로 성공 처리.
+            // [관리자] 광고 창 띄우지 않고 성공 처리
             alert("👑 Admin Pass: 광고 없이 보상을 획득합니다.");
             onSuccess(); 
             return;
@@ -63,9 +61,23 @@ export const AdManager = {
     }
 };
 
+// [수정됨] 난이도별 그리드 크기 설정 (HARD, HELL 명시)
 export function initGridSize(diff) {
-    if(diff === 'EASY') state.gridSize = 9;
-    else if(diff === 'NORMAL') state.gridSize = 8;
-    else state.gridSize = 7; 
+    if (diff === 'EASY') {
+        state.gridSize = 9; // 쉬움: 9x9 (넓음)
+    } 
+    else if (diff === 'NORMAL') {
+        state.gridSize = 8; // 보통: 8x8
+    } 
+    else if (diff === 'HARD') {
+        state.gridSize = 7; // 어려움: 7x7 (좁음)
+    } 
+    else if (diff === 'HELL') {
+        state.gridSize = 7; // 지옥: 7x7 (크기는 같지만 블록 확률이 다름)
+    } 
+    else {
+        state.gridSize = 8; // 기본값 안전장치
+    }
+
     state.grid = new Array(state.gridSize * state.gridSize).fill(null);
 }
