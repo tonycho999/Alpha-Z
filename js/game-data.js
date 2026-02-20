@@ -1,3 +1,5 @@
+// js/game-data.js
+
 export const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 export const SHAPES_1 = [{ id: '1a', map: [[0,0]], w:1, h:1 }];
@@ -18,12 +20,20 @@ export const state = {
     isAdmin: false, diff: 'NORMAL', isHammerMode: false, nextBlock: null 
 };
 
-// [필수] 광고 관리자
+// [수정됨] 광고 관리자
 export const AdManager = {
     canWatchAd: function() { return true; },
+
+    // 광고 보기: 사용자님이 주신 링크를 새 창으로 엽니다.
     showRewardAd: function(onSuccess) {
-        if(confirm("📺 Watch Ad to get reward? (Simulated)")) {
-            onSuccess();
+        if(confirm("📺 Watch Ad to get reward?")) {
+            // [복구] 사용자가 원했던 광고 링크
+            window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
+            
+            // 3초 후 보상 지급 시뮬레이션
+            setTimeout(() => {
+                onSuccess();
+            }, 3000);
         }
     }
 };
