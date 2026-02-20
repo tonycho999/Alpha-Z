@@ -57,7 +57,7 @@ const VISUAL_OFFSET_Y = 120; // 블록이 손가락 위로 떠 있는 높이
 
 // [대폭 수정] 테두리가 블록의 왼쪽 위로 팍 튀어나오도록 값을 키웠습니다.
 const LOGIC_SHIFT_X = -50;  // 왼쪽으로 100px 강제 이동
-const LOGIC_SHIFT_Y = -50;   // 위쪽으로 80px 강제 이동
+const LOGIC_SHIFT_Y = -40;   // 위쪽으로 80px 강제 이동
 
 export function setupDrag(onDrop) {
     const source = document.getElementById('source-block');
