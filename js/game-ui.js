@@ -1,10 +1,8 @@
-// js/game-ui.js
 import { state } from "./game-data.js";
 
-// 셀 크기 계산 (안전장치 추가)
 export function getActualCellSize() {
     const grid = document.getElementById('grid-container');
-    if (!grid) return 40; // 기본값
+    if (!grid) return 40;
     const rect = grid.getBoundingClientRect();
     const size = rect.width / state.gridSize;
     return size > 0 ? size : 40;
@@ -14,30 +12,31 @@ export function renderGrid() {
     const gridEl = document.getElementById('grid-container');
     if (!gridEl) return;
 
-    // 그리드 설정
     gridEl.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
     gridEl.style.gridTemplateRows = `repeat(${state.gridSize}, 1fr)`;
 
-    // 셀이 없으면 생성 (처음 한 번)
+    // 셀 생성 (없는 경우에만)
     if (gridEl.children.length !== state.gridSize * state.gridSize) {
         gridEl.innerHTML = '';
         for(let i=0; i<state.gridSize*state.gridSize; i++) {
             const div = document.createElement('div');
             div.className = 'cell'; 
             div.id = `cell-${i}`;
-            // 클릭 이벤트는 game-flow.js에서 처리하므로 여기선 UI만
             gridEl.appendChild(div);
         }
     }
 
-    // 셀 상태 업데이트
+    // 셀 렌더링
     for(let i=0; i<state.gridSize * state.gridSize; i++) {
         let cell = document.getElementById(`cell-${i}`);
         if (!cell) continue;
         
-        // 기존 스타일 초기화
+        const hasHighlight = cell.classList.contains('highlight-valid');
         cell.className = 'cell'; 
+        if (hasHighlight) cell.classList.add('highlight-valid');
+        
         cell.textContent = ''; 
+        cell.style.transform = ''; 
         cell.style.opacity = '1';
 
         const char = state.grid[i];
@@ -49,13 +48,12 @@ export function renderGrid() {
     }
 }
 
-// 하단 3개 블록 그리기
 export function renderHand() {
     for (let i = 0; i < 3; i++) {
         const slot = document.getElementById(`hand-${i}`);
         if(!slot) continue;
         
-        slot.innerHTML = ''; // 비우기
+        slot.innerHTML = ''; 
         slot.style.opacity = '1';
         
         const block = state.hand[i];
@@ -84,15 +82,16 @@ export function renderHand() {
     }
 }
 
-// 드래그 기능 설정
+// 드래그 오프셋 (손가락보다 얼마나 위로 띄울지)
+const DRAG_Y_OFFSET = 80;
+
 export function setupDrag(onDrop) {
     const ghost = document.getElementById('ghost');
     
     for (let i = 0; i < 3; i++) {
         const slot = document.getElementById(`hand-${i}`);
         if(!slot) continue;
-
-        // 기존 이벤트 제거
+        
         slot.onmousedown = null;
         slot.ontouchstart = null;
 
@@ -129,7 +128,6 @@ export function setupDrag(onDrop) {
                 return { x: t.clientX, y: t.clientY };
             };
             
-            // 초기 위치 설정
             const pos = getPos(e);
             moveGhost(pos.x, pos.y);
 
@@ -137,13 +135,13 @@ export function setupDrag(onDrop) {
                 const w = ghost.offsetWidth;
                 const h = ghost.offsetHeight;
                 ghost.style.left = (x - w/2) + 'px';
-                ghost.style.top = (y - h/2 - 80) + 'px'; // 손가락보다 조금 위에 표시
+                ghost.style.top = (y - h/2 - DRAG_Y_OFFSET) + 'px'; 
                 
-                // 미리보기 하이라이트
-                const idx = getMagnetGridIndex(x, y - 80);
+                // 미리보기
+                const idx = getMagnetGridIndex(x, y - DRAG_Y_OFFSET);
                 document.querySelectorAll('.highlight-valid').forEach(c => c.classList.remove('highlight-valid'));
                 if (idx !== -1) {
-                    onDrop(idx, true); // isPreview = true
+                    onDrop(idx, true); 
                 }
             }
 
@@ -160,7 +158,7 @@ export function setupDrag(onDrop) {
                 window.removeEventListener('touchend', endHandler);
 
                 const p = getPos(ee);
-                const idx = getMagnetGridIndex(p.x, p.y - 80);
+                const idx = getMagnetGridIndex(p.x, p.y - DRAG_Y_OFFSET);
                 
                 let success = false;
                 if (idx !== -1) {
@@ -169,7 +167,7 @@ export function setupDrag(onDrop) {
 
                 ghost.style.display = 'none';
                 if (!success) {
-                    slot.style.opacity = '1'; // 복귀
+                    slot.style.opacity = '1'; // 실패하면 복귀
                 }
                 document.querySelectorAll('.highlight-valid').forEach(c => c.classList.remove('highlight-valid'));
             };
@@ -189,11 +187,16 @@ export function getMagnetGridIndex(x, y) {
     const grid = document.getElementById('grid-container');
     if (!grid) return -1;
     const rect = grid.getBoundingClientRect();
-    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return -1;
+    // 약간의 여유 범위(padding)을 두어 터치 보정
+    if (x < rect.left - 20 || x > rect.right + 20 || y < rect.top - 20 || y > rect.bottom + 20) return -1;
     
     const size = getActualCellSize();
-    const c = Math.floor((x - rect.left) / size);
-    const r = Math.floor((y - rect.top) / size);
+    // 좌표를 그리드 내부로 클램핑(Clamp)
+    const relX = Math.max(0, Math.min(x - rect.left, rect.width - 1));
+    const relY = Math.max(0, Math.min(y - rect.top, rect.height - 1));
+    
+    const c = Math.floor(relX / size);
+    const r = Math.floor(relY / size);
 
     if (r >= 0 && r < state.gridSize && c >= 0 && c < state.gridSize) {
         return r * state.gridSize + c;
@@ -205,4 +208,3 @@ export function updateUI() {
     const starEl = document.getElementById('idx-stars');
     if(starEl) starEl.textContent = state.stars;
 }
-// export function renderSource() {} // 안 씀
