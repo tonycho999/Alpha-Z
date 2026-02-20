@@ -1,11 +1,8 @@
 import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
-// Firebase 관련 함수
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
-// ==========================================
-// [기존 게임 로직 - 수정 없음] 
-// ==========================================
+// ... (getMinIdx, createRandomBlock 등 기존 로직 유지) ...
 export function getMinIdx() {
     const bestIdx = ALPHABET.indexOf(state.best);
     if (bestIdx < 5) return 0; 
@@ -16,7 +13,6 @@ export function getMinIdx() {
     const maxAllowedMin = Math.floor((ALPHABET.indexOf(limitChar) - 3) / 2);
     return Math.min(calcMin, maxAllowedMin);
 }
-
 export function createRandomBlock() {
     let pool;
     const r = Math.random();
@@ -40,7 +36,6 @@ export function createRandomBlock() {
     }
     return { shape, items };
 }
-
 export function canPlaceAnywhere(block) {
     const size = state.gridSize;
     for(let r=0; r<size; r++) {
@@ -55,7 +50,6 @@ export function canPlaceAnywhere(block) {
     }
     return false;
 }
-
 export function getCluster(startIdx) {
     const char = state.grid[startIdx];
     if (!char) return [];
@@ -74,82 +68,67 @@ export function getCluster(startIdx) {
     }
     return cluster;
 }
+// ... (여기까지 기존 코드) ...
 
-// ==========================================
-// [DB 저장 함수 - 신규 등록 문제 해결]
-// ==========================================
+// [핵심] DB 저장 함수 (안전장치 + 디버깅 로그)
 export async function saveScoreToDB(username, isNewUser = false) {
-    console.log(`💾 저장 시도: ${username} (신규유저여부: ${isNewUser})`);
+    console.log(`💾 저장 시도: ${username} (신규: ${isNewUser})`);
 
-    // 1. DB 연결 확인
     if (!db) {
-        console.error("❌ Firebase DB 연결 실패");
+        console.error("❌ DB 연결 실패");
         return { success: false, msg: "DB Connection Error" };
     }
-
-    if (!username || username.trim() === "") return { success: false, msg: "Please enter a name." };
     
-    const docId = username.trim(); 
-    
-    // [안전장치] 데이터가 비어있지 않도록 강제 설정
-    // state.diff가 혹시라도 비어있으면 'NORMAL'로 고정
-    const safeDiff = (state.diff && ['EASY', 'NORMAL', 'HARD', 'HELL'].includes(state.diff)) ? state.diff : 'NORMAL';
+    // 1. 데이터 강제 보정 (HARD 모드 등 대비)
+    const docId = username.trim();
+    const safeDiff = state.diff || 'NORMAL'; 
     const safeBest = state.best || 'A';
     const safeStars = Number(state.stars || 0);
     const newScoreIndex = ALPHABET.indexOf(safeBest);
+
+    // 디버깅: 실제로 뭘 보내는지 콘솔에 찍음
+    console.log("📋 전송 데이터:", { id: docId, diff: safeDiff, best: safeBest, stars: safeStars });
 
     try {
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
         
-        // 1. [신규 등록] 이미 있는 아이디인지 확인
-        if (isNewUser) {
-            if (docSnap.exists()) {
-                console.warn("🚫 이미 존재하는 아이디입니다.");
-                return { success: false, msg: "🚫 Username already taken." };
-            }
+        // 신규 유저 중복 체크
+        if (isNewUser && docSnap.exists()) {
+            return { success: false, msg: "🚫 Username already taken." };
         }
         
-        // 2. [기존 유저] 점수 비교 (신규 유저는 통과)
+        // 기존 유저 점수 비교
         if (!isNewUser && docSnap.exists()) {
             const existingData = docSnap.data();
-            // 기존 점수가 더 높으면 저장 안 함
+            // 점수가 낮으면 저장 안 함
             if (existingData.scoreIndex > newScoreIndex) {
                  return { success: true, msg: "Score preserved (Higher score exists)." };
             }
-            // 점수는 같은데 별이 더 많거나 같으면 저장 안 함
             if (existingData.scoreIndex === newScoreIndex && existingData.stars >= safeStars) {
                  return { success: true, msg: "Score preserved (Existing is better/equal)." };
             }
         }
         
-        // 3. 저장할 데이터 생성
-        const newScoreData = {
+        // 저장
+        await setDoc(docRef, {
             username: docId,
             bestChar: safeBest,
-            difficulty: safeDiff,        // 대문자 확인됨
+            difficulty: safeDiff, 
             scoreIndex: Number(newScoreIndex),
             stars: Number(safeStars),
-            timestamp: serverTimestamp() // 규칙에서 허용했으므로 문제 없음
-        };
-
-        // 로그로 데이터 확인
-        console.log("전송 데이터:", newScoreData);
-        
-        // 4. 저장 실행
-        await setDoc(docRef, newScoreData);
+            timestamp: serverTimestamp()
+        });
         
         console.log("✅ 저장 성공!");
         return { success: true, msg: "Saved Successfully!" };
 
     } catch (e) { 
-        console.error("🔥 DB 저장 에러 발생:", e);
-        // 에러 내용을 사용자에게 알림
-        return { success: false, msg: "Error: " + e.message }; 
+        console.error("🔥 DB 저장 에러:", e);
+        return { success: false, msg: e.message }; 
     }
 }
 
-// 랭킹 가져오기 (기존 유지)
 export async function getLeaderboardData(targetDiff) {
     if (!db) return [];
     try {
