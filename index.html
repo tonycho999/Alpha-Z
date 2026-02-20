@@ -3,61 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alpha-Z | Addictive Alphabet Merge Puzzle</title>
-    
+    <title>Alpha-Z</title>
     <link rel="icon" type="image/png" href="./favicon.png">
-    <link rel="apple-touch-icon" href="./icon-180.png">
     <link rel="stylesheet" href="./style.css">
-    
     <style>
         .hidden { display: none !important; }
-        .best-badge {
-            background: #333; padding: 5px 15px; border-radius: 20px;
-            color: #f1c40f; font-weight: bold; border: 1px solid #555;
-            display: inline-flex; align-items: center; gap: 5px;
-        }
+        .best-badge { background: #333; padding: 5px 15px; border-radius: 20px; color: #f1c40f; border: 1px solid #555; }
     </style>
 </head>
 <body class="main-bg">
     <div class="screen">
-        <div style="position: relative; width: 100%; max-width: 500px; text-align: center;">
-            <h1 style="font-size: 3.5rem; color: var(--accent); margin-bottom: 10px; text-shadow: 0 0 20px rgba(241,196,15,0.4);">Alpha-Z</h1>
-            <button id="btn-sound" onclick="toggleMute()" style="position: absolute; top: 10px; right: 20px; font-size: 1.5rem; background: none; border: none; cursor: pointer; z-index: 10; color: white;">🔊</button>
-        </div>
+        <h1 style="font-size: 3.5rem; color: var(--accent); margin-bottom: 20px;">Alpha-Z</h1>
+        <button id="btn-sound" onclick="toggleMute()" style="position: absolute; top: 10px; right: 20px; font-size: 1.5rem; background: none; border: none; cursor: pointer; color: white;">🔊</button>
 
         <div id="start-screen">
-            <div style="margin-bottom:20px; color:var(--accent); font-weight:bold; font-size:1.2rem;">
-                MY STARS: <span id="idx-stars">0</span>
+            <div style="margin-bottom:20px; color:var(--accent);">MY STARS: <span id="idx-stars">0</span></div>
+            <div style="display: flex; flex-direction: column; gap: 15px; max-width: 300px; margin: 0 auto;">
+                <button class="btn btn-primary" onclick="playBtnSound(); startGame('EASY')">EASY</button>
+                <button class="btn btn-primary" onclick="playBtnSound(); startGame('NORMAL')">NORMAL</button>
+                <button class="btn btn-primary" onclick="playBtnSound(); startGame('HARD')">HARD</button>
+                <button class="btn btn-primary" onclick="playBtnSound(); startGame('HELL')">HELL</button>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; max-width: 300px; margin: 0 auto;">
-                <button class="btn btn-primary" style="width:100%;" onclick="playBtnSound(); startGame('EASY')">EASY (9x9)</button>
-                <button class="btn btn-primary" style="width:100%;" onclick="playBtnSound(); startGame('NORMAL')">NORMAL (8x8)</button>
-                <button class="btn btn-primary" style="width:100%;" onclick="playBtnSound(); startGame('HARD')">HARD (7x7)</button>
-                <button class="btn btn-primary" style="width:100%;" onclick="playBtnSound(); startGame('HELL')">HELL (7x7)</button>
-            </div>
-            <div style="display:flex; gap:10px; margin-top:20px; justify-content:center; width:100%; max-width:300px; margin: 0 auto;">
+            <div style="display:flex; gap:10px; margin-top:20px; justify-content:center; max-width:300px; margin: 20px auto;">
                 <button class="btn" style="flex:1; background:#444;" onclick="playBtnSound(); location.href='shop.html'">🛒 SHOP</button>
                 <button class="btn" style="flex:1; background:#444;" onclick="playBtnSound(); location.href='leaderboard.html'">🏆 RANK</button>
             </div>
         </div>
 
         <div id="game-screen" class="hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; width:95%; max-width:400px; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; width:95%; max-width:400px; margin-bottom:10px;">
                 <div class="best-badge">BEST: <span id="game-best-char">A</span></div>
-                <button class="btn" style="font-size:0.8rem; padding:5px 10px; background:#555;" onclick="playBtnSound(); location.reload()">⬅ MENU</button>
+                <button class="btn" style="font-size:0.8rem; background:#555;" onclick="playBtnSound(); location.reload()">⬅ MENU</button>
             </div>
-
             <div id="grid-container" class="grid-container"></div>
             <div id="ghost" class="ghost-block"></div>
-
-            <div id="hand-container" style="display: flex; justify-content: center; gap: 10px; margin: 10px auto; width: 100%; max-width: 400px; min-height: 90px; align-items: center;">
-                <div id="hand-0" class="hand-slot" style="width: 33%; height: 90px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.1);"></div>
-                <div id="hand-1" class="hand-slot" style="width: 33%; height: 90px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.1);"></div>
-                <div id="hand-2" class="hand-slot" style="width: 33%; height: 90px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px dashed rgba(255,255,255,0.1);"></div>
+            <div id="hand-container" style="display: flex; justify-content: center; gap: 10px; margin: 10px auto; width: 100%; max-width: 400px; min-height: 90px;">
+                <div id="hand-0" class="hand-slot" style="width: 33%;"></div>
+                <div id="hand-1" class="hand-slot" style="width: 33%;"></div>
+                <div id="hand-2" class="hand-slot" style="width: 33%;"></div>
             </div>
         </div>
 
-        <div id="ad-container" style="margin-top: 20px; background:#000; padding:5px; border-radius:8px; min-height:250px;">
+        <div id="ad-container" style="margin-top: 20px; background:#fff; padding:5px; border-radius:8px; min-height:250px;">
              <script type="text/javascript">
                 atOptions = { 'key' : '78fb5625f558f9e3c9b37b431fe339cb', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
             </script>
@@ -66,9 +53,9 @@
     </div>
 
     <div style="display:none;">
-        <audio id="s-drop" src="./assets/drop.mp3" preload="auto"></audio>
-        <audio id="s-merge" src="./assets/merge.mp3" preload="auto"></audio>
-        <audio id="s-over" src="./assets/over.mp3" preload="auto"></audio>
+        <audio id="s-drop" src="./assets/drop.mp3"></audio>
+        <audio id="s-merge" src="./assets/merge.mp3"></audio>
+        <audio id="s-over" src="./assets/over.mp3"></audio>
     </div>
 
     <div id="popup-over" class="popup-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
@@ -93,31 +80,19 @@
     <script>
         let isMuted = localStorage.getItem('alpha_muted') === 'true';
         updateMuteIcon();
-
         function toggleMute() {
-            isMuted = !isMuted;
-            localStorage.setItem('alpha_muted', isMuted);
-            updateMuteIcon();
+            isMuted = !isMuted; localStorage.setItem('alpha_muted', isMuted); updateMuteIcon();
             if(!isMuted) playBtnSound();
         }
-
         function updateMuteIcon() {
             const btn = document.getElementById('btn-sound');
-            if(btn) {
-                btn.textContent = isMuted ? '🔇' : '🔊';
-                btn.style.opacity = isMuted ? '0.5' : '1';
-            }
+            if(btn) { btn.textContent = isMuted ? '🔇' : '🔊'; btn.style.opacity = isMuted ? '0.5' : '1'; }
         }
-
         window.playBtnSound = function() {
             if(isMuted) return;
             const audio = document.getElementById('s-drop');
-            if(audio) { 
-                audio.currentTime = 0; 
-                audio.play().catch(e=>{});
-            }
+            if(audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
         }
-
         window.startGame = function(diff) {
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
@@ -125,7 +100,7 @@
             if (window.initGame) window.initGame(diff);
         };
     </script>
-    <script type="module" src="./js/game-main.js?v=2.54"></script>
+    <script type="module" src="./js/game-main.js?v=2.55"></script>
     <script type="module" src="./js/index.js"></script>
 </body>
 </html>
