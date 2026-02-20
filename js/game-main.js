@@ -5,17 +5,10 @@ import * as Flow from "./game-flow.js";
 import "./game-items.js"; 
 import { AudioMgr } from "./game-audio.js"; 
 
-// [필수] HTML 버튼 연결용 전역 함수
-window.toggleSound = () => {
-    AudioMgr.toggleMute();
-};
-
+// 초기화
 window.initGame = (diff) => {
-    // 1. 데이터 설정
     state.diff = diff || 'NORMAL';
     initGridSize(state.diff);
-    
-    // 2. 화면 그리기
     requestAnimationFrame(() => {
         UI.renderGrid();
         Flow.checkHandAndRefill();
@@ -23,53 +16,77 @@ window.initGame = (diff) => {
     });
 };
 
+// [핵심] 관리자일 경우 화면 UI 변경 함수
+function updateAdminUI() {
+    const isAdmin = (localStorage.getItem('alpha_admin') === 'true') || state.isAdmin;
+    if (isAdmin) {
+        // 1. 하단 배너 제거
+        const adContainer = document.getElementById('ad-container');
+        if (adContainer) adContainer.style.display = 'none';
+
+        // 2. 게임 오버 부활 버튼 텍스트 변경
+        const reviveBtn = document.getElementById('btn-revive-ad');
+        if (reviveBtn) {
+            reviveBtn.textContent = "👑 Free Revive (Admin)";
+            // 배경색도 관리자 느낌으로 변경 (선택사항)
+            reviveBtn.style.background = "#9b59b6"; 
+        }
+    }
+}
+
 window.onload = () => {
-    // 1. 오디오 초기화 (심플 버전)
     AudioMgr.init();
     
-    // 2. [필수] 버튼 소리 켜기
-    AudioMgr.setupGlobalClicks();
-
-    // 3. 소리 버튼 UI 동기화 (HTML 로딩 지연 대비)
-    const soundBtn = document.getElementById('btn-sound');
-    if(soundBtn) {
-        soundBtn.onclick = () => window.toggleSound();
-        AudioMgr.updateIcon(); // 아이콘 상태 맞추기
-    }
-
-    // 4. 데이터 로드
-    if(state.isAdmin) state.stars = 10000;
-    else state.stars = parseInt(localStorage.getItem('alpha_stars')) || 0;
+    // 데이터 로드
+    state.stars = parseInt(localStorage.getItem('alpha_stars')) || 0;
     
+    // 시작하자마자 관리자 체크 후 UI 갱신
+    if(localStorage.getItem('alpha_admin') === 'true') {
+        state.isAdmin = true;
+    }
+    updateAdminUI(); // 배너 숨기기 실행
+
     UI.updateUI();
 
-    // 5. 저장 버튼 이벤트 연결
+    // 저장 버튼 (이름 입력 시 관리자 체크)
     const btnCheckSave = document.getElementById('btn-check-save');
     if (btnCheckSave) {
         btnCheckSave.onclick = async () => {
+            if(window.playBtnSound) window.playBtnSound();
+
             const nameInput = document.getElementById('username-input');
             const name = nameInput ? nameInput.value.trim() : '';
-            if(!name) return alert('Enter username!');
             
-            checkAdmin(name);
+            if(!name) return alert('Please enter your name!');
+            
+            // 관리자 확인
+            if (checkAdmin(name)) {
+                updateAdminUI(); // 즉시 배너 제거 및 UI 변경
+                alert(`Hello Admin ${name}! Ads removed.`);
+                UI.updateUI(); 
+            }
+
             const res = await Core.saveScoreToDB(name, true);
-            
             if(res.success) {
                 document.getElementById('area-new-user').style.display='none';
                 document.getElementById('save-msg').style.display='block';
-                UI.updateUI();
+                localStorage.setItem('alpha_username', name);
             } else {
-                alert(res.msg);
+                alert("Save Failed: " + res.msg);
             }
         };
     }
 
     const btnJustSave = document.getElementById('btn-just-save');
     if (btnJustSave) {
-        btnJustSave.onclick = () => {
-            Core.saveScoreToDB(localStorage.getItem('alpha_username'), false);
-            document.getElementById('area-exist-user').style.display='none';
-            document.getElementById('save-msg').style.display='block';
+        btnJustSave.onclick = async () => {
+            if(window.playBtnSound) window.playBtnSound();
+            const savedName = localStorage.getItem('alpha_username');
+            const res = await Core.saveScoreToDB(savedName, true);
+            if(res.success) {
+                document.getElementById('area-exist-user').style.display='none';
+                document.getElementById('save-msg').style.display='block';
+            }
         };
     }
 };
