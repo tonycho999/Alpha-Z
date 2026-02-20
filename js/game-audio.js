@@ -1,53 +1,68 @@
-// js/game-audio.js
-
 export const AudioMgr = {
     isMuted: false,
     sounds: {},
 
     init() {
-        // 소리 파일 로드
-        this.sounds = {
-            drop: new Audio('assets/drop.mp3'),
-            merge: new Audio('assets/merge.mp3'),
-            over: new Audio('assets/over.mp3'),
-            click: new Audio('assets/drop.mp3') // 버튼 클릭음 (drop 재사용)
-        };
-
-        // 초기 음량 설정
-        Object.values(this.sounds).forEach(s => {
-            s.volume = 0.5; // 너무 시끄럽지 않게 50%
+        const fileNames = ['drop', 'merge', 'over'];
+        
+        fileNames.forEach(name => {
+            const audio = new Audio(`assets/${name}.mp3`);
+            audio.addEventListener('error', (e) => {
+                console.error(`❌ Audio load failed: assets/${name}.mp3`, e);
+            });
+            this.sounds[name] = audio;
         });
 
-        // 저장된 설정 불러오기
+        // 'click'이라는 이름으로 'drop' 소리를 같이 씁니다.
+        // (파일을 또 로드할 필요 없이 drop을 참조)
+        this.sounds['click'] = this.sounds['drop']; 
+
         const savedMute = localStorage.getItem('alpha_muted');
         if (savedMute === 'true') {
             this.isMuted = true;
-            this.updateIcon();
         }
+        this.updateIcon();
+    },
+
+    // [추가] 화면의 모든 버튼에 클릭 소리 자동 적용
+    setupGlobalClicks() {
+        document.addEventListener('click', (e) => {
+            // 클릭한 요소가 버튼이거나, 버튼 안에 있는 글자/아이콘인지 확인
+            // <button>, .btn 클래스, <a> 태그 등을 모두 포함
+            const target = e.target.closest('button, .btn, a');
+            
+            // 버튼이고, 사운드 토글 버튼(얘는 따로 처리함)이 아니면 소리 재생
+            if (target && target.id !== 'btn-sound') {
+                this.play('click');
+            }
+        });
     },
 
     play(name) {
-        if (this.isMuted || !this.sounds[name]) return;
+        if (this.isMuted) return;
         
-        // 끊김 없이 연속 재생을 위해 cloneNode 사용 (또는 currentTime=0)
-        const sound = this.sounds[name];
-        sound.currentTime = 0; 
+        const originalSound = this.sounds[name];
+        if (!originalSound) return;
+
+        // 연속 클릭을 위해 소리 복제해서 재생
+        const soundClone = originalSound.cloneNode(true);
+        soundClone.volume = 0.5;
         
-        // 합쳐지는 소리는 약간 톤을 높여도 좋음 (여기선 기본 재생)
-        sound.play().catch(e => console.log('Audio play failed', e));
+        soundClone.play().catch(e => {
+            // 사용자 인터랙션 전 자동 재생 방지 에러는 무시
+        });
     },
 
     toggleMute() {
         this.isMuted = !this.isMuted;
         localStorage.setItem('alpha_muted', this.isMuted);
         this.updateIcon();
-        return this.isMuted;
+        if (!this.isMuted) this.play('click');
     },
 
     updateIcon() {
         const btn = document.getElementById('btn-sound');
         if (btn) {
-            // 이모지 변경 (🔊 / 🔇)
             btn.textContent = this.isMuted ? '🔇' : '🔊';
             btn.style.opacity = this.isMuted ? '0.5' : '1';
         }
