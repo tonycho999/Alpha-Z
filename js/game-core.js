@@ -3,9 +3,9 @@ import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
-// --- [기존 게임 로직 유지: getMinIdx, createRandomBlock, canPlaceAnywhere, getCluster] ---
-// (이 부분은 수정하지 마세요. 위 코드 그대로 두시면 됩니다.)
-
+// ==========================================
+// [기존 게임 로직 - 수정 없음] 
+// ==========================================
 export function getMinIdx() {
     const bestIdx = ALPHABET.indexOf(state.best);
     if (bestIdx < 5) return 0; 
@@ -74,39 +74,52 @@ export function getCluster(startIdx) {
     }
     return cluster;
 }
-// --- [기존 게임 로직 끝] ---
+// ==========================================
+// [기존 게임 로직 끝]
+// ==========================================
 
 
-// [수정됨] DB 저장 함수 (안전장치 추가)
+// [수정됨] DB 저장 함수 (요구사항 반영: 중복 체크, 점수 비교)
 export async function saveScoreToDB(username, isNewUser = false) {
-    console.log(`📡 DB 저장 시도: ${username}`); // 디버깅 로그
-
     if (!db) {
-        console.error("❌ Firebase Config Error: db 객체가 없습니다.");
-        return { success: false, msg: "DB Connection Failed" };
+        console.error("❌ Firebase DB Not Connected");
+        return { success: false, msg: "DB Connection Error" };
     }
 
     if (!username || username.trim() === "") return { success: false, msg: "Please enter a name." };
     
-    const docId = username.trim(); 
+    const docId = username.trim(); // 대소문자 구분
     
-    // state 값이 혹시 없을 경우를 대비한 안전장치
+    // 데이터 준비
     const safeBest = state.best || 'A';
     const safeDiff = state.diff || 'NORMAL';
     const safeStars = (typeof state.stars === 'number') ? state.stars : 0;
+    const newScoreIndex = ALPHABET.indexOf(safeBest);
 
     try {
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
         
-        // 신규 유저 중복 체크
+        // 1. [신규 유저] ID 중복 체크
         if (isNewUser && docSnap.exists()) {
             return { success: false, msg: "🚫 Username already taken." };
         }
         
-        const newScoreIndex = ALPHABET.indexOf(safeBest);
+        // 2. [기존 유저] 점수 비교 (DB 점수가 더 높으면 저장 안 함)
+        if (!isNewUser && docSnap.exists()) {
+            const existingData = docSnap.data();
+            
+            // 기존 점수(알파벳)가 더 높으면 패스
+            if (existingData.scoreIndex > newScoreIndex) {
+                 return { success: true, msg: "Score preserved (Higher score exists)." };
+            }
+            // 점수는 같은데 별이 더 많거나 같으면 패스
+            if (existingData.scoreIndex === newScoreIndex && existingData.stars >= safeStars) {
+                 return { success: true, msg: "Score preserved (Existing is better/equal)." };
+            }
+        }
         
-        // 데이터 객체 생성
+        // 저장할 데이터
         const newScoreData = {
             username: docId,
             bestChar: safeBest,
@@ -116,35 +129,17 @@ export async function saveScoreToDB(username, isNewUser = false) {
             timestamp: serverTimestamp()
         };
         
-        // 점수 비교 (기존 점수가 더 높으면 덮어쓰지 않음)
-        if (docSnap.exists()) {
-            const existingData = docSnap.data();
-            
-            // 1. 기존 점수(알파벳)가 더 높으면 저장 안 함
-            if (existingData.scoreIndex > newScoreIndex) {
-                 console.log("🛡️ 기존 점수가 더 높아 저장 건너뜀");
-                 return { success: true, msg: "Score preserved (Higher score exists)." };
-            }
-            // 2. 점수는 같은데 별이 더 많거나 같으면 저장 안 함
-            if (existingData.scoreIndex === newScoreIndex && existingData.stars >= newScoreData.stars) {
-                 console.log("🛡️ 점수/별이 동일하거나 기존이 더 높아 저장 건너뜀");
-                 return { success: true, msg: "Score preserved (Existing is better/equal)." };
-            }
-        }
-        
         await setDoc(docRef, newScoreData);
         
-        localStorage.setItem('alpha_username', docId);
-        console.log("✅ DB 저장 성공:", docId);
         return { success: true, msg: "Saved Successfully!" };
 
     } catch (e) { 
-        console.error("🔥 DB Save Error Detail:", e);
+        console.error("🔥 DB Save Error:", e);
         return { success: false, msg: e.message }; 
     }
 }
 
-// 랭킹 가져오기 (기존 유지)
+// 랭킹 가져오기 (그대로 유지)
 export async function getLeaderboardData(targetDiff) {
     if (!db) return [];
     try {
