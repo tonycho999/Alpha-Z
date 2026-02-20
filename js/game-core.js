@@ -1,11 +1,11 @@
 import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
-// Firestore 함수들
-import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, where, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// Firebase 관련 함수 (v9 Modular)
+import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// [중요] 이 파일이 서버에 없으면 "MIME type" 에러가 납니다. 업로드를 꼭 확인하세요.
+// [중요] 이 파일이 서버에 없으면 "MIME type" 에러가 납니다. .gitignore 확인 필수!
 import { db } from "./firebase-config.js";
 
-// [수정 2] 난이도별 자동 승급(삭제) 규칙
+// 난이도별 자동 승급(삭제) 규칙
 export function getMinIdx() {
     const bestIdx = ALPHABET.indexOf(state.best);
     if (bestIdx < 5) return 0; 
@@ -17,10 +17,11 @@ export function getMinIdx() {
     else if (state.diff === 'NORMAL' || state.diff === 'HARD') limitChar = 'R';
 
     const maxAllowedMin = Math.floor((ALPHABET.indexOf(limitChar) - 3) / 2);
+    
     return Math.min(calcMin, maxAllowedMin);
 }
 
-// [수정 3] 블록 생성 확률
+// 블록 생성 확률
 export function createRandomBlock() {
     let pool;
     const r = Math.random();
@@ -41,7 +42,6 @@ export function createRandomBlock() {
     }
 
     const shape = pool[Math.floor(Math.random() * pool.length)];
-    
     const minIdx = getMinIdx();
     const items = [];
 
@@ -91,52 +91,54 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
-// [핵심] DB 저장 함수 (Firestore 설정에 맞춤)
+// [핵심] DB 저장 함수 (보안 규칙 준수)
 export async function saveScoreToDB(username, isNewUser = false) {
-    // 1. DB 연결 확인 (가장 중요한 부분)
+    // 1. DB 연결 확인
     if (!db) {
-        console.error("❌ Firebase Config Error: db 객체가 로드되지 않았습니다.");
-        return { success: false, msg: "Server File Missing: firebase-config.js" };
+        console.error("❌ Firebase Config Error: db 객체 없음. 서버 파일 누락 가능성.");
+        return { success: false, msg: "DB Connection Failed (Check .gitignore)" };
     }
 
     if (!username || username.trim() === "") return { success: false, msg: "Please enter a name." };
     
+    // 문서 ID는 소문자로 변환하지 않고 입력값 그대로 사용 (보안 규칙 username 체크)
     const docId = username.trim(); 
+    
     try {
-        // 컬렉션 참조 (leaderboard)
-        const collectionRef = collection(db, "leaderboard");
-        
-        // 데이터 준비 (스크린샷 필드명 준수)
-        const charIdx = ALPHABET.indexOf(state.best);
-        const newScoreData = {
-            username: docId,
-            bestChar: state.best,     // 예: "G"
-            difficulty: state.diff,   // 예: "HELL"
-            scoreIndex: charIdx,      // 예: 6 (정렬용)
-            stars: state.stars,       // 예: 10000
-            timestamp: serverTimestamp(),
-            platform: 'web'
-        };
-
-        // 문서 추가 (addDoc 사용 - ID 자동생성 방지하고 이름으로 하려면 setDoc, 여기선 setDoc 유지)
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
-
+        
         // 신규 유저 중복 체크
         if (isNewUser && docSnap.exists()) {
             return { success: false, msg: "🚫 Username already taken." };
         }
         
-        // 기존 유저 점수 비교
+        const newScoreIndex = ALPHABET.indexOf(state.best);
+        
+        // 보안 규칙의 isValidScore() 요구사항에 정확히 맞춘 데이터 객체
+        const newScoreData = {
+            username: docId,                    // string
+            bestChar: state.best,               // string (size 1)
+            difficulty: state.diff,             // string (in list)
+            scoreIndex: Number(newScoreIndex),  // number (규칙엔 없지만 정렬용)
+            stars: Number(state.stars),         // number (규칙 필수)
+            timestamp: serverTimestamp()        // timestamp
+        };
+        
+        // 기존 점수 확인 및 비교 (보안 규칙 update 조건: 점수가 높거나 같아야 함)
         if (docSnap.exists()) {
             const existingData = docSnap.data();
-            // 점수(scoreIndex)가 더 낮으면 갱신 안 함
-            if (charIdx < existingData.scoreIndex) {
-                 return { success: true, msg: "Score preserved (Higher score exists)." };
+            // 기존 점수(scoreIndex)가 더 높으면 갱신하지 않고 성공 처리
+            if (existingData.scoreIndex > newScoreIndex) {
+                 return { success: true, msg: "Score preserved (Existing is higher)." };
+            }
+            // 점수가 같은데 별이 더 적으면 갱신 안 함
+            if (existingData.scoreIndex === newScoreIndex && existingData.stars > newScoreData.stars) {
+                 return { success: true, msg: "Score preserved (More stars existing)." };
             }
         }
         
-        // 저장 실행
+        // setDoc을 사용하면 문서가 없으면 생성, 있으면 덮어쓰기(merge:false가 기본)
         await setDoc(docRef, newScoreData);
         
         localStorage.setItem('alpha_username', docId);
@@ -145,11 +147,12 @@ export async function saveScoreToDB(username, isNewUser = false) {
 
     } catch (e) { 
         console.error("🔥 DB Save Error:", e);
-        return { success: false, msg: e.message || "Error saving score." }; 
+        // 에러 메시지가 'Missing or insufficient permissions'라면 규칙 위반임
+        return { success: false, msg: e.message }; 
     }
 }
 
-// [수정 4] 난이도별 랭킹 가져오기
+// 랭킹 가져오기
 export async function getLeaderboardData(targetDiff) {
     if (!db) return [];
     try {
