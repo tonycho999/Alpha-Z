@@ -12,10 +12,11 @@ export const state = {
     grid: [], gridSize: 7,
     stars: 0, best: 'A', diff: 'NORMAL',
     currentBlock: null, nextBlock: null,
-    isLocked: false, isHammerMode: false, isAdmin: false, hasReachedO: false
+    isLocked: false, isHammerMode: false, isAdmin: false, hasReachedO: false,
+    hasRevived: false, // [추가] 부활 사용 여부
+    isReviveTurn: false // [추가] 부활 직후 특수 턴 여부
 };
 
-// 광고 시청 시스템 매니저
 export const AdManager = {
     canWatchAd() {
         if(state.isAdmin) return { canWatch: true }; 
@@ -24,11 +25,11 @@ export const AdManager = {
         let count = parseInt(localStorage.getItem('alpha_ad_count')) || 0;
 
         if (lastDate !== today) { count = 0; localStorage.setItem('alpha_ad_count', count); }
-        if (count >= 10) return { canWatch: false, reason: 'Daily Limit Reached (10/10)' };
+        if (count >= 20) return { canWatch: false, reason: 'Daily Limit Reached' };
 
         const lastTime = parseInt(localStorage.getItem('alpha_ad_time')) || 0;
         const elapsed = Date.now() - lastTime;
-        const cooldown = 10 * 60 * 1000; // 10 minutes
+        const cooldown = 10 * 60 * 1000; 
 
         if (elapsed < cooldown) return { canWatch: false, reason: 'cooldown', remaining: cooldown - elapsed };
         return { canWatch: true };
@@ -64,4 +65,6 @@ export function initGridSize(diff) {
     state.grid = Array(state.gridSize * state.gridSize).fill(null);
     document.documentElement.style.setProperty('--grid-size', state.gridSize);
     state.isAdmin = localStorage.getItem('alpha_admin') === 'true';
+    state.hasRevived = false; // 초기화
+    state.isReviveTurn = false; // 초기화
 }
