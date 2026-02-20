@@ -1,4 +1,35 @@
-// game-main.js
+import { state, initGridSize, checkAdmin } from "./game-data.js";
+import * as Core from "./game-core.js";
+import * as UI from "./game-ui.js";
+import * as Flow from "./game-flow.js";
+import "./game-items.js"; 
+import { AudioMgr } from "./game-audio.js"; 
+
+// 초기화
+window.initGame = (diff) => {
+    state.diff = diff || 'NORMAL';
+    initGridSize(state.diff);
+    requestAnimationFrame(() => {
+        UI.renderGrid();
+        Flow.checkHandAndRefill();
+        UI.updateUI();
+    });
+};
+
+// 관리자 UI 업데이트
+function updateAdminUI() {
+    const isAdmin = (localStorage.getItem('alpha_admin') === 'true') || state.isAdmin;
+    if (isAdmin) {
+        const adContainer = document.getElementById('ad-container');
+        if (adContainer) adContainer.style.display = 'none';
+
+        const reviveBtn = document.getElementById('btn-revive-ad');
+        if (reviveBtn) {
+            reviveBtn.textContent = "👑 Free Revive (Admin)";
+            reviveBtn.style.background = "#9b59b6"; 
+        }
+    }
+}
 
 window.onload = () => {
     AudioMgr.init();
@@ -12,8 +43,10 @@ window.onload = () => {
     updateAdminUI(); 
     UI.updateUI();
 
-    // [중요] 이벤트 위임(Event Delegation) 방식
-    // UI가 다시 그려져도 클릭 이벤트가 유지되도록 document에 이벤트를 겁니다.
+    // ============================================================
+    // [핵심 수정] 이벤트 위임 (Event Delegation)
+    // 버튼이 나중에 생겨도 클릭이 되도록 document에 이벤트를 겁니다.
+    // ============================================================
     document.addEventListener('click', async (e) => {
         
         // 1. [신규 유저] 저장 버튼 클릭 감지
@@ -25,8 +58,6 @@ window.onload = () => {
             
             if(!name) return alert('Please enter your name!');
             
-            console.log("📝 저장 시도(신규):", name); // 디버깅용 로그
-
             // 관리자 확인
             if (checkAdmin(name)) {
                 updateAdminUI();
@@ -34,22 +65,27 @@ window.onload = () => {
                 UI.updateUI(); 
             }
 
-            // DB 저장 시도
+            // 저장 중 버튼 비활성화 (중복 클릭 방지)
+            e.target.disabled = true;
+            e.target.textContent = "Saving...";
+
             const res = await Core.saveScoreToDB(name, true);
             
+            // 버튼 복구
+            e.target.disabled = false;
+            e.target.textContent = "Save";
+
             if(res.success) {
-                console.log("🎉 저장 성공 메시지:", res.msg);
-                // 성공 시 UI 처리
                 const areaNew = document.getElementById('area-new-user');
                 const msgBox = document.getElementById('save-msg');
+                
                 if(areaNew) areaNew.style.display = 'none';
                 if(msgBox) {
                     msgBox.style.display = 'block';
-                    msgBox.innerText = "Saved Successfully!"; // 메시지 명시
+                    msgBox.innerText = res.msg; // 성공/보존 메시지 출력
                 }
                 localStorage.setItem('alpha_username', name);
             } else {
-                console.error("🔥 저장 실패:", res.msg);
                 alert("Save Failed: " + res.msg);
             }
         }
@@ -59,22 +95,26 @@ window.onload = () => {
             if(window.playBtnSound) window.playBtnSound();
             
             const savedName = localStorage.getItem('alpha_username');
-            console.log("📝 저장 시도(기존):", savedName); // 디버깅용 로그
+            
+            // 저장 중 버튼 비활성화
+            e.target.disabled = true;
+            e.target.textContent = "Saving...";
 
             const res = await Core.saveScoreToDB(savedName, false);
+
+            e.target.disabled = false;
+            e.target.textContent = "Update Score";
             
             if(res.success) {
-                console.log("🎉 저장 성공 메시지:", res.msg);
                 const areaExist = document.getElementById('area-exist-user');
                 const msgBox = document.getElementById('save-msg');
+                
                 if(areaExist) areaExist.style.display = 'none';
                 if(msgBox) {
                     msgBox.style.display = 'block';
-                    // 보존된 경우와 갱신된 경우 메시지 구분
-                    msgBox.innerText = res.msg || "Saved Successfully!";
+                    msgBox.innerText = res.msg; // 성공/보존 메시지 출력
                 }
             } else {
-                console.error("🔥 저장 실패:", res.msg);
                 alert("Save Failed: " + res.msg);
             }
         }
