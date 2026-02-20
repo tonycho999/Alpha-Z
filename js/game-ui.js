@@ -1,13 +1,16 @@
 import { state } from "./game-data.js";
 
-// 셀 크기 실시간 계산
+// [보조 함수] 현재 보드판 상태를 기준으로 칸 하나의 크기를 구함 (실시간)
 function getActualCellSize() {
     const grid = document.getElementById('grid-container');
     if (!grid) return 45;
-    const rect = grid.getBoundingClientRect();
+    
+    const rect = grid.getBoundingClientRect(); // 현재 보드 크기 측정
     const style = window.getComputedStyle(grid);
     const paddingLeft = parseFloat(style.paddingLeft) || 0;
     const paddingRight = parseFloat(style.paddingRight) || 0;
+    
+    // (보드 전체 너비 - 패딩) / 칸 수
     return (rect.width - paddingLeft - paddingRight) / state.gridSize;
 }
 
@@ -17,7 +20,6 @@ export function renderGrid() {
         if(!cell) continue;
         
         const hasHighlight = cell.classList.contains('highlight-valid');
-        
         cell.className = 'cell'; 
         if (hasHighlight) cell.classList.add('highlight-valid');
         
@@ -40,7 +42,10 @@ export function renderSource(block, elementId) {
     const el = document.getElementById(elementId);
     if(!el) return;
     el.innerHTML = '';
+    
+    // 렌더링 시점의 크기 (참고용일 뿐, 드래그 시점에 다시 계산됨)
     const size = elementId === 'next-preview' ? 25 : getActualCellSize();
+    
     el.style.gridTemplateColumns = `repeat(${block.shape.w}, ${size}px)`;
     el.style.gridTemplateRows = `repeat(${block.shape.h}, ${size}px)`;
     
@@ -57,29 +62,16 @@ export function renderSource(block, elementId) {
 }
 
 // ==========================================
-// [설정] 난이도별 미세 조정 (여기서 수정하세요!)
+// [설정] 드래그 & 자석 보정
 // ==========================================
-const VISUAL_OFFSET_Y = 120; // 시각적으로 띄우는 높이
-
-const OFFSET_CONFIG = {
-    // x: +값이면 오른쪽, -값이면 왼쪽으로 판정 이동
-    // y: +값이면 아래쪽, -값이면 위쪽으로 판정 이동
-    
-    // 9x9 (HARD): 보통 0, 0이면 맞음
-    9: { x: 0, y: 0 }, 
-
-    // 8x8 (NORMAL): 만약 오른쪽으로 치우쳐 보이면 x를 -10 정도로 수정
-    8: { x: -10, y: 10 }, 
-
-    // 7x7 (EASY): 칸이 커서 오차가 클 수 있음. 필요하면 조절
-    7: { x: 0, y: 0 }  
-};
+const VISUAL_OFFSET_Y = 120; // 손가락 위로 띄우는 높이
 
 export function setupDrag(onDrop) {
     const source = document.getElementById('source-block');
     const ghost = document.getElementById('ghost');
     if(!source) return;
 
+    // 기존 리스너 제거 (중복 방지)
     source.onmousedown = source.ontouchstart = null;
 
     const getPos = (e) => {
@@ -90,16 +82,30 @@ export function setupDrag(onDrop) {
     const start = (e) => {
         if(state.isLocked || state.isHammerMode) return;
         
+        // 1. 고스트 내용 복사
         ghost.innerHTML = source.innerHTML;
         ghost.style.display = 'grid';
-        ghost.style.gridTemplateColumns = source.style.gridTemplateColumns;
-        ghost.style.gridTemplateRows = source.style.gridTemplateRows;
+
+        // [핵심 해결책]
+        // 주소창 등에 의해 보드 크기가 변했을 수 있으므로, 
+        // 드래그를 시작하는 '지금 이 순간'의 셀 크기를 다시 계산해서 적용합니다.
+        const currentCellSize = getActualCellSize();
         
+        // 고스트(드래그 블록)의 크기를 현재 보드판 비율에 강제로 맞춤
+        ghost.style.gridTemplateColumns = `repeat(${state.currentBlock.shape.w}, ${currentCellSize}px)`;
+        ghost.style.gridTemplateRows = `repeat(${state.currentBlock.shape.h}, ${currentCellSize}px)`;
+        
+        // 필요하다면 폰트 사이즈도 보정 (선택 사항)
+        // Array.from(ghost.children).forEach(c => c.style.fontSize = (currentCellSize * 0.5) + 'px');
+
+        // 2. 크기가 보정된 고스트의 실제 크기 측정
         const rect = ghost.getBoundingClientRect();
+        
         const pos = getPos(e);
         updateGhostAndCheck(pos.x, pos.y, rect.width, rect.height, onDrop, false);
         source.style.opacity = '0';
 
+        // 전역 이벤트 리스너
         const moveHandler = (me) => move(me);
         const endHandler = (ee) => end(ee);
 
@@ -107,6 +113,7 @@ export function setupDrag(onDrop) {
             if(source.style.opacity !== '0') return;
             if(me.cancelable) me.preventDefault();
             const p = getPos(me);
+            // 이동 중에도 크기가 변할 수 있으니 rect를 계속 갱신
             const r = ghost.getBoundingClientRect();
             updateGhostAndCheck(p.x, p.y, r.width, r.height, onDrop, false);
         }
@@ -120,6 +127,7 @@ export function setupDrag(onDrop) {
             if(source.style.opacity !== '0') return;
             const p = getPos(ee);
             const r = ghost.getBoundingClientRect();
+            
             updateGhostAndCheck(p.x, p.y, r.width, r.height, onDrop, true);
 
             ghost.style.display = 'none';
@@ -141,38 +149,35 @@ function clearHighlights() {
     cells.forEach(c => c.classList.remove('highlight-valid'));
 }
 
+// 자석 위치 계산 및 시각적 업데이트
 function updateGhostAndCheck(fingerX, fingerY, w, h, onDrop, isDropAction) {
     const ghost = document.getElementById('ghost');
 
-    // 1. 시각적 위치 (손가락 위 120px)
-    // 블록의 정중앙이 손가락에 오도록 배치
+    // 1. 시각적 위치: 손가락 위에 블록 정중앙이 오도록
     const visualLeft = fingerX - (w / 2);
     const visualTop = fingerY - VISUAL_OFFSET_Y - (h / 2);
 
     ghost.style.left = visualLeft + 'px';
     ghost.style.top = visualTop + 'px';
 
-    if (!isDropAction) clearHighlights();
+    // 2. 자석 판정: 손가락 위치를 기준으로 가장 가까운 칸 찾기
+    const idx = getMagnetGridIndex(fingerX, fingerY - VISUAL_OFFSET_Y);
 
-    // 2. [수정됨] 설정값을 가져와서 판정 좌표 보정
-    const config = OFFSET_CONFIG[state.gridSize] || { x: 0, y: 0 };
-    
-    // 손가락 위치에 설정된 오프셋을 더함
-    const magnetTargetX = fingerX + config.x;
-    const magnetTargetY = fingerY - VISUAL_OFFSET_Y + config.y;
-
-    // 3. 자석 판정 실행
-    const idx = getMagnetGridIndex(magnetTargetX, magnetTargetY);
+    if (!isDropAction) {
+        clearHighlights();
+    }
 
     if (idx !== -1) {
         onDrop(idx, !isDropAction);
     }
 }
 
+// [자석 로직] 가장 가까운 칸 찾기 (반올림 방식)
 function getMagnetGridIndex(checkX, checkY) {
     const grid = document.getElementById('grid-container');
     if(!grid) return -1;
     
+    // 매번 실시간 측정 (절대값 아님)
     const rect = grid.getBoundingClientRect();
     const style = window.getComputedStyle(grid);
     const pL = parseFloat(style.paddingLeft) || 0;
@@ -186,22 +191,26 @@ function getMagnetGridIndex(checkX, checkY) {
     const cellSizeX = contentW / state.gridSize;
     const cellSizeY = contentH / state.gridSize;
 
-    // 현재 손가락(보정됨)이 가리키는 중심 칸 계산
+    // 현재 손가락 위치가 그리드 상에서 몇 번째 칸인지 (실수 형태)
     const rawCol = (checkX - contentStartX) / cellSizeX;
     const rawRow = (checkY - contentStartY) / cellSizeY;
+
+    // 보드 밖 너무 멀리 벗어남 체크
+    if (rawCol < -2 || rawCol > state.gridSize + 1 || rawRow < -2 || rawRow > state.gridSize + 1) return -1;
+
+    // 블록의 중심을 잡고 있으므로, 블록의 '왼쪽 위' 좌표를 역산
+    // Math.round를 사용해 가장 가까운 정수 칸으로 '자석'처럼 붙임
+    const blockW = state.currentBlock.shape.w;
+    const blockH = state.currentBlock.shape.h;
+
+    const targetCol = Math.round(rawCol - (blockW / 2));
+    const targetRow = Math.round(rawRow - (blockH / 2));
+
+    // 유효 범위 체크 (걸치는 것 허용 여부에 따라 조절 가능)
+    // 여기서는 중심점이 유효 범위 근처일 때만 허용
+    if (targetCol < -2 || targetCol >= state.gridSize || targetRow < -2 || targetRow >= state.gridSize) return -1;
     
-    if (rawCol < -1 || rawCol > state.gridSize || rawRow < -1 || rawRow > state.gridSize) return -1;
-
-    // 블록의 크기를 고려하여 '왼쪽 위 시작점'을 역산
-    // Math.round를 사용하여 가장 가까운 칸으로 '착' 달라붙게 함
-    const blockWidthCells = state.currentBlock.shape.w;
-    const blockHeightCells = state.currentBlock.shape.h;
-
-    const targetCol = Math.floor(rawCol - (blockWidthCells / 2) + 0.5); 
-    const targetRow = Math.floor(rawRow - (blockHeightCells / 2) + 0.5);
-
-    if (targetCol < -2 || targetCol >= state.gridSize + 1 || targetRow < -2 || targetRow >= state.gridSize + 1) return -1;
-
+    // 최종 인덱스가 음수여도 highlight 로직 등에서 걸러짐, 일단 좌표 반환
     return targetRow * state.gridSize + targetCol;
 }
 
