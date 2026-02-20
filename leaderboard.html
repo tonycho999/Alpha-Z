@@ -3,27 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alpha-Z Rank</title>
+    <title>Alpha-Z Leaderboard</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="main-bg">
-    <div class="screen" style="justify-content: flex-start; padding-top: 40px;">
-        <h1 style="color:var(--accent); margin-top:0; margin-bottom:20px;">HALL OF FAME</h1>
+<body class="game-mode">
+    <div class="screen">
+        <h1 style="color: var(--accent); margin: 20px 0;">🏆 TOP RANKERS</h1>
         
-        <div class="rank-tabs">
-            <button class="tab-btn active" onclick="loadRank('EASY')">EASY</button>
-            <button class="tab-btn" onclick="loadRank('NORMAL')">NORMAL</button>
-            <button class="tab-btn" onclick="loadRank('HARD')">HARD</button>
-            <button class="tab-btn" onclick="loadRank('HELL')">HELL</button>
+        <div id="leaderboard-list" class="leaderboard-container">
+            <p style="text-align:center; color:#888;">Loading ranks...</p>
         </div>
 
-        <div id="loading-text" style="color:#888; padding:20px;">Loading...</div>
-        
-        <div id="rank-list" class="leaderboard-list" style="margin-bottom: 20px;"></div>
-
-        <button class="btn" style="width:100%; max-width:400px; background:#444;" onclick="location.href='/'">🏠 BACK TO MENU</button>
+        <div style="margin-top: 20px; width: 100%; max-width: 500px; padding: 0 10px;">
+            <button class="btn btn-primary" style="width: 100%;" onclick="location.href='./index.html'">🏠 Back to Menu</button>
+        </div>
     </div>
-    
-    <script type="module" src="js/leaderboard.js"></script>
+
+    <script type="module">
+        import { state, ALPHABET } from './js/game-data.js';
+        // 데이터를 가져와서 그리는 로직 예시
+        async function loadRanks() {
+            const listEl = document.getElementById('leaderboard-list');
+            try {
+                // 실제 DB 호출 부분 (Core.getRanks 등)
+                // const ranks = await Core.getRanks(); 
+                const dummyRanks = [
+                    { name: 'AlphaKing', best: 'Z', stars: 999 },
+                    { name: 'PuzzleMaster', best: 'W', stars: 450 },
+                    { name: 'LuckyGuy', best: 'S', stars: 120 },
+                    { name: 'NormalPlayer', best: 'O', stars: 50 }
+                ];
+
+                listEl.innerHTML = '';
+                dummyRanks.forEach((user, index) => {
+                    const rank = index + 1;
+                    const item = document.createElement('div');
+                    item.className = `rank-item ${rank <= 3 ? 'rank-' + rank : ''}`;
+                    
+                    let medal = rank;
+                    if(rank === 1) medal = '🥇';
+                    else if(rank === 2) medal = '🥈';
+                    else if(rank === 3) medal = '🥉';
+
+                    item.innerHTML = `
+                        <div class="rank-number">${medal}</div>
+                        <div class="rank-name">${user.name}</div>
+                        <div class="rank-stats">
+                            <div class="rank-best">${user.best}</div>
+                            <div class="rank-stars">⭐ ${user.stars}</div>
+                        </div>
+                    `;
+                    listEl.appendChild(item);
+                });
+            } catch (e) {
+                listEl.innerHTML = '<p>Failed to load rankings.</p>';
+            }
+        }
+        window.onload = loadRanks;
+    </script>
 </body>
 </html>
