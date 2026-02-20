@@ -27,7 +27,7 @@ export const state = {
     gridSize: 8,
     grid: [],
     
-    // [중요] 3개 슬롯 (이게 없으면 에러남)
+    // 3개 슬롯
     hand: [null, null, null], 
     dragIndex: -1,
     
@@ -47,12 +47,15 @@ export const state = {
     nextBlock: null 
 };
 
-// [추가] AdManager (이게 없어서 SyntaxError가 났던 것입니다)
+// [수정됨] AdManager에 canWatchAd 추가 (shop.js 오류 해결)
 export const AdManager = {
-    // 광고 보기 시뮬레이션 (나중에 실제 광고 SDK 연동 가능)
+    // 광고 시청 가능 여부 체크 (항상 true로 반환하여 버튼 활성화)
+    canWatchAd: function() {
+        return true; 
+    },
+
+    // 광고 보기 시뮬레이션
     showRewardAd: function(onSuccess) {
-        // 실제 광고가 준비되지 않았으므로 확인창으로 대체
-        // 확인(OK)을 누르면 광고를 본 것으로 처리
         if(confirm("📺 Watch Ad to get reward? (Simulated)")) {
             onSuccess();
         }
