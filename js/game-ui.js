@@ -16,11 +16,18 @@ export function renderGrid() {
         const cell = document.getElementById(`cell-${i}`);
         if(!cell) continue;
         const char = state.grid[i];
+        
+        // [중요 수정] highlight-valid 클래스는 드래그 로직에서 관리하므로 함부로 지우지 않음
+        // 기존 블록 컬러 클래스들(b-A, b-B 등)만 정밀하게 교체
+        const isHighlighted = cell.classList.contains('highlight-valid');
         cell.className = 'cell'; 
+        if (isHighlighted) cell.classList.add('highlight-valid');
+        
         cell.textContent = ''; 
         cell.style.transform = ''; 
         cell.style.opacity = '1';
         cell.style.border = 'none';
+
         if(char) {
             cell.textContent = char; 
             cell.classList.add(`b-${char}`);
@@ -51,23 +58,19 @@ export function renderSource(block, elementId) {
 }
 
 // ==========================================
-// [극단적 보정] 판정 지점 좌상단 강제 이동
+// [보정 설정] 판정 지점 좌상단 이동
 // ==========================================
-const VISUAL_OFFSET_Y = 120; // 블록이 손가락 위로 떠 있는 높이
-
-// [대폭 수정] 테두리가 블록의 왼쪽 위로 팍 튀어나오도록 값을 키웠습니다.
-const LOGIC_SHIFT_X = -50;  // 왼쪽으로 100px 강제 이동
-const LOGIC_SHIFT_Y = -40;   // 위쪽으로 80px 강제 이동
+const VISUAL_OFFSET_Y = 120; 
+const LOGIC_SHIFT_X = -60; // 왼쪽 시프트 값 (체감상 더 정확하게 조정)
+const LOGIC_SHIFT_Y = -50; // 위쪽 시프트 값
 
 export function setupDrag(onDrop) {
     const source = document.getElementById('source-block');
     const ghost = document.getElementById('ghost');
     if(!source) return;
 
-    // 이벤트 리스너 중복 방지를 위한 초기화
-    source.ontouchstart = source.onmousedown = null;
-    window.ontouchmove = window.onmousemove = null;
-    window.ontouchend = window.onmouseup = null;
+    // 기존 이벤트 완전 제거 (클린업)
+    source.onmousedown = source.ontouchstart = null;
 
     const getPos = (e) => {
         const t = e.changedTouches ? e.changedTouches[0] : (e.touches ? e.touches[0] : e);
@@ -86,6 +89,12 @@ export function setupDrag(onDrop) {
         const pos = getPos(e);
         updateGhostAndCheck(pos.x, pos.y, rect.width, rect.height, onDrop, false);
         source.style.opacity = '0';
+
+        // 윈도우 전역 리스너 등록 (드래그 끊김 방지)
+        window.addEventListener('mousemove', move);
+        window.addEventListener('touchmove', move, { passive: false });
+        window.addEventListener('mouseup', end);
+        window.addEventListener('touchend', end);
     };
 
     const move = (e) => {
@@ -98,6 +107,12 @@ export function setupDrag(onDrop) {
     };
 
     const end = (e) => {
+        // 전역 리스너 제거
+        window.removeEventListener('mousemove', move);
+        window.removeEventListener('touchmove', move);
+        window.removeEventListener('mouseup', end);
+        window.removeEventListener('touchend', end);
+
         if(source.style.opacity !== '0') return;
         const pos = getPos(e);
         const rect = ghost.getBoundingClientRect();
@@ -107,35 +122,32 @@ export function setupDrag(onDrop) {
         ghost.style.display = 'none';
         source.style.opacity = '1';
         
-        // 모든 하이라이트 즉시 제거
-        const allCells = document.querySelectorAll('.cell');
-        allCells.forEach(c => c.classList.remove('highlight-valid'));
+        // 하이라이트 즉시 청소
+        clearHighlights();
     };
 
-    source.ontouchstart = start;
-    source.onmousedown = start;
-    window.ontouchmove = move;
-    window.onmousemove = move;
-    window.ontouchend = end;
-    window.onmouseup = end;
+    source.onmousedown = source.ontouchstart = start;
+}
+
+function clearHighlights() {
+    const allCells = document.querySelectorAll('.cell');
+    allCells.forEach(c => c.classList.remove('highlight-valid'));
 }
 
 function updateGhostAndCheck(fingerX, fingerY, w, h, onDrop, isDropAction) {
     const ghost = document.getElementById('ghost');
 
-    // 1. 시각적 위치 (손가락 위 120px)
+    // 1. 시각적 위치
     ghost.style.left = (fingerX - w / 2) + 'px';
     ghost.style.top = (fingerY - VISUAL_OFFSET_Y - h / 2) + 'px';
 
-    // 2. 판정 지점 (Logic Point) 계산
-    // 눈에 보이는 블록의 중심에서 좌상단으로 크게 이동시켜 판정
+    // 2. 판정 지점 (공중 블록의 좌측 상단으로 이동)
     const logicX = fingerX + LOGIC_SHIFT_X;
     const logicY = fingerY - VISUAL_OFFSET_Y + LOGIC_SHIFT_Y;
 
-    // 3. 하이라이트 초기화 (매 프레임 강제 실행)
+    // 3. 하이라이트 초기화
     if (!isDropAction) {
-        const allCells = document.querySelectorAll('.cell');
-        allCells.forEach(c => c.classList.remove('highlight-valid'));
+        clearHighlights();
     }
 
     // 4. 그리드 판정
@@ -150,7 +162,6 @@ function getMathGridIndex(checkX, checkY) {
     const grid = document.getElementById('grid-container');
     if(!grid) return -1;
     
-    // 매번 실시간 위치 측정
     const rect = grid.getBoundingClientRect();
     const style = window.getComputedStyle(grid);
 
@@ -165,8 +176,7 @@ function getMathGridIndex(checkX, checkY) {
     const relX = checkX - contentStartX;
     const relY = checkY - contentStartY;
 
-    // 판정 허용 범위 (보드판 바깥 약간까지 인정)
-    if (relX < -20 || relY < -20 || relX > contentW + 20 || relY > contentH + 20) return -1;
+    if (relX < -15 || relY < -15 || relX > contentW + 15 || relY > contentH + 15) return -1;
 
     const cellW = contentW / state.gridSize;
     const cellH = contentH / state.gridSize;
