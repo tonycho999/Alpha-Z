@@ -63,28 +63,45 @@ function nextTurn() {
         UI.setupDrag(handleDropAttempt);
     }, 50);
 
+    // 게임 오버 체크
     if(!Core.canPlaceAnywhere(state.currentBlock)) {
         document.getElementById('popup-over').style.display = 'flex';
         document.getElementById('over-best').textContent = state.best;
+        
+        // 이미 부활을 썼다면 버튼 숨기기
+        const reviveBtn = document.getElementById('btn-revive-ad');
+        if(state.hasRevived) {
+            reviveBtn.style.display = 'none';
+        } else {
+            reviveBtn.style.display = 'flex'; 
+        }
+
         const name = localStorage.getItem('alpha_username');
         document.getElementById(name ? 'area-exist-user' : 'area-new-user').style.display = 'block';
         if(name) document.getElementById('user-badge').textContent = name;
     }
 }
 
+// [수정됨] 덮어쓰기 로직 제거 -> 일반적인 빈칸 찾기 로직으로 복귀
 function handleDropAttempt(targetIdx, isPreview) {
     const size = state.gridSize;
     const r = Math.floor(targetIdx / size), c = targetIdx % size;
     const shape = state.currentBlock.shape;
     let finalIndices = null;
 
+    // 일반적인 배치 로직 (빈칸인지 확인)
     for (let i = 0; i < shape.map.length; i++) {
         const anchorR = r - shape.map[i][0], anchorC = c - shape.map[i][1];
         let possible = true, temp = [];
         for (let j = 0; j < shape.map.length; j++) {
             const tr = anchorR + shape.map[j][0], tc = anchorC + shape.map[j][1];
             const tidx = tr * size + tc;
-            if (tr < 0 || tr >= size || tc < 0 || tc >= size || state.grid[tidx] !== null) { possible = false; break; }
+            
+            // 경계 밖이거나, 이미 블록이 있으면 배치 불가
+            if (tr < 0 || tr >= size || tc < 0 || tc >= size || state.grid[tidx] !== null) { 
+                possible = false; 
+                break; 
+            }
             temp.push(tidx);
         }
         if (possible) { finalIndices = temp; break; }
@@ -93,7 +110,12 @@ function handleDropAttempt(targetIdx, isPreview) {
     if(!finalIndices) return false;
 
     if(isPreview) {
-        finalIndices.forEach(i => document.getElementById(`cell-${i}`).classList.add('highlight-valid'));
+        finalIndices.forEach(i => {
+            const el = document.getElementById(`cell-${i}`);
+            el.classList.add('highlight-valid');
+            // 부활 턴일 때 시각적 강조
+            if(state.isReviveTurn) el.style.borderColor = '#4CAF50'; // 초록색 (안전함)
+        });
         return true;
     } else {
         placeBlock(finalIndices);
@@ -103,6 +125,13 @@ function handleDropAttempt(targetIdx, isPreview) {
 
 async function placeBlock(indices) {
     state.isLocked = true;
+    
+    // 부활 턴 종료
+    if(state.isReviveTurn) {
+        state.isReviveTurn = false;
+        document.getElementById('popup-over').style.display = 'none';
+    }
+
     indices.forEach((pos, i) => state.grid[pos] = state.currentBlock.items[i]);
     UI.renderGrid();
     await wait(300);
@@ -178,7 +207,7 @@ async function processMerge(idx, cluster) {
     UI.renderGrid(); UI.updateUI(); await wait(200);
 }
 
-// 아이템 전역 로직 (광고 통합)
+// 아이템 전역 로직
 window.gameLogic = {
     useHammer: () => {
         const cost = 2;
@@ -204,11 +233,10 @@ window.gameLogic = {
         if(!state.isAdmin) { state.stars -= cost; localStorage.setItem('alpha_stars', state.stars); }
         UI.updateUI(); nextTurn();
     },
-    // ⭐ [신규 아이템] 최하위 블록 강제 진화
     useUpgrade: () => {
         const cost = 5;
         if(state.stars < cost && !state.isAdmin) {
-            if (state.stars + 2 >= cost) { // 2별을 보상으로 받았을 때 5별 이상이 되면 사용 가능
+            if (state.stars + 2 >= cost) {
                 triggerAdForItem(cost, () => { executeUpgrade(); });
             } else {
                 alert(`Need ${cost} Stars! You only have ${state.stars}⭐.\nVisit the shop to earn more!`);
@@ -218,16 +246,67 @@ window.gameLogic = {
         if(!state.isAdmin) { state.stars -= cost; localStorage.setItem('alpha_stars', state.stars); UI.updateUI(); }
         executeUpgrade();
     },
-    revive: () => {
-        if(state.stars < 5 && !state.isAdmin) return alert('Need 5 Stars! Play more or visit shop.');
-        if(!state.isAdmin) { state.stars -= 5; localStorage.setItem('alpha_stars', state.stars); }
-        for(let i=0; i<state.gridSize; i++) state.grid[i] = null; 
-        document.getElementById('popup-over').style.display = 'none';
-        UI.renderGrid(); UI.updateUI(); nextTurn();
+    // 광고 보고 만능 블록(1x1) 얻기
+    tryReviveWithAd: () => {
+        if(state.hasRevived) return; 
+
+        if(state.isAdmin) { doReviveAction(); return; }
+
+        if(confirm("Watch ad to get a 1x1 'A' Block? \nIt fits in any empty space!")) {
+            window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
+            
+            setTimeout(() => {
+                AdManager.recordAdWatch();
+                doReviveAction();
+                alert("You got a 1x1 Block! Place it in an empty spot.");
+            }, 3000);
+        }
     }
 };
 
-// 광고를 보고 아이템을 즉시 실행하는 함수
+// [수정됨] 부활 실행: 1x1 'A' 지급 + (중요) 빈칸 없으면 하나 만들어주기
+function doReviveAction() {
+    state.hasRevived = true;
+    state.isReviveTurn = true; 
+
+    // 1. 현재 블록을 1x1 'A'로 교체
+    state.currentBlock = {
+        shape: { w:1, h:1, map:[[0,0]] },
+        items: ['A'] 
+    };
+
+    // 2. [안전장치] 만약 보드가 100% 꽉 찼다면, 1x1 블록도 못 놓는다.
+    // 따라서 가장 등급이 낮은 블록 1개를 찾아서 지워준다.
+    const hasEmptySpace = state.grid.includes(null);
+    if (!hasEmptySpace) {
+        let lowestIdx = -1;
+        let lowestCharIdx = 999;
+        
+        // 가장 낮은 알파벳 찾기
+        for(let i=0; i<state.gridSize*state.gridSize; i++) {
+            if(state.grid[i]) {
+                const cIdx = ALPHABET.indexOf(state.grid[i]);
+                if(cIdx < lowestCharIdx) {
+                    lowestCharIdx = cIdx;
+                    lowestIdx = i;
+                }
+            }
+        }
+
+        // 지우기
+        if(lowestIdx !== -1) {
+            state.grid[lowestIdx] = null;
+            UI.renderGrid(); // 화면 갱신
+            // 알림
+            setTimeout(() => alert("Board was full! \nOne lowest block removed to make space."), 100);
+        }
+    }
+
+    // UI 갱신
+    UI.renderSource(state.currentBlock, 'source-block');
+    document.getElementById('popup-over').style.display = 'none';
+}
+
 function triggerAdForItem(cost, actionCallback) {
     const adStatus = AdManager.canWatchAd();
     if (!adStatus.canWatch) {
@@ -245,8 +324,8 @@ function triggerAdForItem(cost, actionCallback) {
         
         setTimeout(() => {
             AdManager.recordAdWatch();
-            state.stars += 2; // 광고 보상
-            state.stars -= cost; // 아이템 가격 차감
+            state.stars += 2;
+            state.stars -= cost;
             localStorage.setItem('alpha_stars', state.stars);
             actionCallback(); 
             alert("Thanks for watching! Item applied.");
@@ -254,7 +333,6 @@ function triggerAdForItem(cost, actionCallback) {
     }
 }
 
-// 진화 아이템 발동 함수
 async function executeUpgrade() {
     if (state.isLocked || state.isHammerMode) return;
     state.isLocked = true;
