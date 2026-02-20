@@ -2,10 +2,10 @@ import { collection, query, where, getDocs } from "https://www.gstatic.com/fireb
 import { db } from "./firebase-config.js";
 
 window.loadRank = async function(difficulty) {
-    // 1. 탭 스타일 안전하게 업데이트 (event 에러 방지)
+    // 1. 탭 버튼 스타일 업데이트
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
-        // 버튼 텍스트에 EASY, NORMAL 등이 포함되어 있으면 활성화
+        // 텍스트에 난이도가 포함되어 있으면 활성화 (예: "EASY (9x9)")
         if (btn.innerText.includes(difficulty)) {
             btn.classList.add('active');
         }
@@ -13,56 +13,71 @@ window.loadRank = async function(difficulty) {
 
     const list = document.getElementById('rank-list');
     const loading = document.getElementById('loading-text');
+    
+    // 초기화
     list.innerHTML = '';
     loading.style.display = 'block';
 
     try {
-        // 2. Firebase 복합 인덱스 에러 방지 (where만 사용해서 데이터 호출)
+        // 2. 해당 난이도의 데이터만 가져오기
         const q = query(collection(db, "leaderboard"), where("difficulty", "==", difficulty));
         const querySnapshot = await getDocs(q);
         
         loading.style.display = 'none';
         
         if(querySnapshot.empty) {
-            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No records yet. Be the first!</div>';
+            list.innerHTML = '<div style="padding:40px; text-align:center; color:#888;">No records yet.<br>Be the first challenger!</div>';
             return;
         }
 
-        // 3. 데이터를 자바스크립트 배열로 옮겨서 직접 내림차순 정렬
+        // 3. 데이터 변환 및 정렬 (클라이언트 사이드)
         let records = [];
         querySnapshot.forEach((doc) => records.push(doc.data()));
         
-        // scoreIndex 기준으로 내림차순 정렬 후 상위 50개만 자르기
-        records.sort((a, b) => b.scoreIndex - a.scoreIndex);
+        // [수정됨] 정렬 로직: 1순위 블록등급(scoreIndex), 2순위 별(stars)
+        records.sort((a, b) => {
+            if (b.scoreIndex !== a.scoreIndex) {
+                return b.scoreIndex - a.scoreIndex; // 블록 높은 순
+            }
+            return (b.stars || 0) - (a.stars || 0); // 별 많은 순
+        });
+
+        // 상위 50명 자르기
         records = records.slice(0, 50);
 
-        // 4. 화면에 그리기
-        let rank = 1;
-        records.forEach((data) => {
+        // 4. [디자인 적용] HTML 그리기
+        records.forEach((data, index) => {
+            const rank = index + 1;
             const item = document.createElement('div');
-            item.className = 'rank-item';
             
-            let rankBadge = rank;
-            if(rank === 1) rankBadge = '🥇';
-            else if(rank === 2) rankBadge = '🥈';
-            else if(rank === 3) rankBadge = '🥉';
+            // CSS 클래스 적용 (rank-1, rank-2, rank-3 등)
+            item.className = `rank-item ${rank <= 3 ? 'rank-' + rank : ''}`;
+            
+            // 메달 아이콘
+            let rankDisplay = rank;
+            if(rank === 1) rankDisplay = '🥇';
+            else if(rank === 2) rankDisplay = '🥈';
+            else if(rank === 3) rankDisplay = '🥉';
 
+            // HTML 구조 (style.css의 디자인 활용)
             item.innerHTML = `
-                <span style="width:30px; font-weight:bold;">${rankBadge}</span>
-                <span style="flex-grow:1; color:white; text-align:left;">${data.username}</span>
-                <span style="color:var(--accent); font-weight:bold;">${data.bestChar}</span>
+                <div class="rank-number">${rankDisplay}</div>
+                <div class="rank-name">${data.username}</div>
+                <div class="rank-stats">
+                    <div class="rank-best">${data.bestChar} Block</div>
+                    <div class="rank-stars">⭐ ${data.stars || 0}</div>
+                </div>
             `;
             list.appendChild(item);
-            rank++;
         });
 
     } catch (e) {
         console.error("Firebase Query Error: ", e);
-        loading.innerHTML = '<span style="color:#e74c3c">Failed to load data.</span>';
+        loading.innerHTML = '<span style="color:#e74c3c">Failed to load rankings.</span>';
     }
 }
 
-// 창이 켜지면 자동으로 EASY 랭킹을 불러옴
+// 창이 켜지면 자동으로 EASY 랭킹 로드
 window.onload = () => {
     loadRank('EASY');
 };
