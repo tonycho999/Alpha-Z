@@ -28,16 +28,25 @@ window.gameLogic = {
     },
     saveScore: async () => {
         const nameInput = document.getElementById('username-input');
-        const name = nameInput ? nameInput.value : localStorage.getItem('alpha_username');
+        
+        // [버그 수정] 입력창 값과 로컬스토리지 값 중 '있는 것'을 가져오도록 순서 수정
+        let name = '';
+        if (nameInput && nameInput.value.trim()) {
+            name = nameInput.value.trim();
+        } else {
+            name = localStorage.getItem('alpha_username');
+        }
+
         if(!name) { alert("Enter Name"); return; }
         
-        // [수정] 저장 시 현재 난이도(state.diff)를 명시적으로 전달하여 모드 섞임 방지
-        const res = await Core.saveScoreToDB(name, state.diff, !!nameInput);
+        // [중요] 현재 난이도를 명시적으로 전달 (Easy가 Hell로 저장되는 문제 방지)
+        const res = await Core.saveScoreToDB(name, state.diff, !!(nameInput && nameInput.value));
         
         if(res.success) {
             document.getElementById('save-msg').style.display = 'block';
             document.getElementById('btn-check-save').style.display = 'none';
             document.getElementById('btn-just-save').style.display = 'none';
+            // 성공한 이름은 로컬스토리지에 저장해둠
             localStorage.setItem('alpha_username', name);
         } else alert(res.msg);
     }
@@ -51,27 +60,23 @@ window.onload = () => {
             if(e.target.closest('button, .btn, .hand-slot')) AudioMgr.play('button');
         });
 
-        // 1. 기본 데이터 로드
         if(localStorage.getItem('alpha_stars')) state.stars = parseInt(localStorage.getItem('alpha_stars'));
         if(localStorage.getItem('alpha_items')) state.items = JSON.parse(localStorage.getItem('alpha_items'));
         if(localStorage.getItem('alpha_best')) state.best = localStorage.getItem('alpha_best');
 
-        // [중요] URL 파라미터 로드 및 대문자 강제 변환
+        // URL 파라미터 처리 (대문자 강제 변환)
         const params = new URLSearchParams(window.location.search);
         let diffParam = params.get('diff') || 'NORMAL';
-        diffParam = diffParam.toUpperCase(); // 소문자 방지 (hell -> HELL)
-        state.diff = diffParam;
+        state.diff = diffParam.toUpperCase(); 
         
         initGridSize(state.diff); 
 
-        // 2. 이어하기 체크
         const savedGame = localStorage.getItem('alpha_gamestate');
         let resumed = false;
         
         if (savedGame) {
             try {
                 const loaded = JSON.parse(savedGame);
-                // 난이도가 정확히 일치할 때만 이어하기
                 if(loaded.diff === state.diff) {
                     state.grid = loaded.grid;
                     state.hand = loaded.hand;
@@ -87,7 +92,7 @@ window.onload = () => {
         }
         
         if (!resumed) {
-            console.log(`New Game Started: ${state.diff}`);
+            console.log(`New Game: ${state.diff}`);
             state.score = 0;
             state.currentMax = 'A';
             state.hand = [null, null, null];
@@ -106,7 +111,6 @@ window.onload = () => {
 
     } catch (e) {
         console.error("Init Fail:", e);
-        // 에러 시 안전하게 NORMAL로 초기화
         state.diff = 'NORMAL';
         initGridSize('NORMAL');
         UI.renderGrid();
