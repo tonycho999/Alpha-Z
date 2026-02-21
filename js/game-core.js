@@ -2,33 +2,38 @@ import { ALPHABET, state, SHAPES_1, SHAPES_2, SHAPES_3 } from "./game-data.js";
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
-// [난이도별 바닥 글자 상승 속도 조절]
+// [난이도별 블록 삭제 규칙 적용]
 export function getMinIdx() {
     const currentIdx = ALPHABET.indexOf(state.currentMax);
-    
+    let limitIdx = 0;
+
+    // 1. 난이도별 삭제 한계점(Limit) 설정
     switch(state.diff) {
         case 'EASY':
-            // Easy: 최고 기록보다 4단계 아래부터 나옴 (성장 빠름)
-            return Math.max(0, currentIdx - 4);
-            
+            limitIdx = 21; // V (V 이후로는 더 삭제 안 됨)
+            break;
         case 'NORMAL':
-            // Normal: 적당한 속도
-            return Math.max(0, Math.floor((currentIdx - 3) / 1.5));
-            
         case 'HARD':
-            // Hard: 맵이 좁으므로 바닥 글자라도 좀 따라와줘야 함
-            return Math.max(0, Math.floor((currentIdx - 4) / 2));
-            
+            limitIdx = 19; // T (T 이후로는 더 삭제 안 됨)
+            break;
         case 'HELL':
-            // Hell: 바닥 글자가 아주 천천히 오름 (노가다 & 공간 압박)
-            return Math.max(0, Math.floor(currentIdx / 3));
-            
+            limitIdx = 17; // R (R 이후로는 더 삭제 안 됨)
+            break;
         default:
-            return 0;
+            limitIdx = 19;
     }
+
+    // 2. 현재 단계와 한계점 중 낮은 것 선택
+    const effectiveIdx = Math.min(currentIdx, limitIdx);
+
+    // 3. 삭제 공식 적용 (F(5) -> 1(B), H(7) -> 2(C))
+    // 공식: floor((단계 - 3) / 2)
+    // 5(F) - 3 = 2 / 2 = 1 (B)
+    // 7(H) - 3 = 4 / 2 = 2 (C)
+    return Math.max(0, Math.floor((effectiveIdx - 3) / 2));
 }
 
-// [핵심: 요청하신 블록 출현 확률 적용]
+// [블록 출현 확률 - 이전 확정 수치 유지]
 export function createRandomBlock() {
     let pool;
     const r = Math.random();
@@ -36,29 +41,28 @@ export function createRandomBlock() {
     if (state.diff === 'EASY') {
         // EASY: 1블록 20%, 2블록 55%, 3블록 25%
         if (r < 0.20) pool = SHAPES_1; 
-        else if (r < 0.70) pool = SHAPES_2; // 0.20 + 0.55 = 0.75
+        else if (r < 0.75) pool = SHAPES_2; 
         else pool = SHAPES_3;
     } 
     else if (state.diff === 'NORMAL') {
-        // NORMAL: 1블록 15%, 2블록 50%, 3블록 35%
+        // NORMAL: 1블록 15%, 2블록 60%, 3블록 25%
         if (r < 0.15) pool = SHAPES_1; 
-        else if (r < 0.65) pool = SHAPES_2; // 0.15 + 0.60 = 0.75
+        else if (r < 0.75) pool = SHAPES_2; 
         else pool = SHAPES_3;
     }
     else if (state.diff === 'HARD') {
-        // HARD: 1블록 20%, 2블록 50%, 3블록 30% (Easy와 같지만 7x7 맵이라 어려움)
+        // HARD: 1블록 20%, 2블록 55%, 3블록 25%
         if (r < 0.20) pool = SHAPES_1; 
-        else if (r < 0.70) pool = SHAPES_2; 
+        else if (r < 0.75) pool = SHAPES_2; 
         else pool = SHAPES_3;
     }
     else if (state.diff === 'HELL') {
         // HELL: 1블록 15%, 2블록 40%, 3블록 45%
-        if (r < 0.10) pool = SHAPES_1;
-        else if (r < 0.50) pool = SHAPES_2; // 0.10 + 0.40 = 0.50
+        if (r < 0.15) pool = SHAPES_1;
+        else if (r < 0.55) pool = SHAPES_2; 
         else pool = SHAPES_3;
     } 
     else {
-        // 기본값 (Normal과 동일)
         if (r < 0.15) pool = SHAPES_1; 
         else if (r < 0.75) pool = SHAPES_2; 
         else pool = SHAPES_3;
@@ -71,7 +75,7 @@ export function createRandomBlock() {
     for(let i=0; i<shape.map.length; i++) {
         let char;
         do { 
-            // 블록 등급 결정 (약간의 랜덤성)
+            // 블록 등급 결정 (약간의 랜덤성 포함)
             const offset = (Math.random() > 0.6 ? 1 : 0) + (Math.random() > 0.85 ? 1 : 0);
             char = ALPHABET[minIdx + offset] || 'A';
         } while (items.length > 0 && char === items[items.length - 1]);
