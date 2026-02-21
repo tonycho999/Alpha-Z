@@ -2,6 +2,7 @@ import { ALPHABET, state, SHAPES_1, SHAPES_2, SHAPES_3 } from "./game-data.js";
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
+// ... (getMinIdx, createRandomBlock, canPlaceAnywhere, getCluster 함수는 기존과 동일 - 생략) ...
 export function getMinIdx() {
     const bestIdx = ALPHABET.indexOf(state.best);
     if (bestIdx < 5) return 0; 
@@ -65,29 +66,49 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
+// [핵심 수정] DB 저장 로직 (모드별 분리 저장)
 export async function saveScoreToDB(username, isNewUser = false) {
-    if (!db) return { success: false, msg: "DB Connection Error" };
-    const docId = username.trim();
+    if (!db) return { success: false, msg: "DB Disconnected" };
+    
+    const cleanName = username.trim();
     const safeDiff = state.diff || 'NORMAL'; 
+    
+    // [중요] 문서 ID를 "이름_난이도"로 설정하여 모드별로 따로 저장되게 함
+    const docId = `${cleanName}_${safeDiff}`;
+    
     const currentScore = Number(state.score) || 0;
 
     try {
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
-        if (isNewUser && docSnap.exists()) return { success: false, msg: "Name taken." };
+        
+        // 신규 유저 체크 로직 (해당 난이도에 기록이 없으면 신규로 간주)
+        // 주의: 다른 난이도에 아이디가 있어도, 이 난이도에서는 처음일 수 있음
+        if (isNewUser && docSnap.exists()) {
+            return { success: false, msg: "Name taken in this mode." };
+        }
+
         if (!isNewUser && docSnap.exists()) {
             const existingData = docSnap.data();
-            if ((existingData.score || 0) >= currentScore) return { success: true, msg: "Score preserved." };
+            // 해당 난이도의 기존 점수와 비교
+            if ((existingData.score || 0) >= currentScore) {
+                return { success: true, msg: "Score preserved (Higher exists)." };
+            }
         }
+        
+        // 저장 (ID는 Tony_EASY지만, 필드 username은 Tony로 저장하여 리더보드엔 이름만 표시)
         await setDoc(docRef, {
-            username: docId,
+            username: cleanName, 
             bestChar: state.best,
             difficulty: safeDiff, 
-            score: currentScore, // 점수 저장
+            score: currentScore, 
             timestamp: serverTimestamp()
         });
         return { success: true, msg: "Saved!" };
-    } catch (e) { return { success: false, msg: e.message }; }
+    } catch (e) { 
+        console.error("DB Error:", e);
+        return { success: false, msg: "Error: " + e.message }; 
+    }
 }
 
 export async function getLeaderboardData(targetDiff) {
@@ -96,11 +117,14 @@ export async function getLeaderboardData(targetDiff) {
         const q = query(
             collection(db, "leaderboard"), 
             where("difficulty", "==", targetDiff), 
-            orderBy("score", "desc") // 인덱스 생성 필요
+            orderBy("score", "desc") 
         );
         const snapshot = await getDocs(q);
         const ranks = [];
         snapshot.forEach((doc) => ranks.push(doc.data()));
         return ranks;
-    } catch (e) { console.error("LB Error:", e); return []; }
+    } catch (e) { 
+        console.error("LB Error:", e);
+        return []; 
+    }
 }
