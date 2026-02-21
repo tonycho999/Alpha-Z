@@ -1,6 +1,6 @@
 import { state, ALPHABET } from "./game-data.js";
 
-// 1. 그리드 그리기 (export 필수!)
+// 1. 그리드 그리기 (기존 동일)
 export function renderGrid() {
     const gridEl = document.getElementById('grid-container');
     if (!gridEl) return;
@@ -25,7 +25,6 @@ export function renderGrid() {
             cell.classList.add('empty');
         }
         
-        // 클릭 이벤트
         cell.onclick = () => {
              if(window.gameLogic && window.gameLogic.handleCellClick) {
                  window.gameLogic.handleCellClick(idx);
@@ -35,7 +34,7 @@ export function renderGrid() {
     });
 }
 
-// 2. 핸드(대기열) 그리기 - [수정] 크기 키움
+// 2. 핸드 그리기 [수정됨: 클릭 방해 해결]
 export function renderHand() {
     for (let i = 0; i < 3; i++) {
         const slot = document.getElementById(`hand-${i}`);
@@ -47,35 +46,49 @@ export function renderHand() {
         const block = state.hand[i];
         if (block) {
             const miniGrid = document.createElement('div');
-            // 미니 그리드 스타일
+            
+            // [핵심 수정] 블록 그림이 클릭을 가로채지 못하게 설정
+            miniGrid.style.pointerEvents = 'none'; 
+            
+            // 스타일 설정
+            miniGrid.className = 'mini-grid';
             miniGrid.style.display = 'grid';
             miniGrid.style.gridTemplateColumns = `repeat(${block.shape.w}, 1fr)`;
             miniGrid.style.gridTemplateRows = `repeat(${block.shape.h}, 1fr)`;
             miniGrid.style.gap = '2px';
-            // [중요] 핸드 블록 크기 조정 (기존보다 크게)
+            
+            // 크기 키움 (가시성 확보)
             miniGrid.style.width = (block.shape.w * 35) + 'px'; 
             miniGrid.style.height = (block.shape.h * 35) + 'px';
             
+            // 중앙 정렬 보정
+            miniGrid.style.justifySelf = 'center';
+            miniGrid.style.alignSelf = 'center';
+
             block.items.forEach((char, idx) => {
                 const cell = document.createElement('div');
-                cell.className = `cell b-${char}`; // small 클래스 제거하여 크게 보임
+                cell.className = `cell b-${char}`;
                 cell.textContent = char;
-                cell.style.fontSize = '1.2rem'; // 글자도 키움
-                cell.style.width = '100%';
-                cell.style.height = '100%';
+                cell.style.fontSize = '1.2rem';
+                cell.style.display = 'flex';
+                cell.style.justifyContent = 'center';
+                cell.style.alignItems = 'center';
                 
+                // 그리드 배치
                 cell.style.gridColumnStart = block.shape.map[idx][1] + 1;
                 cell.style.gridRowStart = block.shape.map[idx][0] + 1;
+                
                 miniGrid.appendChild(cell);
             });
             slot.appendChild(miniGrid);
             
+            // 슬롯에 드래그 이벤트 연결
             if(window.setupDragForSlot) window.setupDragForSlot(slot, i);
         }
     }
 }
 
-// 3. UI 텍스트 갱신
+// 3. UI 텍스트 갱신 (기존 동일)
 export function updateUI() {
     const bestEl = document.getElementById('ui-best');
     if(bestEl) bestEl.textContent = state.best;
@@ -90,22 +103,22 @@ export function updateUI() {
     if(scoreEl) scoreEl.textContent = state.score;
 }
 
-// 4. 게임오버 UI
+// 4. 게임오버 UI (기존 동일)
 export function updateGameOverUI() {
     const overBest = document.getElementById('over-best');
     if(overBest) overBest.textContent = state.best;
 }
 
-// 5. 드래그 셋업
+// 5. 드래그 셋업 (기존 동일)
 export function setupDrag(onDropCallback) {
     window._onDropCallback = onDropCallback;
     window.setupDragForSlot = setupDragForSlot;
 }
 
+// 6. 내부 드래그 로직 (기존 동일)
 function setupDragForSlot(slot, index) {
     const ghost = document.getElementById('ghost');
     
-    // 실제 셀 크기 계산
     const getCellSize = () => {
         const gridEl = document.getElementById('grid-container');
         const cell = gridEl.querySelector('.cell');
@@ -125,6 +138,7 @@ function setupDragForSlot(slot, index) {
         ghost.style.gridTemplateColumns = `repeat(${block.shape.w}, ${cellSize}px)`;
         ghost.style.gridTemplateRows = `repeat(${block.shape.h}, ${cellSize}px)`;
         ghost.style.gap = '3px';
+        ghost.style.pointerEvents = 'none'; // 고스트도 클릭 방지
         
         block.items.forEach((char, idx) => {
             const b = document.createElement('div');
@@ -143,6 +157,12 @@ function setupDragForSlot(slot, index) {
             return { x: t.clientX, y: t.clientY };
         };
 
+        // 초기 위치 설정 (클릭하자마자 고스트가 손가락 위치로)
+        const initPos = getPos(e);
+        ghost.style.left = (initPos.x - ghost.offsetWidth/2) + 'px';
+        ghost.style.top = (initPos.y - ghost.offsetHeight - 80) + 'px';
+        ghost.style.display = 'grid'; // 보이게 설정
+
         const moveHandler = (me) => {
             if(me.cancelable) me.preventDefault();
             const p = getPos(me);
@@ -150,15 +170,12 @@ function setupDragForSlot(slot, index) {
             ghost.style.left = (p.x - ghost.offsetWidth/2) + 'px';
             ghost.style.top = (p.y - ghost.offsetHeight - 80) + 'px';
 
-            // 자석 감지
             const idx = getMagnetIndex(p.x, p.y - 80);
             
-            // [수정] 예측 효과 초기화
             document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
-            document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge')); // 합체 예측 초기화
+            document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
             
             if (idx !== -1 && window._onDropCallback) {
-                 // 미리보기 실행 (Highlight + Merge Check)
                  window._onDropCallback(idx, true); 
             }
         };
@@ -174,7 +191,7 @@ function setupDragForSlot(slot, index) {
             
             let success = false;
             if (idx !== -1 && window._onDropCallback) {
-                success = window._onDropCallback(idx, false); // 실제 드롭
+                success = window._onDropCallback(idx, false);
             }
             
             ghost.style.display = 'none';
@@ -182,7 +199,6 @@ function setupDragForSlot(slot, index) {
                 slot.style.opacity = '1';
                 state.dragIndex = -1;
             }
-            // 효과 제거
             document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
             document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
         };
@@ -193,6 +209,7 @@ function setupDragForSlot(slot, index) {
         window.addEventListener('touchend', endHandler);
     };
 
+    // 슬롯에 이벤트 리스너 연결
     slot.onmousedown = start;
     slot.ontouchstart = start;
 }
@@ -203,10 +220,8 @@ function getMagnetIndex(x, y) {
     const rect = grid.getBoundingClientRect();
     const cellSize = (grid.offsetWidth - (state.gridSize-1)*3) / state.gridSize; 
     
-    // 약간의 여유 범위(padding)
     if (x < rect.left - 20 || x > rect.right + 20 || y < rect.top - 20 || y > rect.bottom + 20) return -1;
     
-    // 로컬 좌표
     const lx = x - rect.left;
     const ly = y - rect.top;
 
