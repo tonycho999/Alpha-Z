@@ -1,6 +1,5 @@
 import { state } from "./game-data.js";
 
-// 1. 그리드
 export function renderGrid() {
     const gridEl = document.getElementById('grid-container');
     if (!gridEl) return;
@@ -23,7 +22,6 @@ export function renderGrid() {
     });
 }
 
-// 2. 핸드 (터치 통과 중요)
 export function renderHand() {
     for (let i = 0; i < 3; i++) {
         const slot = document.getElementById(`hand-${i}`);
@@ -33,7 +31,7 @@ export function renderHand() {
         const block = state.hand[i];
         if (block) {
             const miniGrid = document.createElement('div');
-            miniGrid.style.pointerEvents = 'none'; // [중요] 슬롯 클릭 허용
+            miniGrid.style.pointerEvents = 'none'; // 터치 통과
             miniGrid.style.display = 'grid';
             miniGrid.style.gridTemplateColumns = `repeat(${block.shape.w}, 1fr)`;
             miniGrid.style.gridTemplateRows = `repeat(${block.shape.h}, 1fr)`;
@@ -53,20 +51,18 @@ export function renderHand() {
                 miniGrid.appendChild(cell);
             });
             slot.appendChild(miniGrid);
-            // 드래그 연결
             setupDragForSlot(slot, i);
         }
     }
 }
 
-// 3. UI 업데이트 (아이템 개수 표시 필수)
+// UI 업데이트 (아이템 개수 및 점수)
 export function updateUI() {
     if(document.getElementById('ui-best')) document.getElementById('ui-best').textContent = state.best;
     if(document.getElementById('ui-stars')) document.getElementById('ui-stars').textContent = state.stars;
     if(document.getElementById('ui-diff')) document.getElementById('ui-diff').textContent = state.diff;
     if(document.getElementById('ui-score')) document.getElementById('ui-score').textContent = state.score;
 
-    // 아이템 개수 업데이트 (ID 확인)
     if (state.items) {
         if(document.getElementById('cnt-refresh')) document.getElementById('cnt-refresh').textContent = state.items.refresh;
         if(document.getElementById('cnt-hammer')) document.getElementById('cnt-hammer').textContent = state.items.hammer;
@@ -82,18 +78,20 @@ export function setupDrag(onDropCallback) {
     window._onDropCallback = onDropCallback;
 }
 
-// [핵심] 드래그 로직 (자석 오차 해결)
+// [드래그 로직]
 function setupDragForSlot(slot, index) {
     const ghost = document.getElementById('ghost');
     
-    // 현재 보드판의 실제 셀 크기 계산
     const getRealCellSize = () => {
         const gridEl = document.getElementById('grid-container');
         if(!gridEl) return 40;
         const cell = gridEl.querySelector('.cell');
         if(cell) return cell.offsetWidth;
+        // 셀이 없으면 계산
         const rect = gridEl.getBoundingClientRect();
-        return (rect.width - (state.gridSize - 1) * 3) / state.gridSize; // 계산식
+        const gap = 3;
+        const padding = 5;
+        return (rect.width - (state.gridSize - 1) * gap - (padding * 2)) / state.gridSize;
     };
 
     const start = (e) => {
@@ -103,7 +101,7 @@ function setupDragForSlot(slot, index) {
         const block = state.hand[index];
         if(!block) return;
 
-        // [오차 해결] 손가락보다 1.8배 위로 띄움
+        // [오차 해결] 손가락보다 위로 띄움
         const yOffset = cellSize * 1.8; 
 
         ghost.innerHTML = '';
@@ -124,10 +122,7 @@ function setupDragForSlot(slot, index) {
         
         slot.style.opacity = '0';
         
-        const getPos = (ev) => { 
-            const t = ev.changedTouches ? ev.changedTouches[0] : (ev.touches ? ev.touches[0] : ev);
-            return { x: t.clientX, y: t.clientY }; 
-        };
+        const getPos = (ev) => { return { x: (ev.changedTouches?ev.changedTouches[0]:ev).clientX, y: (ev.changedTouches?ev.changedTouches[0]:ev).clientY }; };
         
         const updateGhost = (x,y) => { 
             ghost.style.left = (x - ghost.offsetWidth/2)+'px'; 
@@ -140,7 +135,7 @@ function setupDragForSlot(slot, index) {
             if(me.cancelable) me.preventDefault(); 
             const p = getPos(me); updateGhost(p.x, p.y); 
             
-            // [자석 판정] Ghost의 중심점(Center)을 기준으로 판정
+            // [자석] Ghost 중심점 기준
             const rect = ghost.getBoundingClientRect();
             const cx = rect.left + rect.width/2;
             const cy = rect.top + rect.height/2;
@@ -149,7 +144,7 @@ function setupDragForSlot(slot, index) {
             document.querySelectorAll('.highlight-valid').forEach(el=>el.classList.remove('highlight-valid'));
             document.querySelectorAll('.will-merge').forEach(el=>el.classList.remove('will-merge'));
             
-            // [기존 기능 유지] 하이라이트/Merge 미리보기 실행
+            // 하이라이트/Merge 미리보기 (기존 기능 유지)
             if(idx!==-1 && window._onDropCallback) window._onDropCallback(idx, true);
         };
         
@@ -177,7 +172,7 @@ function setupDragForSlot(slot, index) {
     slot.onmousedown = start; slot.ontouchstart = start;
 }
 
-// [자석 계산식] 실제 렌더링된 크기 기준 (오차 없음)
+// [핵심] 자석 좌표 계산 (오차 제거)
 function getMagnetIndex(x, y) {
     const grid = document.getElementById('grid-container');
     if (!grid) return -1;
@@ -185,7 +180,7 @@ function getMagnetIndex(x, y) {
     const gap = 3;
     const padding = 5; 
     
-    // 실제 렌더링된 셀 크기 역산 (중요)
+    // 현재 셀 크기 역산 (정확도 높음)
     const cellSize = (rect.width - (state.gridSize - 1) * gap - (padding * 2)) / state.gridSize;
     
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return -1;
