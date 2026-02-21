@@ -65,7 +65,7 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
-// [DB 저장] Score 필드 추가
+// [DB 저장] Score 저장 로직 수정 (Insufficient Error 해결용)
 export async function saveScoreToDB(username, isNewUser = false) {
     if (!db) return { success: false, msg: "DB Connection Error" };
     
@@ -82,14 +82,15 @@ export async function saveScoreToDB(username, isNewUser = false) {
         if (!isNewUser && docSnap.exists()) {
             const existingData = docSnap.data();
             // 점수가 기존보다 낮으면 저장 안함
-            if (existingData.score >= currentScore) return { success: true, msg: "Score preserved." };
+            if ((existingData.score || 0) >= currentScore) return { success: true, msg: "Score preserved." };
         }
         
+        // [중요] stars 제외, score 추가
         await setDoc(docRef, {
             username: docId,
             bestChar: safeBest,
             difficulty: safeDiff, 
-            score: Number(currentScore), // 점수 필수 저장
+            score: Number(currentScore), 
             timestamp: serverTimestamp()
         });
         return { success: true, msg: "Saved!" };
@@ -106,7 +107,7 @@ export async function getLeaderboardData(targetDiff) {
         const q = query(
             collection(db, "leaderboard"), 
             where("difficulty", "==", targetDiff), 
-            orderBy("score", "desc") // 점수 내림차순
+            orderBy("score", "desc") // score 기준
         );
         const snapshot = await getDocs(q);
         const ranks = [];
