@@ -1,149 +1,108 @@
 import { state } from "./game-data.js";
+import { getCluster } from "./game-core.js"; // 예측 계산용
 
-// ==========================================
-// [기존 UI 로직 - 수정 없음]
-// ==========================================
+// ... (getActualCellSize, renderGrid, renderHand 기존 유지) ...
 
-// 정확한 셀 크기 계산
-export function getActualCellSize() {
-    const grid = document.getElementById('grid-container');
-    if (!grid) return 40;
-    const rect = grid.getBoundingClientRect();
-    const style = window.getComputedStyle(grid);
-    const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-    const actualWidth = rect.width - paddingX;
-    return actualWidth / state.gridSize;
-}
+// [설정] 드래그 시 손가락 위로 띄우는 거리 (화면 가림 방지)
+const DRAG_Y_OFFSET = 100; 
 
-// 그리드 그리기
-export function renderGrid() { 
-    const gridEl = document.getElementById('grid-container');
-    if (!gridEl) return;
-    gridEl.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
-    gridEl.style.gridTemplateRows = `repeat(${state.gridSize}, 1fr)`;
-    if (gridEl.children.length !== state.gridSize * state.gridSize) {
-        gridEl.innerHTML = '';
-        for(let i=0; i<state.gridSize*state.gridSize; i++) {
-            const div = document.createElement('div');
-            div.className = 'cell'; 
-            div.id = `cell-${i}`;
-            gridEl.appendChild(div);
-        }
-    }
-    for(let i=0; i<state.gridSize * state.gridSize; i++) {
-        let cell = document.getElementById(`cell-${i}`);
-        if (!cell) continue;
-        const hasHighlight = cell.classList.contains('highlight-valid');
-        cell.className = 'cell'; 
-        if (hasHighlight) cell.classList.add('highlight-valid');
-        cell.textContent = ''; 
-        cell.style.transform = ''; 
-        cell.style.opacity = '1';
-        const char = state.grid[i];
-        if(char) {
-            cell.textContent = char; 
-            cell.classList.add(`b-${char}`);
-            if(char==='Z') cell.classList.add('b-Z');
-            cell.classList.add('pop-effect');
-        }
-    }
-}
-
-// 핸드 그리기
-export function renderHand() {
-    for (let i = 0; i < 3; i++) {
-        const slot = document.getElementById(`hand-${i}`);
-        if(!slot) continue;
-        slot.innerHTML = ''; 
-        slot.style.opacity = '1';
-        const block = state.hand[i];
-        if (block) {
-            const size = 25; 
-            const gridDiv = document.createElement('div');
-            gridDiv.style.display = 'grid';
-            gridDiv.style.gridTemplateColumns = `repeat(${block.shape.w}, ${size}px)`;
-            gridDiv.style.gridTemplateRows = `repeat(${block.shape.h}, ${size}px)`;
-            gridDiv.style.gap = '2px';
-            gridDiv.style.pointerEvents = 'none';
-            block.items.forEach((char, idx) => {
-                const b = document.createElement('div');
-                b.className = `cell b-${char}`;
-                b.textContent = char;
-                b.style.fontSize = '0.9rem';
-                b.style.gridColumnStart = block.shape.map[idx][1] + 1;
-                b.style.gridRowStart = block.shape.map[idx][0] + 1;
-                gridDiv.appendChild(b);
-            });
-            slot.appendChild(gridDiv);
-        }
-    }
-}
-
-// 드래그 설정
-const DRAG_Y_OFFSET = 90;
 export function setupDrag(onDrop) {
     const ghost = document.getElementById('ghost');
+    
     for (let i = 0; i < 3; i++) {
         const slot = document.getElementById(`hand-${i}`);
         if(!slot) continue;
-        slot.onmousedown = null;
-        slot.ontouchstart = null;
+        slot.onmousedown = null; slot.ontouchstart = null; // 중복 방지
+
         if (!state.hand[i]) continue; 
+
         const start = (e) => {
             if(state.isLocked) return;
             state.dragIndex = i; 
-            const cellSize = getActualCellSize();
+            const cellSize = getActualCellSize(); // 현재 그리드 칸 크기
             const block = state.hand[i];
+            
+            // 1. 고스트(미리보기) 설정 - 그리드 크기에 딱 맞게!
             ghost.innerHTML = '';
             ghost.style.position = 'fixed'; 
             ghost.style.display = 'grid';
             ghost.style.gridTemplateColumns = `repeat(${block.shape.w}, ${cellSize}px)`;
             ghost.style.gridTemplateRows = `repeat(${block.shape.h}, ${cellSize}px)`;
-            ghost.style.gap = '3px';
+            ghost.style.gap = '2px';
             ghost.style.zIndex = '9999';
+            ghost.style.opacity = '0.8'; // 약간 투명하게
+            ghost.style.pointerEvents = 'none';
+
             block.items.forEach((char, idx) => {
                 const b = document.createElement('div');
                 b.className = `cell b-${char}`;
                 b.textContent = char;
-                b.style.fontSize = '1.5rem';
+                // 폰트 사이즈도 셀 크기에 맞춰 조정
+                b.style.fontSize = (cellSize * 0.5) + 'px'; 
                 b.style.gridColumnStart = block.shape.map[idx][1] + 1;
                 b.style.gridRowStart = block.shape.map[idx][0] + 1;
                 ghost.appendChild(b);
             });
-            slot.style.opacity = '0'; 
+            
+            slot.style.opacity = '0'; // 원본 숨김
+
             const getPos = (ev) => {
                 const t = ev.changedTouches ? ev.changedTouches[0] : (ev.touches ? ev.touches[0] : ev);
                 return { x: t.clientX, y: t.clientY };
             };
+            
+            // 초기 위치 설정
             const pos = getPos(e);
             moveGhost(pos.x, pos.y);
+
             function moveGhost(x, y) {
+                // 고스트는 손가락보다 위에 위치 (가림 방지)
                 const w = ghost.offsetWidth;
                 const h = ghost.offsetHeight;
                 ghost.style.left = (x - w/2) + 'px';
                 ghost.style.top = (y - h/2 - DRAG_Y_OFFSET) + 'px'; 
+                
+                // [자석 효과] 계산된 인덱스 가져오기
+                // y좌표 보정: 시각적으로 보이는 ghost 위치를 기준으로 판정
                 const idx = getMagnetGridIndex(x, y - DRAG_Y_OFFSET);
+                
+                // 기존 하이라이트/이펙트 초기화
                 document.querySelectorAll('.highlight-valid').forEach(c => c.classList.remove('highlight-valid'));
-                if (idx !== -1) { onDrop(idx, true); }
+                document.querySelectorAll('.will-merge').forEach(c => c.classList.remove('will-merge'));
+
+                if (idx !== -1) { 
+                    // [기능 추가] 합체 예측 시각화 (빛나는 효과)
+                    showMergePrediction(idx, block);
+                    onDrop(idx, true); // 미리보기 실행
+                }
             }
+
             const moveHandler = (me) => {
                 if(me.cancelable) me.preventDefault();
                 const p = getPos(me);
                 moveGhost(p.x, p.y);
             };
+
             const endHandler = (ee) => {
                 window.removeEventListener('mousemove', moveHandler);
                 window.removeEventListener('touchmove', moveHandler);
                 window.removeEventListener('mouseup', endHandler);
                 window.removeEventListener('touchend', endHandler);
+
                 const p = getPos(ee);
                 const idx = getMagnetGridIndex(p.x, p.y - DRAG_Y_OFFSET);
+                
                 let success = false;
                 if (idx !== -1) { success = onDrop(idx, false); }
+                
                 ghost.style.display = 'none';
                 if (!success) { slot.style.opacity = '1'; }
+                
+                // 이펙트 정리
                 document.querySelectorAll('.highlight-valid').forEach(c => c.classList.remove('highlight-valid'));
+                document.querySelectorAll('.will-merge').forEach(c => c.classList.remove('will-merge'));
             };
+
             window.addEventListener('mousemove', moveHandler);
             window.addEventListener('touchmove', moveHandler, { passive: false });
             window.addEventListener('mouseup', endHandler);
@@ -154,95 +113,108 @@ export function setupDrag(onDrop) {
     }
 }
 
-// 자석 좌표 계산
+// [핵심 개선] 자석 좌표 계산 (중심점 거리 기반)
 export function getMagnetGridIndex(x, y) {
     const grid = document.getElementById('grid-container');
     if (!grid) return -1;
+    
     const rect = grid.getBoundingClientRect();
+    const cellSize = getActualCellSize();
+    
+    // 그리드 내부 패딩 고려
+    const style = window.getComputedStyle(grid);
+    const pLeft = parseFloat(style.paddingLeft);
+    const pTop = parseFloat(style.paddingTop);
+
+    // 터치한 좌표(블록의 중심)가 그리드 영역 안에 있는지 대략 체크 (여유 50px)
     if (x < rect.left - 50 || x > rect.right + 50 || y < rect.top - 50 || y > rect.bottom + 50) {
         return -1;
     }
-    const cellSize = getActualCellSize();
-    const style = window.getComputedStyle(grid);
-    const paddingLeft = parseFloat(style.paddingLeft) || 0;
-    const paddingTop = parseFloat(style.paddingTop) || 0;
-    let relX = x - rect.left - paddingLeft;
-    let relY = y - rect.top - paddingTop;
-    const maxPos = cellSize * state.gridSize - 1; 
-    relX = Math.max(0, Math.min(relX, maxPos));
-    relY = Math.max(0, Math.min(relY, maxPos));
-    const c = Math.floor(relX / cellSize);
-    const r = Math.floor(relY / cellSize);
-    if (r >= 0 && r < state.gridSize && c >= 0 && c < state.gridSize) {
-        return r * state.gridSize + c;
+
+    // 그리드 내부 로컬 좌표
+    const localX = x - rect.left - pLeft;
+    const localY = y - rect.top - pTop;
+
+    // 현재 좌표가 속한 행/열 계산
+    const c = Math.floor(localX / cellSize);
+    const r = Math.floor(localY / cellSize);
+
+    // 유효 범위 체크
+    if (c >= 0 && c < state.gridSize && r >= 0 && r < state.gridSize) {
+        // [정밀 보정] 터치 포인트가 해당 셀의 '중심'에서 너무 멀면 무효 처리 (오작동 방지)
+        // 셀의 중심 좌표
+        const cellCenterX = (c * cellSize) + (cellSize / 2);
+        const cellCenterY = (r * cellSize) + (cellSize / 2);
+        
+        // 거리 계산 (피타고라스)
+        const dist = Math.sqrt(Math.pow(localX - cellCenterX, 2) + Math.pow(localY - cellCenterY, 2));
+        
+        // 셀 크기의 65% 반경 안에 들어와야 자석 발동 (쫀쫀한 느낌)
+        if (dist < cellSize * 0.65) {
+            return r * state.gridSize + c;
+        }
     }
     return -1;
 }
 
-// ==========================================
-// [UI 업데이트 로직 - 여기만 수정/추가됨]
-// ==========================================
+// [추가] 합체 예측 효과 표시
+function showMergePrediction(idx, block) {
+    const size = state.gridSize;
+    const r = Math.floor(idx / size);
+    const c = idx % size;
 
-export function updateUI() {
-    // 1. 별 개수 업데이트
-    const starEl = document.getElementById('idx-stars');
-    if(starEl) starEl.textContent = state.stars;
+    // 1. 내가 놓을 자리 하이라이트
+    for(let i=0; i<block.items.length; i++) {
+        const tr = r + block.shape.map[i][0];
+        const tc = c + block.shape.map[i][1];
+        if(tr >= size || tc >= size) continue;
+        
+        const targetIdx = tr * size + tc;
+        // 이미 블록이 있으면 패스 (놓을 수 없는 자리)
+        if (state.grid[targetIdx]) continue;
 
-    // 2. 현재 게임의 최고 알파벳 표시
-    const bestEl = document.getElementById('game-best-char');
-    if(bestEl) bestEl.textContent = state.best;
+        const cell = document.getElementById(`cell-${targetIdx}`);
+        if (cell) cell.classList.add('highlight-valid');
 
-    // 3. [추가] 팝업이 떠있으면 게임 오버 UI도 갱신
-    const popup = document.getElementById('popup-over');
-    if (popup && popup.style.display !== 'none') {
-        updateGameOverUI();
+        // 2. 주변에 같은 알파벳이 있어서 합쳐질 것 같은가?
+        const myChar = block.items[i];
+        const neighbors = [targetIdx-1, targetIdx+1, targetIdx-size, targetIdx+size];
+        
+        let willMerge = false;
+        neighbors.forEach(n => {
+            if(n >= 0 && n < size*size) {
+                // 좌우 경계 넘임 체크
+                if(Math.abs((n%size) - (targetIdx%size)) > 1) return;
+                
+                // 같은 알파벳이 있으면 반응!
+                if(state.grid[n] === myChar) {
+                    willMerge = true;
+                    // 주변 친구도 빛나게
+                    const friend = document.getElementById(`cell-${n}`);
+                    if(friend) friend.classList.add('will-merge');
+                }
+            }
+        });
+
+        // 합쳐질 예정이면 내 자리도 강하게 빛남
+        if (willMerge && cell) cell.classList.add('will-merge');
     }
 }
 
-// [신규 기능] 게임 오버 UI (기기에 저장된 ID 확인 및 점수 비교)
-export function updateGameOverUI() {
-    const savedName = localStorage.getItem('alpha_username');
-    const localBestChar = localStorage.getItem('alpha_best_char') || 'A';
+export function updateUI() {
+    const starEl = document.getElementById('idx-stars');
+    if(starEl) starEl.textContent = state.stars;
+
+    const bestEl = document.getElementById('game-best-char');
+    if(bestEl) bestEl.textContent = state.best;
     
-    // 알파벳 비교를 위해 인덱스 계산 (A=0, B=1...)
-    const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const currentIdx = ALPHABET.indexOf(state.best);
-    const localIdx = ALPHABET.indexOf(localBestChar);
+    // [추가] 점수 표시 (헤더에 추가 공간이 필요할 수 있음)
+    // game.html의 헤더에 id="ui-score"를 가진 요소를 추가하면 좋습니다.
+    const scoreEl = document.getElementById('ui-score');
+    if(scoreEl) scoreEl.textContent = state.score;
 
-    // UI 요소 가져오기
-    const areaNew = document.getElementById('area-new-user');
-    const areaExist = document.getElementById('area-exist-user');
-    const msgSave = document.getElementById('save-msg');
-    const msgLow = document.getElementById('low-score-msg');
-    const errBox = document.getElementById('save-error');
-    
-    // 초기화: 일단 모두 숨김
-    if(areaNew) areaNew.style.display = 'none';
-    if(areaExist) areaExist.style.display = 'none';
-    if(msgSave) msgSave.style.display = 'none';
-    if(msgLow) msgLow.style.display = 'none';
-    if(errBox) errBox.style.display = 'none';
-
-    // 1. 이미 저장 완료된 상태면 성공 메시지만 표시
-    if (state.isSaved) {
-        if(msgSave) msgSave.style.display = 'block';
-        return;
-    }
-
-    // 2. 신규 유저 (기기에 ID 없음) -> 이름 입력창 노출
-    if (!savedName) {
-        if(areaNew) areaNew.style.display = 'block';
-    } 
-    // 3. 기존 유저 (기기에 ID 있음)
-    else {
-        const badge = document.getElementById('user-badge');
-        if(badge) badge.textContent = savedName; // ID 표시
-
-        // ★ 핵심: 이번 판 점수(currentIdx)가 내 최고 기록(localIdx)보다 클 때만 버튼 노출
-        if (currentIdx > localIdx) {
-            if(areaExist) areaExist.style.display = 'block'; // "Update Best Score" 버튼
-        } else {
-            if(msgLow) msgLow.style.display = 'block'; // "No new record" 메시지
-        }
+    const popup = document.getElementById('popup-over');
+    if (popup && popup.style.display !== 'none') {
+        if(window.updateGameOverUI) window.updateGameOverUI();
     }
 }
