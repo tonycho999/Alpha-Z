@@ -4,7 +4,6 @@ import * as UI from "./game-ui.js";
 import * as Logic from "./game-logic.js";
 import { AudioMgr } from "./game-audio.js";
 
-// 1. 셀 클릭
 export function handleCellClick(idx) {
     if(state.isHammerMode && state.grid[idx]) {
         state.grid[idx] = null;
@@ -15,21 +14,19 @@ export function handleCellClick(idx) {
     }
 }
 
-// 2. 핸드 리필
 export function checkHandAndRefill() {
     const isEmpty = state.hand.every(b => b === null);
     if (isEmpty) {
         state.hand = [ Core.createRandomBlock(), Core.createRandomBlock(), Core.createRandomBlock() ];
         UI.renderHand();
         UI.setupDrag(handleDropAttempt); 
-        Logic.saveGameState(); // 새 핸드 저장
+        Logic.saveGameState(); 
         checkGameOver();
     } else {
         checkGameOver();
     }
 }
 
-// 3. 게임 오버
 function checkGameOver() {
     let canPlace = false;
     for (let i = 0; i < 3; i++) {
@@ -45,7 +42,6 @@ function checkGameOver() {
 }
 
 function showGameOverPopup() {
-    // [핵심 수정] 게임이 끝나면 저장된 상태와 점수를 삭제하여 다음 번에 0점으로 시작하게 함
     localStorage.removeItem('alpha_gamestate');
     localStorage.removeItem('alpha_score');
 
@@ -53,10 +49,14 @@ function showGameOverPopup() {
     if(popup) popup.style.display = 'flex';
     document.getElementById('over-best').textContent = state.best;
     
+    // 저장 메시지 초기화
+    const saveMsg = document.getElementById('save-msg');
+    if(saveMsg) saveMsg.style.display = 'none';
+
+    // 부활 버튼 로직
     const btnRevive = document.getElementById('btn-revive-ad');
     if(btnRevive) {
         const adStatus = AdManager.checkAdStatus();
-        
         if(state.hasRevived) {
             btnRevive.style.display = 'none';
         } else if (state.isAdmin) {
@@ -73,19 +73,31 @@ function showGameOverPopup() {
             btnRevive.textContent = "📺 Revive (Get 1x1 Block)";
             btnRevive.onclick = () => {
                 AdManager.showRewardAd(() => {
-                    // 부활 시 상태 복구 로직은 game-main.js의 tryReviveWithAd에서 처리
                     window.gameLogic.tryReviveWithAd();
                 });
             };
         }
     }
     
-    // 유저 UI
+    // 유저 UI 처리 (버튼 텍스트 변경)
     const name = localStorage.getItem('alpha_username');
     const existArea = document.getElementById('area-exist-user');
     const newArea = document.getElementById('area-new-user');
+    
+    // [중요] 기존 유저일 경우 버튼 텍스트를 'Update' 대신 'Save Score'로 변경
+    const btnExistSave = document.getElementById('btn-just-save');
+    if(btnExistSave) {
+        btnExistSave.style.display = 'block';
+        btnExistSave.textContent = "Save Score"; // "Update" 대신 중립적인 표현 사용
+    }
+    const btnNewSave = document.getElementById('btn-check-save');
+    if(btnNewSave) btnNewSave.style.display = 'block';
+
     if(name) {
-         if(existArea) { existArea.style.display = 'block'; document.getElementById('user-badge').textContent = name; }
+         if(existArea) { 
+             existArea.style.display = 'block'; 
+             document.getElementById('user-badge').textContent = name; 
+         }
          if(newArea) newArea.style.display = 'none';
     } else {
          if(existArea) existArea.style.display = 'none';
@@ -95,7 +107,6 @@ function showGameOverPopup() {
 
 export function nextTurn() { checkHandAndRefill(); }
 
-// 4. 드롭 시도
 export function handleDropAttempt(targetIdx, isPreview) {
     if(state.dragIndex === -1) return false;
     const block = state.hand[state.dragIndex];
