@@ -70,6 +70,7 @@
         <audio id="s-drop" src="./assets/drop.mp3"></audio>
         <audio id="s-merge" src="./assets/merge.mp3"></audio>
         <audio id="s-over" src="./assets/over.mp3"></audio>
+        <audio id="s-button" src="./assets/button.mp3"></audio>
     </div>
 
     <div id="popup-over" class="popup-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
@@ -123,19 +124,32 @@
     <script>
         let isMuted = localStorage.getItem('alpha_muted') === 'true';
         updateMuteIcon();
+        
         function toggleMute() {
-            isMuted = !isMuted; localStorage.setItem('alpha_muted', isMuted); updateMuteIcon();
+            isMuted = !isMuted; 
+            localStorage.setItem('alpha_muted', isMuted); 
+            updateMuteIcon();
             if(!isMuted) playBtnSound();
         }
+        
         function updateMuteIcon() {
             const btn = document.getElementById('btn-sound');
-            if(btn) { btn.textContent = isMuted ? '🔇' : '🔊'; btn.style.opacity = isMuted ? '0.5' : '1'; }
+            if(btn) { 
+                btn.textContent = isMuted ? '🔇' : '🔊'; 
+                btn.style.opacity = isMuted ? '0.5' : '1'; 
+            }
         }
+        
+        // [수정] 버튼 소리 재생 함수 (s-button 사용)
         window.playBtnSound = function() {
             if(isMuted) return;
-            const audio = document.getElementById('s-drop');
-            if(audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
+            const audio = document.getElementById('s-button');
+            if(audio) { 
+                audio.currentTime = 0; 
+                audio.play().catch(e=>{}); 
+            }
         }
+        
         window.startGame = function(diff) {
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
@@ -143,17 +157,13 @@
             if (window.initGame) window.initGame(diff);
         };
 
-        // --- New Intro Popup Logic ---
+        // --- Intro Popup Logic ---
         document.addEventListener('DOMContentLoaded', () => {
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             const introPopup = document.getElementById('intro-popup');
             const pcContent = document.getElementById('intro-pc');
             const mobileContent = document.getElementById('intro-mobile');
 
-            // Logic:
-            // 1. Mobile: Check localStorage. If checked, don't show.
-            // 2. PC: Always show (no localStorage check).
-            
             if (isMobile) {
                 const dontShow = localStorage.getItem('alpha_intro_done');
                 if (!dontShow) {
@@ -175,7 +185,6 @@
             
             if (window.playBtnSound) window.playBtnSound();
 
-            // Save preference only if checkbox is visible and checked
             if (checkbox && checkbox.offsetParent !== null && checkbox.checked) {
                 localStorage.setItem('alpha_intro_done', 'true');
             }
@@ -183,7 +192,7 @@
             introPopup.style.display = 'none';
         }
     </script>
-    <script type="module" src="./js/game-main.js?v=2.6"></script>
+    <script type="module" src="./js/game-main.js?v=2.61"></script>
     <script type="module" src="./js/index.js"></script>
 </body>
 </html>
