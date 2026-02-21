@@ -1,9 +1,9 @@
-import { state, ALPHABET } from "./game-data.js";
+import { state, ALPHABET, AdManager } from "./game-data.js";
 import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
 import { AudioMgr } from "./game-audio.js";
 
-// [이어하기] 상태 저장
+// [이어하기 상태 저장]
 export function saveGameState() {
     const saveData = {
         grid: state.grid,
@@ -18,8 +18,10 @@ export function saveGameState() {
     localStorage.setItem('alpha_score', state.score);
     localStorage.setItem('alpha_best', state.best);
     localStorage.setItem('alpha_stars', state.stars);
+    localStorage.setItem('alpha_items', JSON.stringify(state.items));
 }
 
+// [블록 배치]
 export async function placeBlock(indices, block, onComplete) {
     if(state.isLocked) return;
     state.isLocked = true;
@@ -68,7 +70,6 @@ async function handleMerge(indices) {
                     }
                 }
             }
-            
             const centerEl = document.getElementById(`cell-${targetIdx}`);
             for(let t of cluster) {
                 if(t === targetIdx) continue;
@@ -138,22 +139,41 @@ function addScore(amount) {
     UI.updateUI();
 }
 
-export function buyItem(itemType, price) {
-    if (state.stars >= price) {
-        state.stars -= price;
-        if (!state.items) state.items = { refresh: 0, hammer: 0, upgrade: 0 };
-        state.items[itemType] = (state.items[itemType] || 0) + 1;
-        
-        localStorage.setItem('alpha_stars', state.stars);
-        localStorage.setItem('alpha_items', JSON.stringify(state.items));
-        
-        UI.updateUI(); // 즉시 갱신
-        AudioMgr.play('merge');
-        return true;
-    } else {
-        alert("Not enough stars!");
-        return false;
-    }
+// [아이템 사용 로직 통합]
+export function useRefresh(onRefill) {
+    if(state.items.refresh > 0) {
+        state.items.refresh--;
+        saveGameState(); // 차감 저장
+        onRefill();
+        UI.updateUI();
+    } else alert("No Refresh item!");
+}
+
+export function useHammer() {
+    if(state.items.hammer > 0) {
+        state.items.hammer--;
+        saveGameState();
+        state.isHammerMode = true;
+        document.getElementById('grid-container').classList.add('hammer-mode');
+        alert("Click a block to remove!");
+        UI.updateUI();
+    } else alert("No Hammer item!");
+}
+
+export function useUpgrade() {
+    if(state.items.upgrade > 0) {
+        state.items.upgrade--;
+        saveGameState();
+        let upgraded = false;
+        state.grid.forEach((char, i) => {
+            if(char) {
+                state.grid[i] = ALPHABET[ALPHABET.indexOf(char)+1] || char;
+                upgraded = true;
+            }
+        });
+        if(upgraded) { UI.renderGrid(); AudioMgr.play('merge'); }
+        UI.updateUI();
+    } else alert("No Upgrade item!");
 }
 
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
