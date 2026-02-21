@@ -65,37 +65,29 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
-// [DB 저장] Score 저장 로직
 export async function saveScoreToDB(username, isNewUser = false) {
-    if (!db) return { success: false, msg: "DB Disconnected" };
-    
+    if (!db) return { success: false, msg: "DB Connection Error" };
     const docId = username.trim();
     const safeDiff = state.diff || 'NORMAL'; 
-    const safeBest = state.best || 'A';
     const currentScore = Number(state.score) || 0;
 
     try {
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
-        
         if (isNewUser && docSnap.exists()) return { success: false, msg: "Name taken." };
         if (!isNewUser && docSnap.exists()) {
             const existingData = docSnap.data();
             if ((existingData.score || 0) >= currentScore) return { success: true, msg: "Score preserved." };
         }
-        
         await setDoc(docRef, {
             username: docId,
-            bestChar: safeBest,
+            bestChar: state.best,
             difficulty: safeDiff, 
-            score: currentScore, 
+            score: currentScore, // 점수 저장
             timestamp: serverTimestamp()
         });
         return { success: true, msg: "Saved!" };
-    } catch (e) { 
-        console.error("DB Error:", e);
-        return { success: false, msg: "Error: " + e.message }; 
-    }
+    } catch (e) { return { success: false, msg: e.message }; }
 }
 
 export async function getLeaderboardData(targetDiff) {
@@ -104,14 +96,11 @@ export async function getLeaderboardData(targetDiff) {
         const q = query(
             collection(db, "leaderboard"), 
             where("difficulty", "==", targetDiff), 
-            orderBy("score", "desc")
+            orderBy("score", "desc") // 인덱스 생성 필요
         );
         const snapshot = await getDocs(q);
         const ranks = [];
         snapshot.forEach((doc) => ranks.push(doc.data()));
         return ranks;
-    } catch (e) { 
-        console.error("LB Error:", e);
-        return []; 
-    }
+    } catch (e) { console.error("LB Error:", e); return []; }
 }
