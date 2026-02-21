@@ -46,7 +46,7 @@ export function renderHand() {
         const block = state.hand[i];
         if (block) {
             const miniGrid = document.createElement('div');
-            // [중요] 클릭이 슬롯까지 전달되도록 통과 설정
+            // 터치 이벤트 통과 (슬롯이 클릭되게)
             miniGrid.style.pointerEvents = 'none';
             
             miniGrid.style.display = 'grid';
@@ -54,11 +54,9 @@ export function renderHand() {
             miniGrid.style.gridTemplateRows = `repeat(${block.shape.h}, 1fr)`;
             miniGrid.style.gap = '2px';
             
-            // 크기 설정
+            // 크기 크게
             miniGrid.style.width = (block.shape.w * 35) + 'px'; 
             miniGrid.style.height = (block.shape.h * 35) + 'px';
-            
-            // 중앙 정렬
             miniGrid.style.justifySelf = 'center';
             miniGrid.style.alignSelf = 'center';
 
@@ -78,13 +76,13 @@ export function renderHand() {
             });
             slot.appendChild(miniGrid);
             
-            // [핵심 수정] window 객체 거치지 않고 직접 함수 호출
+            // 내부 함수 직접 호출
             setupDragForSlot(slot, i);
         }
     }
 }
 
-// 3. UI 텍스트 갱신
+// 3. UI 업데이트
 export function updateUI() {
     const bestEl = document.getElementById('ui-best');
     if(bestEl) bestEl.textContent = state.best;
@@ -99,19 +97,16 @@ export function updateUI() {
     if(scoreEl) scoreEl.textContent = state.score;
 }
 
-// 4. 게임오버 UI
 export function updateGameOverUI() {
     const overBest = document.getElementById('over-best');
     if(overBest) overBest.textContent = state.best;
 }
 
-// 5. 드래그 셋업 (외부 호출용)
 export function setupDrag(onDropCallback) {
-    // 드롭 콜백만 저장
     window._onDropCallback = onDropCallback;
 }
 
-// [내부 함수] 개별 슬롯 드래그 연결
+// [핵심] 드래그 로직 (좌표 오차 해결)
 function setupDragForSlot(slot, index) {
     const ghost = document.getElementById('ghost');
     
@@ -128,7 +123,7 @@ function setupDragForSlot(slot, index) {
         const block = state.hand[index];
         if(!block) return;
 
-        // 고스트 생성
+        // Ghost 모양 잡기
         ghost.innerHTML = '';
         ghost.style.display = 'grid';
         ghost.style.gridTemplateColumns = `repeat(${block.shape.w}, ${cellSize}px)`;
@@ -153,26 +148,36 @@ function setupDragForSlot(slot, index) {
             return { x: t.clientX, y: t.clientY };
         };
 
-        // 초기 위치 설정
+        // Ghost 위치 보정 (손가락 위로 띄움)
+        const updateGhostPos = (x, y) => {
+            const ghostW = ghost.offsetWidth;
+            const ghostH = ghost.offsetHeight;
+            ghost.style.left = (x - ghostW / 2) + 'px';
+            ghost.style.top = (y - ghostH - 80) + 'px'; 
+        };
+
         const initPos = getPos(e);
-        ghost.style.left = (initPos.x - ghost.offsetWidth/2) + 'px';
-        ghost.style.top = (initPos.y - ghost.offsetHeight - 80) + 'px';
-        ghost.style.display = 'grid'; 
+        ghost.style.display = 'grid';
+        updateGhostPos(initPos.x, initPos.y);
 
         const moveHandler = (me) => {
             if(me.cancelable) me.preventDefault();
             const p = getPos(me);
-            
-            ghost.style.left = (p.x - ghost.offsetWidth/2) + 'px';
-            ghost.style.top = (p.y - ghost.offsetHeight - 80) + 'px';
+            updateGhostPos(p.x, p.y);
 
-            const idx = getMagnetIndex(p.x, p.y - 80);
+            // [중요] 자석 감지는 Ghost의 중심점을 기준으로 해야 정확함!
+            const ghostRect = ghost.getBoundingClientRect();
+            const centerX = ghostRect.left + ghostRect.width / 2;
+            const centerY = ghostRect.top + ghostRect.height / 2;
+
+            const idx = getMagnetIndex(centerX, centerY);
             
+            // 초기화
             document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
             document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
             
             if (idx !== -1 && window._onDropCallback) {
-                 window._onDropCallback(idx, true); 
+                 window._onDropCallback(idx, true); // 미리보기 (하이라이트 + 반짝임)
             }
         };
 
@@ -182,8 +187,11 @@ function setupDragForSlot(slot, index) {
             window.removeEventListener('mouseup', endHandler);
             window.removeEventListener('touchend', endHandler);
 
-            const p = getPos(ee);
-            const idx = getMagnetIndex(p.x, p.y - 80);
+            // 마지막 위치 기준 드롭 시도
+            const ghostRect = ghost.getBoundingClientRect();
+            const centerX = ghostRect.left + ghostRect.width / 2;
+            const centerY = ghostRect.top + ghostRect.height / 2;
+            const idx = getMagnetIndex(centerX, centerY);
             
             let success = false;
             if (idx !== -1 && window._onDropCallback) {
@@ -209,13 +217,15 @@ function setupDragForSlot(slot, index) {
     slot.ontouchstart = start;
 }
 
+// 자석 인덱스 계산
 function getMagnetIndex(x, y) {
     const grid = document.getElementById('grid-container');
     if (!grid) return -1;
     const rect = grid.getBoundingClientRect();
     const cellSize = (grid.offsetWidth - (state.gridSize-1)*3) / state.gridSize; 
     
-    if (x < rect.left - 20 || x > rect.right + 20 || y < rect.top - 20 || y > rect.bottom + 20) return -1;
+    // 약간의 여유 허용
+    if (x < rect.left - 10 || x > rect.right + 10 || y < rect.top - 10 || y > rect.bottom + 10) return -1;
     
     const lx = x - rect.left;
     const ly = y - rect.top;
