@@ -3,25 +3,19 @@ export const SHAPES_1 = [{ id: '1a', map: [[0,0]], w:1, h:1 }];
 export const SHAPES_2 = [{ id: '2h', map: [[0,0], [0,1]], w:2, h:1 }, { id: '2v', map: [[0,0], [1,0]], w:1, h:2 }];
 export const SHAPES_3 = [ { id: '3h', map: [[0,0], [0,1], [0,2]], w:3, h:1 }, { id: '3v', map: [[0,0], [1,0], [2,0]], w:1, h:3 }, { id: '3Lt', map: [[0,0], [0,1], [1,0]], w:2, h:2 }, { id: '3Lb', map: [[0,0], [1,0], [1,1]], w:2, h:2 }, { id: '3Rt', map: [[0,0], [0,1], [1,1]], w:2, h:2 }, { id: '3Rb', map: [[0,0], [1,0], [0,1]], w:2, h:2 } ];
 
-// 안전한 로컬 데이터 로드
-function safeLoad(key, defaultVal) {
-    try {
-        const val = localStorage.getItem(key);
-        return val ? JSON.parse(val) : defaultVal;
-    } catch(e) { return defaultVal; }
+// 안전한 로드 함수
+function safeLoad(key, def) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
 }
 
 export const state = {
-    gridSize: 8, 
-    grid: [], 
-    hand: [null, null, null], 
-    dragIndex: -1,
+    gridSize: 8, grid: [], hand: [null, null, null], dragIndex: -1,
     score: parseInt(localStorage.getItem('alpha_score')) || 0,
     stars: parseInt(localStorage.getItem('alpha_stars')) || 0,
     items: safeLoad('alpha_items', { refresh:0, hammer:0, upgrade:0 }),
     best: localStorage.getItem('alpha_best') || 'A',
     isLocked: false, isReviveTurn: false, hasRevived: false,
-    isAdmin: localStorage.getItem('alpha_admin') === 'true', // 즉시 로드
+    isAdmin: localStorage.getItem('alpha_admin') === 'true',
     diff: 'NORMAL', isHammerMode: false
 };
 
@@ -37,11 +31,7 @@ export function checkAdmin(username) {
 
 export const AdManager = {
     showRewardAd: function(onSuccess) {
-        if(state.isAdmin) {
-            // 관리자는 경고창 없이 바로 성공
-            onSuccess(); 
-            return;
-        }
+        if(state.isAdmin) { onSuccess(); return; } // 관리자 스킵
         if(confirm("📺 Watch Ad to get reward?")) {
             window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
             setTimeout(() => { onSuccess(); }, 3000);
@@ -52,8 +42,8 @@ export const AdManager = {
 export function initGridSize(diff) {
     if (diff === 'EASY') state.gridSize = 9;
     else if (diff === 'NORMAL') state.gridSize = 8;
-    else if (diff === 'HARD') state.gridSize = 7;
-    else if (diff === 'HELL') state.gridSize = 7;
+    else if (diff === 'HARD' || diff === 'HELL') state.gridSize = 7;
     else state.gridSize = 8;
+    // 그리드 리셋
     state.grid = new Array(state.gridSize * state.gridSize).fill(null);
 }
