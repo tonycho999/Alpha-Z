@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <title>Alpha-Z: 2048 Puzzle Game</title>
+    <title>Alpha-Z: 2048 Puzzle Game (v1.0)</title>
+    
     <meta name="description" content="Merge alphabet blocks from A to Z! A highly addictive puzzle game inspired by 2048. Play now on mobile and desktop.">
     <meta name="keywords" content="Alpha-Z, 2048, Puzzle Game, Alphabet Game, Brain Teaser, Casual Game, PWA">
     <meta name="author" content="Alpha-Z Team">
@@ -19,8 +20,10 @@
     <meta property="og:url" content="https://alpha-z.pages.dev">
 
     <link rel="icon" type="image/png" href="./favicon.png">
-    <link rel="manifest" href="./manifest.json">
-    <link rel="stylesheet" href="./style.css">
+    
+    <link rel="manifest" href="./manifest.json?v=1.0">
+    
+    <link rel="stylesheet" href="./style.css?v=1.0">
 
     <style>
         .hidden { display: none !important; }
@@ -38,6 +41,8 @@
 <body class="main-bg">
     <div class="screen">
         <h1 style="font-size: 3.5rem; color: var(--accent); margin-bottom: 20px;">Alpha-Z</h1>
+        <div style="font-size: 0.8rem; color: #555; margin-top: -15px; margin-bottom: 15px;">v1.0</div>
+
         <button id="btn-sound" onclick="toggleMute()" style="position: absolute; top: 10px; right: 20px; font-size: 1.5rem; background: none; border: none; cursor: pointer; color: white;">🔊</button>
 
         <div id="start-screen">
@@ -106,7 +111,6 @@
         let isMuted = localStorage.getItem('alpha_muted') === 'true';
         updateMuteIcon();
         
-        // Admin Check Logic
         const isAdmin = localStorage.getItem('alpha_admin') === 'true';
         if (isAdmin) {
             const adContainer = document.getElementById('ad-container');
@@ -137,9 +141,10 @@
             }
         }
         
+        // [버전 관리] 게임 페이지로 넘어갈 때 버전 쿼리 추가 (캐시 방지)
         window.startGame = function(diff) {
             playBtnSound();
-            location.href = `game.html?diff=${diff}`;
+            location.href = `game.html?diff=${diff}&v=1.0`; 
         };
 
         // --- PWA Install Logic ---
