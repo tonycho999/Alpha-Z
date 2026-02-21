@@ -1,97 +1,208 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alpha-Z Game</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="game-mode">
-    
-    <div style="display:none;">
-        <audio id="s-drop" src="./assets/drop.mp3"></audio>
-        <audio id="s-merge" src="./assets/merge.mp3"></audio>
-        <audio id="s-over" src="./assets/over.mp3"></audio>
-        <audio id="s-button" src="./assets/button.mp3"></audio>
-    </div>
+import { state, ALPHABET } from "./game-data.js";
 
-    <div class="screen">
-        <div class="header">
-            <div class="stat"><span>BEST</span><strong id="ui-best">A</strong></div>
-            <div class="stat"><span style="font-size: 14px;">⭐</span><strong id="ui-stars">0</strong></div>
-            <div class="stat"><span>SCORE</span><strong id="ui-score">0</strong></div>
-            <div class="stat"><span>LEVEL</span><strong id="ui-diff">-</strong></div>
-        </div>
-
-        <div class="game-area">
-            <div id="grid-container" class="grid-container"></div>
-
-            <div id="hand-container">
-                <div id="hand-0" class="hand-slot"></div>
-                <div id="hand-1" class="hand-slot"></div>
-                <div id="hand-2" class="hand-slot"></div>
-            </div>
-        </div>
-
-        <div style="display:flex; width:100%; max-width:500px; gap:5px; margin-bottom:10px;">
-            <button class="btn" style="flex:1; padding: 10px 0; font-size:0.85rem;" onclick="playBtnSound(); window.gameLogic.useRefresh()">
-                🔄 Ref (<span id="cnt-refresh">0</span>)
-            </button>
-            <button class="btn" style="flex:1; padding: 10px 0; font-size:0.85rem;" onclick="playBtnSound(); window.gameLogic.useHammer()">
-                🔨 Ham (<span id="cnt-hammer">0</span>)
-            </button>
-            <button class="btn" style="flex:1; padding: 10px 0; font-size:0.85rem;" onclick="playBtnSound(); window.gameLogic.useUpgrade()">
-                ✨ Up (<span id="cnt-upgrade">0</span>)
-            </button>
-        </div>
-
-        <div style="display:flex; width:100%; max-width:500px; gap:8px;">
-            <button class="btn" style="flex:1; background:#444;" onclick="playBtnSound(); location.href='/'">🏠 Menu</button>
-        </div>
-    </div>
-
-    <div id="ghost" class="shape-container"></div>
-
-    <div id="popup-over" class="popup-overlay">
-        <div class="popup-box">
-            <h2 style="color:#e74c3c;">GAME OVER</h2>
-            <p>Best Block: <strong id="over-best" style="color:var(--accent); font-size:1.5rem;">A</strong></p>
-            
-            <div id="save-error" style="display:none; color:#e74c3c; font-size:0.9rem; margin-bottom:10px; font-weight:bold;"></div>
-
-            <div id="area-new-user" style="display:none;">
-                <input type="text" id="username-input" placeholder="Enter Name" maxlength="12" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:none; text-align:center;">
-                <button class="btn btn-primary" style="width:100%;" id="btn-check-save" onclick="playBtnSound(); window.gameLogic.saveScore()">Save Record</button>
-            </div>
-            
-            <div id="area-exist-user" style="display:none;">
-                <div style="margin-bottom:5px; color:#aaa; font-size:0.9rem;">Player</div>
-                <div id="user-badge" style="color:var(--accent); font-weight:bold; margin-bottom:10px; font-size:1.4rem;">User</div>
-                <button class="btn btn-primary" style="width:100%;" id="btn-just-save" onclick="playBtnSound(); window.gameLogic.saveScore()">Update Best Score</button>
-            </div>
-            
-            <div id="save-msg" style="display:none; color:#2ecc71; margin:15px 0; font-weight:bold;">✅ Saved Successfully!</div>
-
-            <hr style="border:0; border-top:1px solid #444; margin:20px 0;">
-            
-            <button id="btn-revive-ad" class="btn" style="width:100%; background: linear-gradient(45deg, #e65100, #f57c00); border:none; color:white; margin-bottom:10px;" onclick="playBtnSound(); window.gameLogic.tryReviveWithAd()">
-                📺 Revive (Get Special 1x1 Block)
-            </button>
-            
-            <button class="btn" style="width:100%; background:#222;" onclick="playBtnSound(); location.href='/'">Main Menu</button>
-        </div>
-    </div>
-
-    <script>
-        window.playBtnSound = function() {
-            var audio = document.getElementById('s-button');
-            if(audio) {
-                audio.currentTime = 0;
-                audio.play().catch(function(e){});
-            }
+// 1. 그리드 그리기
+export function renderGrid() {
+    const gridEl = document.getElementById('grid-container');
+    if (!gridEl) return;
+    gridEl.innerHTML = '';
+    gridEl.style.display = 'grid';
+    gridEl.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
+    gridEl.style.gridTemplateRows = `repeat(${state.gridSize}, 1fr)`;
+    gridEl.style.gap = '3px';
+    state.grid.forEach((char, idx) => {
+        const cell = document.createElement('div');
+        cell.id = `cell-${idx}`;
+        cell.className = 'cell';
+        if(state.isHammerMode) cell.classList.add('hammer-target');
+        if (char) { cell.classList.add(`b-${char}`); cell.textContent = char; } 
+        else { cell.classList.add('empty'); }
+        cell.onclick = () => {
+             if(window.gameLogic && window.gameLogic.handleCellClick) window.gameLogic.handleCellClick(idx);
         };
-    </script>
+        gridEl.appendChild(cell);
+    });
+}
 
-    <script type="module" src="js/game-main.js"></script>
-</body>
-</html>
+// 2. 핸드 그리기
+export function renderHand() {
+    for (let i = 0; i < 3; i++) {
+        const slot = document.getElementById(`hand-${i}`);
+        if (!slot) continue;
+        slot.innerHTML = '';
+        slot.style.opacity = '1';
+        const block = state.hand[i];
+        if (block) {
+            const miniGrid = document.createElement('div');
+            miniGrid.style.pointerEvents = 'none'; // 중요: 터치 통과
+            miniGrid.style.display = 'grid';
+            miniGrid.style.gridTemplateColumns = `repeat(${block.shape.w}, 1fr)`;
+            miniGrid.style.gridTemplateRows = `repeat(${block.shape.h}, 1fr)`;
+            miniGrid.style.gap = '2px';
+            miniGrid.style.width = (block.shape.w * 35) + 'px'; 
+            miniGrid.style.height = (block.shape.h * 35) + 'px';
+            miniGrid.style.justifySelf = 'center'; miniGrid.style.alignSelf = 'center';
+            block.items.forEach((char, idx) => {
+                const cell = document.createElement('div');
+                cell.className = `cell b-${char}`;
+                cell.textContent = char;
+                cell.style.fontSize = '1.2rem';
+                cell.style.display = 'flex';
+                cell.style.justifyContent = 'center'; cell.style.alignItems = 'center';
+                cell.style.gridColumnStart = block.shape.map[idx][1] + 1;
+                cell.style.gridRowStart = block.shape.map[idx][0] + 1;
+                miniGrid.appendChild(cell);
+            });
+            slot.appendChild(miniGrid);
+            setupDragForSlot(slot, i);
+        }
+    }
+}
+
+// [수정된 부분] UI 업데이트: BEST에 현재 보드판 최고 알파벳 표시
+export function updateUI() {
+    // 1. 현재 보드 스캔하여 가장 높은 알파벳 찾기
+    let currentBoardMax = 'A';
+    let maxIdx = -1;
+
+    if (state.grid && state.grid.length > 0) {
+        state.grid.forEach(char => {
+            if (char) {
+                const idx = ALPHABET.indexOf(char);
+                if (idx > maxIdx) {
+                    maxIdx = idx;
+                    currentBoardMax = char;
+                }
+            }
+        });
+    }
+
+    // 2. UI 요소 업데이트
+    if(document.getElementById('ui-best')) document.getElementById('ui-best').textContent = currentBoardMax; // 수정됨
+    if(document.getElementById('ui-stars')) document.getElementById('ui-stars').textContent = state.stars;
+    if(document.getElementById('ui-diff')) document.getElementById('ui-diff').textContent = state.diff;
+    if(document.getElementById('ui-score')) document.getElementById('ui-score').textContent = state.score;
+
+    // 아이템 개수 업데이트
+    if (state.items) {
+        if(document.getElementById('cnt-refresh')) document.getElementById('cnt-refresh').textContent = state.items.refresh;
+        if(document.getElementById('cnt-hammer')) document.getElementById('cnt-hammer').textContent = state.items.hammer;
+        if(document.getElementById('cnt-upgrade')) document.getElementById('cnt-upgrade').textContent = state.items.upgrade;
+    }
+}
+
+export function updateGameOverUI() {
+    // 게임 오버 팝업에는 '역대 최고 기록'을 보여줍니다.
+    document.getElementById('over-best').textContent = state.best;
+}
+
+export function setupDrag(onDropCallback) {
+    window._onDropCallback = onDropCallback;
+}
+
+// [드래그 로직 - 자석 보정 포함]
+function setupDragForSlot(slot, index) {
+    const ghost = document.getElementById('ghost');
+    
+    const getRealCellSize = () => {
+        const gridEl = document.getElementById('grid-container');
+        if(!gridEl) return 40;
+        const cell = gridEl.querySelector('.cell');
+        if(cell) return cell.offsetWidth;
+        const rect = gridEl.getBoundingClientRect();
+        return (rect.width - (state.gridSize - 1) * 3) / state.gridSize;
+    };
+
+    const start = (e) => {
+        if(state.isLocked) return;
+        state.dragIndex = index;
+        const cellSize = getRealCellSize();
+        const block = state.hand[index];
+        if(!block) return;
+
+        const yOffset = cellSize * 1.8; 
+
+        ghost.innerHTML = '';
+        ghost.style.display = 'grid';
+        ghost.style.gridTemplateColumns = `repeat(${block.shape.w}, ${cellSize}px)`;
+        ghost.style.gridTemplateRows = `repeat(${block.shape.h}, ${cellSize}px)`;
+        ghost.style.gap = '3px';
+        ghost.style.pointerEvents = 'none';
+        
+        block.items.forEach((char, idx) => {
+            const b = document.createElement('div');
+            b.className = `cell b-${char}`; b.textContent = char;
+            b.style.fontSize = (cellSize*0.55)+'px';
+            b.style.gridColumnStart = block.shape.map[idx][1] + 1;
+            b.style.gridRowStart = block.shape.map[idx][0] + 1;
+            ghost.appendChild(b);
+        });
+        
+        slot.style.opacity = '0';
+        
+        const getPos = (ev) => { return { x: (ev.changedTouches?ev.changedTouches[0]:ev).clientX, y: (ev.changedTouches?ev.changedTouches[0]:ev).clientY }; };
+        const updateGhost = (x,y) => { 
+            ghost.style.left = (x - ghost.offsetWidth/2)+'px'; 
+            ghost.style.top = (y - ghost.offsetHeight - yOffset)+'px'; 
+        };
+        
+        const init = getPos(e); ghost.style.display='grid'; updateGhost(init.x, init.y);
+        
+        const move = (me) => { 
+            if(me.cancelable) me.preventDefault(); 
+            const p = getPos(me); updateGhost(p.x, p.y); 
+            
+            const rect = ghost.getBoundingClientRect();
+            // 자석 기준: 첫번째 칸 중심
+            const cx = rect.left + (cellSize / 2);
+            const cy = rect.top + (cellSize / 2);
+            const idx = getMagnetIndex(cx, cy);
+            
+            document.querySelectorAll('.highlight-valid').forEach(el=>el.classList.remove('highlight-valid'));
+            document.querySelectorAll('.will-merge').forEach(el=>el.classList.remove('will-merge'));
+            
+            if(idx!==-1 && window._onDropCallback) window._onDropCallback(idx, true);
+        };
+        
+        const end = (ee) => {
+            window.removeEventListener('mousemove', move); window.removeEventListener('touchmove', move);
+            window.removeEventListener('mouseup', end); window.removeEventListener('touchend', end);
+            
+            const rect = ghost.getBoundingClientRect();
+            const cx = rect.left + (cellSize / 2);
+            const cy = rect.top + (cellSize / 2);
+            const idx = getMagnetIndex(cx, cy);
+
+            let success = false;
+            if(idx!==-1 && window._onDropCallback) success = window._onDropCallback(idx, false);
+            
+            ghost.style.display='none';
+            if(!success) { slot.style.opacity='1'; state.dragIndex=-1; }
+            document.querySelectorAll('.highlight-valid').forEach(el=>el.classList.remove('highlight-valid'));
+            document.querySelectorAll('.will-merge').forEach(el=>el.classList.remove('will-merge'));
+        };
+        
+        window.addEventListener('mousemove', move); window.addEventListener('touchmove', move, {passive:false});
+        window.addEventListener('mouseup', end); window.addEventListener('touchend', end);
+    };
+    slot.onmousedown = start; slot.ontouchstart = start;
+}
+
+function getMagnetIndex(x, y) {
+    const grid = document.getElementById('grid-container');
+    if (!grid) return -1;
+    const rect = grid.getBoundingClientRect();
+    const gap = 3;
+    const padding = 5; 
+    const cellSize = (rect.width - (state.gridSize - 1) * gap - (padding * 2)) / state.gridSize;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return -1;
+    
+    const lx = x - rect.left - padding;
+    const ly = y - rect.top - padding;
+    
+    const c = Math.floor(lx / (cellSize + gap));
+    const r = Math.floor(ly / (cellSize + gap));
+    
+    if(c >= 0 && c < state.gridSize && r >= 0 && r < state.gridSize) return r * state.gridSize + c;
+    return -1;
+}
