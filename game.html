@@ -36,20 +36,20 @@
         <div id="grid-container" class="grid-container"></div>
 
         <div style="display:flex; width:100%; max-width:500px; gap:5px; margin-bottom:10px;">
-            <button class="btn" style="flex:1; padding: 10px 0; font-size:0.85rem;" onclick="window.gameLogic.useRefresh()">
+            <button class="btn" style="flex:1; padding: 10px 0; font-size:0.85rem;" onclick="playBtnSound(); window.gameLogic.useRefresh()">
                 🔄 Ref (<span id="cnt-refresh">0</span>)
             </button>
-            <button class="btn" style="flex:1; padding: 10px 0; font-size:0.85rem;" onclick="window.gameLogic.useHammer()">
+            <button class="btn" style="flex:1; padding: 10px 0; font-size:0.85rem;" onclick="playBtnSound(); window.gameLogic.useHammer()">
                 🔨 Ham (<span id="cnt-hammer">0</span>)
             </button>
-            <button class="btn" style="flex:1; padding: 10px 0; font-size:0.85rem;" onclick="window.gameLogic.useUpgrade()">
+            <button class="btn" style="flex:1; padding: 10px 0; font-size:0.85rem;" onclick="playBtnSound(); window.gameLogic.useUpgrade()">
                 ✨ Up (<span id="cnt-upgrade">0</span>)
             </button>
         </div>
 
         <div style="display:flex; width:100%; max-width:500px; gap:8px;">
-            <button class="btn" style="flex:1; background:#444;" onclick="location.href='/'">🏠 Menu</button>
-            <button class="btn btn-primary" style="flex:1;" onclick="location.href='./shop.html'">🛒 Shop</button>
+            <button class="btn" style="flex:1; background:#444;" onclick="playBtnSound(); location.href='/'">🏠 Menu</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="playBtnSound(); location.href='./shop.html'">🛒 Shop</button>
         </div>
     </div>
 
@@ -64,26 +64,36 @@
 
             <div id="area-new-user" style="display:none;">
                 <input type="text" id="username-input" placeholder="Enter Name" maxlength="12" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:none; text-align:center;">
-                <button class="btn btn-primary" style="width:100%;" id="btn-check-save" onclick="window.gameLogic.saveScore()">Save Record</button>
+                <button class="btn btn-primary" style="width:100%;" onclick="playBtnSound(); window.gameLogic.saveScore()">Save Record</button>
             </div>
             
             <div id="area-exist-user" style="display:none;">
                 <div style="margin-bottom:5px; color:#aaa; font-size:0.9rem;">Player</div>
                 <div id="user-badge" style="color:var(--accent); font-weight:bold; margin-bottom:10px; font-size:1.4rem;">User</div>
-                <button class="btn btn-primary" style="width:100%;" id="btn-just-save" onclick="window.gameLogic.saveScore()">Update Best Score</button>
+                <button class="btn btn-primary" style="width:100%;" onclick="playBtnSound(); window.gameLogic.saveScore()">Update Best Score</button>
             </div>
             
             <div id="save-msg" style="display:none; color:#2ecc71; margin:15px 0; font-weight:bold;">✅ Saved Successfully!</div>
 
             <hr style="border:0; border-top:1px solid #444; margin:20px 0;">
             
-            <button id="btn-revive-ad" class="btn" style="width:100%; background: linear-gradient(45deg, #e65100, #f57c00); border:none; color:white; margin-bottom:10px;" onclick="window.gameLogic.tryReviveWithAd()">
+            <button id="btn-revive-ad" class="btn" style="width:100%; background: linear-gradient(45deg, #e65100, #f57c00); border:none; color:white; margin-bottom:10px;" onclick="playBtnSound(); window.gameLogic.tryReviveWithAd()">
                 📺 Revive (Get Special 1x1 Block)
             </button>
             
-            <button class="btn" style="width:100%; background:#222;" onclick="location.href='/'">Main Menu</button>
+            <button class="btn" style="width:100%; background:#222;" onclick="playBtnSound(); location.href='/'">Main Menu</button>
         </div>
     </div>
+
+    <script>
+        window.playBtnSound = function() {
+            var audio = document.getElementById('s-button');
+            if(audio) {
+                audio.currentTime = 0;
+                audio.play().catch(function(e){});
+            }
+        };
+    </script>
 
     <script type="module" src="js/game-main.js"></script>
 </body>
