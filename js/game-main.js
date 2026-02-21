@@ -1,146 +1,115 @@
-// [디버깅] 파일이 로드되면 즉시 로그 출력
-console.log("🚀 game-main.js 파일 로드 시작됨!");
-
 import { state, initGridSize, checkAdmin } from "./game-data.js";
 import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
 import * as Flow from "./game-flow.js";
-import "./game-items.js"; 
-import { AudioMgr } from "./game-audio.js"; 
+import * as Logic from "./game-logic.js";
+import { AudioMgr } from "./game-audio.js";
 
-// 초기화
-window.initGame = (diff) => {
-    state.diff = diff || 'NORMAL';
-    state.isSaved = false; 
-    initGridSize(state.diff);
-    requestAnimationFrame(() => {
-        UI.renderGrid();
-        Flow.checkHandAndRefill();
-        UI.updateUI();
-    });
+// 전역 객체 등록
+window.gameLogic = {
+    ...Flow,
+    ...Logic,
+    ...Core,
+    useRefresh: () => {
+        if(state.items.refresh > 0) {
+            state.items.refresh--;
+            Logic.buyItem('refresh', 0); // 개수 저장용 트릭 (가격0 재구매=저장)
+            Flow.checkHandAndRefill();
+            UI.updateUI();
+        } else alert("No Refresh item!");
+    },
+    useHammer: () => {
+        if(state.items.hammer > 0) {
+            state.items.hammer--;
+            Logic.buyItem('hammer', 0);
+            state.isHammerMode = true;
+            document.getElementById('grid-container').classList.add('hammer-mode');
+            alert("Click a block to remove!");
+            UI.updateUI();
+        } else alert("No Hammer item!");
+    },
+    useUpgrade: () => {
+        if(state.items.upgrade > 0) {
+            state.items.upgrade--;
+            Logic.buyItem('upgrade', 0);
+            // 전체 블록 승급 로직
+            state.grid.forEach((char, i) => {
+                if(char) {
+                    let next = state.ALPHABET[state.ALPHABET.indexOf(char)+1] || char;
+                    state.grid[i] = next;
+                }
+            });
+            UI.renderGrid(); UI.updateUI();
+        } else alert("No Upgrade item!");
+    },
+    tryReviveWithAd: () => {}
 };
-
-function updateAdminUI() {
-    const isAdmin = (localStorage.getItem('alpha_admin') === 'true') || state.isAdmin;
-    if (isAdmin) {
-        const adContainer = document.getElementById('ad-container');
-        if (adContainer) adContainer.style.display = 'none';
-        const reviveBtn = document.getElementById('btn-revive-ad');
-        if (reviveBtn) {
-            reviveBtn.textContent = "👑 Free Revive (Admin)";
-            reviveBtn.style.background = "#9b59b6"; 
-        }
-    }
-}
 
 window.onload = () => {
-    console.log("✅ window.onload 실행됨 (게임 준비 완료)");
-    
-    AudioMgr.init();
-    state.stars = parseInt(localStorage.getItem('alpha_stars')) || 0;
-    if(localStorage.getItem('alpha_admin') === 'true') {
-        state.isAdmin = true;
-    }
-    updateAdminUI(); 
-    UI.updateUI();
+    try {
+        console.log("🚀 Game Init");
 
-    // 팝업 감시
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.target.id === 'popup-over' && mutation.target.style.display !== 'none') {
-                state.isSaved = false;
-                UI.updateGameOverUI(); 
+        // [소리] 전역 버튼 사운드 (button.mp3)
+        document.addEventListener('click', (e) => {
+            if(e.target.closest('button, .btn, .hand-slot')) {
+                AudioMgr.play('button'); // assets/button.mp3 재생
             }
         });
-    });
-    const popup = document.getElementById('popup-over');
-    if(popup) observer.observe(popup, { attributes: true, attributeFilter: ['style'] });
-};
 
-// ============================================================
-// [핵심] 버튼 클릭 강제 인식 시스템 (전역 이벤트 리스너)
-// ============================================================
-// 문서 전체의 클릭을 감시하다가 저장 버튼이 눌리면 낚아챕니다.
-document.addEventListener('click', async (e) => {
-    
-    // 클릭된 요소 확인 (버튼이나 그 내부 요소인지)
-    const target = e.target.closest('button');
-    if (!target) return; // 버튼 아니면 무시
-
-    console.log("🖱️ 클릭 감지됨:", target.id); // 어떤 버튼을 눌렀는지 로그 출력
-
-    // 1. [신규 유저] 저장 버튼
-    if (target.id === 'btn-check-save') {
-        console.log("✨ 신규 저장 로직 시작");
+        // 1. 기본 데이터 로드
+        const savedStars = localStorage.getItem('alpha_stars');
+        if(savedStars) state.stars = parseInt(savedStars);
         
-        if(window.playBtnSound) window.playBtnSound();
+        const savedItems = localStorage.getItem('alpha_items');
+        if(savedItems) state.items = JSON.parse(savedItems);
+        else state.items = { refresh:0, hammer:0, upgrade:0 };
 
-        const nameInput = document.getElementById('username-input');
-        const errBox = document.getElementById('save-error');
-        const name = nameInput ? nameInput.value.trim() : '';
+        const savedBest = localStorage.getItem('alpha_best');
+        if(savedBest) state.best = savedBest;
+
+        // 2. 파라미터 확인
+        const params = new URLSearchParams(window.location.search);
+        const diff = params.get('diff') || 'NORMAL';
+        state.diff = diff;
         
-        if(errBox) errBox.style.display = 'none';
-
-        if(!name) {
-            alert("Please enter a name!");
-            return;
-        }
-
-        // 버튼 비활성화
-        target.disabled = true;
-        target.textContent = "Checking...";
-
-        if (checkAdmin(name)) {
-            updateAdminUI();
-            UI.updateUI(); 
-        }
-
-        // DB 저장 호출
-        console.log("📡 DB로 데이터 전송 시작...");
-        const res = await Core.saveScoreToDB(name, true);
-        console.log("📡 DB 응답:", res);
+        // 3. [이어하기 기능] 저장된 게임 상태 확인
+        const savedGame = localStorage.getItem('alpha_gamestate');
         
-        target.disabled = false;
-        target.textContent = "Save Record";
+        // 난이도별 그리드 초기화
+        initGridSize(diff); 
 
-        if(res.success) {
-            state.isSaved = true;
-            localStorage.setItem('alpha_username', name); 
-            localStorage.setItem('alpha_best_char', state.best);
-            UI.updateGameOverUI(); 
-            alert("✅ 저장 성공! (Saved)"); 
-        } else {
-            if(errBox) {
-                errBox.textContent = res.msg; 
-                errBox.style.display = 'block';
+        if (savedGame) {
+            try {
+                const loaded = JSON.parse(savedGame);
+                // 난이도가 같을 때만 이어하기
+                if(loaded.diff === diff) {
+                    state.grid = loaded.grid;
+                    state.hand = loaded.hand;
+                    state.score = loaded.score;
+                    state.best = loaded.best;
+                    console.log("Resume Game");
+                } else {
+                    // 난이도 다르면 새 게임
+                    Flow.checkHandAndRefill(); 
+                }
+            } catch(e) {
+                console.error("Load Failed", e);
+                Flow.checkHandAndRefill();
             }
-            alert("❌ 저장 실패: " + res.msg);
-        }
-    }
-
-    // 2. [기존 유저] 저장 버튼
-    if (target.id === 'btn-just-save') {
-        console.log("✨ 기존 유저 저장 로직 시작");
-        
-        if(window.playBtnSound) window.playBtnSound();
-        
-        const savedName = localStorage.getItem('alpha_username');
-        
-        target.disabled = true;
-        target.textContent = "Saving...";
-
-        const res = await Core.saveScoreToDB(savedName, false);
-
-        target.disabled = false;
-        target.textContent = "Update Best Score";
-        
-        if(res.success) {
-            state.isSaved = true;
-            localStorage.setItem('alpha_best_char', state.best); 
-            UI.updateGameOverUI(); 
-            alert("✅ 업데이트 성공! (Updated)");
         } else {
-            alert("❌ 저장 실패: " + res.msg);
+            Flow.checkHandAndRefill(); // 새 게임
         }
+
+        const savedName = localStorage.getItem('alpha_username');
+        if(savedName) checkAdmin(savedName);
+
+        UI.updateUI(); // 화면 그리기
+
+    } catch (e) {
+        console.error("Critical Init Error:", e);
+        // 에러 나도 빈 화면 안 뜨게 강제 실행
+        initGridSize('NORMAL');
+        UI.renderGrid();
+        Flow.checkHandAndRefill();
     }
-});
+};
