@@ -2,23 +2,67 @@ import { ALPHABET, state, SHAPES_1, SHAPES_2, SHAPES_3 } from "./game-data.js";
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
-// [수정됨] 현재 게임 진행도(currentMax) 기준 블록 생성 (A 등장 보장)
+// [난이도별 바닥 글자 상승 속도 조절]
 export function getMinIdx() {
     const currentIdx = ALPHABET.indexOf(state.currentMax);
-    if (currentIdx < 5) return 0; // 초반엔 무조건 A (인덱스 0)
     
-    // 게임이 진행될수록 낮은 등급 블록 등장 확률을 줄임
-    let calcMin = Math.floor((currentIdx - 3) / 2);
-    const maxAllowedMin = Math.floor((ALPHABET.indexOf('T') - 3) / 2);
-    return Math.min(calcMin, maxAllowedMin);
+    switch(state.diff) {
+        case 'EASY':
+            // Easy: 최고 기록보다 4단계 아래부터 나옴 (성장 빠름)
+            return Math.max(0, currentIdx - 4);
+            
+        case 'NORMAL':
+            // Normal: 적당한 속도
+            return Math.max(0, Math.floor((currentIdx - 3) / 1.5));
+            
+        case 'HARD':
+            // Hard: 맵이 좁으므로 바닥 글자라도 좀 따라와줘야 함
+            return Math.max(0, Math.floor((currentIdx - 4) / 2));
+            
+        case 'HELL':
+            // Hell: 바닥 글자가 아주 천천히 오름 (노가다 & 공간 압박)
+            return Math.max(0, Math.floor(currentIdx / 3));
+            
+        default:
+            return 0;
+    }
 }
 
+// [핵심: 요청하신 블록 출현 확률 적용]
 export function createRandomBlock() {
     let pool;
     const r = Math.random();
-    if (state.diff === 'EASY') { if (r < 0.2) pool = SHAPES_1; else if (r < 0.5) pool = SHAPES_2; else pool = SHAPES_3; } 
-    else if (state.diff === 'HELL') { if (r < 0.1) pool = SHAPES_2; else pool = SHAPES_3; } 
-    else { if (r < 0.1) pool = SHAPES_1; else if (r < 0.4) pool = SHAPES_2; else pool = SHAPES_3; }
+    
+    if (state.diff === 'EASY') {
+        // EASY: 1블록 20%, 2블록 55%, 3블록 25%
+        if (r < 0.20) pool = SHAPES_1; 
+        else if (r < 0.75) pool = SHAPES_2; // 0.20 + 0.55 = 0.75
+        else pool = SHAPES_3;
+    } 
+    else if (state.diff === 'NORMAL') {
+        // NORMAL: 1블록 15%, 2블록 60%, 3블록 25%
+        if (r < 0.15) pool = SHAPES_1; 
+        else if (r < 0.75) pool = SHAPES_2; // 0.15 + 0.60 = 0.75
+        else pool = SHAPES_3;
+    }
+    else if (state.diff === 'HARD') {
+        // HARD: 1블록 20%, 2블록 55%, 3블록 25% (Easy와 같지만 7x7 맵이라 어려움)
+        if (r < 0.20) pool = SHAPES_1; 
+        else if (r < 0.75) pool = SHAPES_2; 
+        else pool = SHAPES_3;
+    }
+    else if (state.diff === 'HELL') {
+        // HELL: 1블록 15%, 2블록 40%, 3블록 45%
+        if (r < 0.15) pool = SHAPES_1;
+        else if (r < 0.55) pool = SHAPES_2; // 0.15 + 0.40 = 0.55
+        else pool = SHAPES_3;
+    } 
+    else {
+        // 기본값 (Normal과 동일)
+        if (r < 0.15) pool = SHAPES_1; 
+        else if (r < 0.75) pool = SHAPES_2; 
+        else pool = SHAPES_3;
+    }
     
     const shape = pool[Math.floor(Math.random() * pool.length)];
     const minIdx = getMinIdx();
@@ -27,10 +71,10 @@ export function createRandomBlock() {
     for(let i=0; i<shape.map.length; i++) {
         let char;
         do { 
-            // 약간의 랜덤성을 더해 블록 등급 결정
+            // 블록 등급 결정 (약간의 랜덤성)
             const offset = (Math.random() > 0.6 ? 1 : 0) + (Math.random() > 0.85 ? 1 : 0);
             char = ALPHABET[minIdx + offset] || 'A';
-        } while (items.length > 0 && char === items[items.length - 1]); // 연속된 같은 글자 방지
+        } while (items.length > 0 && char === items[items.length - 1]);
         items.push(char);
     }
     return { shape, items };
@@ -70,13 +114,11 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
-// [DB 저장] 모드별(Easy, Hell 등) 별도 저장 보장
 export async function saveScoreToDB(username, isNewUser = false) {
     if (!db) return { success: false, msg: "DB Disconnected" };
     
     const cleanName = username.trim();
     const safeDiff = state.diff || 'NORMAL'; 
-    // 문서 ID에 난이도를 포함시켜 덮어쓰기 방지
     const docId = `${cleanName}_${safeDiff}`;
     const currentScore = Number(state.score) || 0;
 
@@ -88,7 +130,6 @@ export async function saveScoreToDB(username, isNewUser = false) {
         
         if (!isNewUser && docSnap.exists()) {
             const existingData = docSnap.data();
-            // 기존 점수가 더 높으면 저장하지 않음
             if ((existingData.score || 0) >= currentScore) return { success: true, msg: "Score preserved." };
         }
         
