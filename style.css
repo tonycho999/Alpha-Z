@@ -36,9 +36,34 @@ body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--te
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
 /* Blocks */
-.b-A { background: #e74c3c; } .b-B { background: #3498db; } .b-C { background: #2ecc71; color: #004d40; } .b-D { background: #f39c12; } .b-E { background: #9b59b6; } .b-F { background: #1abc9c; } .b-G { background: #f1c40f; color: #3e2723; } .b-H { background: #e91e63; } .b-I { background: #3f51b5; } .b-J { background: #009688; } .b-K { background: #673ab7; } .b-L { background: #ff5722; } .b-M { background: #cddc39; color: #33691e; } .b-N { background: #607d8b; }
-.b-O, .b-P, .b-Q, .b-R, .b-S, .b-T, .b-U, .b-V, .b-W, .b-X, .b-Y { background: #546e7a; }
-.b-Z { background: linear-gradient(135deg, #FFD700, #FF8F00); box-shadow: 0 0 15px #FFD700; animation: glow 1s infinite alternate; }
+/* --- Block Colors (A-Z) --- */
+.b-A { background: #e74c3c; box-shadow: 0 4px 0 #c0392b; }
+.b-B { background: #e67e22; box-shadow: 0 4px 0 #d35400; }
+.b-C { background: #f1c40f; box-shadow: 0 4px 0 #f39c12; }
+.b-D { background: #2ecc71; box-shadow: 0 4px 0 #27ae60; }
+.b-E { background: #1abc9c; box-shadow: 0 4px 0 #16a085; }
+.b-F { background: #3498db; box-shadow: 0 4px 0 #2980b9; }
+.b-G { background: #9b59b6; box-shadow: 0 4px 0 #8e44ad; }
+.b-H { background: #34495e; box-shadow: 0 4px 0 #2c3e50; }
+.b-I { background: #ff7979; box-shadow: 0 4px 0 #eb4d4b; }
+.b-J { background: #badc58; box-shadow: 0 4px 0 #6ab04c; }
+.b-K { background: #7ed6df; box-shadow: 0 4px 0 #22a6b3; }
+.b-L { background: #e056fd; box-shadow: 0 4px 0 #be2edd; }
+.b-M { background: #686de0; box-shadow: 0 4px 0 #4834d4; }
+.b-N { background: #30336b; box-shadow: 0 4px 0 #130f40; }
+.b-O { background: #ffbe76; box-shadow: 0 4px 0 #f0932b; }
+.b-P { background: #ff6b81; box-shadow: 0 4px 0 #ee5253; }
+.b-Q { background: #535c68; box-shadow: 0 4px 0 #2f3542; }
+.b-R { background: #F97F51; box-shadow: 0 4px 0 #D35400; }
+.b-S { background: #1B9CFC; box-shadow: 0 4px 0 #0984e3; }
+.b-T { background: #58B19F; box-shadow: 0 4px 0 #2C3A47; }
+.b-U { background: #2C3A47; box-shadow: 0 4px 0 #182C61; }
+.b-V { background: #B33771; box-shadow: 0 4px 0 #6D214F; }
+.b-W { background: #82589F; box-shadow: 0 4px 0 #3B3B98; }
+.b-X { background: #FD7272; box-shadow: 0 4px 0 #B03060; }
+.b-Y { background: #9AECDB; box-shadow: 0 4px 0 #55E6C1; color: #333; }
+.b-Z { background: #000000; box-shadow: 0 4px 0 #333333; border: 2px solid gold; color: gold; }
+
 @keyframes glow { from { box-shadow: 0 0 10px #FFD700; } to { box-shadow: 0 0 20px #FFD700; } }
 
 /* Popups & Shop */
