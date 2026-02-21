@@ -31,7 +31,7 @@ export function renderHand() {
         const block = state.hand[i];
         if (block) {
             const miniGrid = document.createElement('div');
-            miniGrid.style.pointerEvents = 'none';
+            miniGrid.style.pointerEvents = 'none'; // 터치 통과 필수
             miniGrid.style.display = 'grid';
             miniGrid.style.gridTemplateColumns = `repeat(${block.shape.w}, 1fr)`;
             miniGrid.style.gridTemplateRows = `repeat(${block.shape.h}, 1fr)`;
@@ -51,24 +51,17 @@ export function renderHand() {
                 miniGrid.appendChild(cell);
             });
             slot.appendChild(miniGrid);
-            if(window.setupDragForSlot) window.setupDragForSlot(slot, i);
+            setupDragForSlot(slot, i);
         }
     }
 }
 
-// [UI 업데이트] 점수, 아이템 개수 갱신
+// [UI 업데이트] 점수 및 아이템 개수
 export function updateUI() {
-    const bestEl = document.getElementById('ui-best');
-    if(bestEl) bestEl.textContent = state.best;
-    
-    const starEl = document.getElementById('ui-stars');
-    if(starEl) starEl.textContent = state.stars;
-
-    const diffEl = document.getElementById('ui-diff');
-    if(diffEl) diffEl.textContent = state.diff;
-
-    const scoreEl = document.getElementById('ui-score');
-    if(scoreEl) scoreEl.textContent = state.score;
+    if(document.getElementById('ui-best')) document.getElementById('ui-best').textContent = state.best;
+    if(document.getElementById('ui-stars')) document.getElementById('ui-stars').textContent = state.stars;
+    if(document.getElementById('ui-diff')) document.getElementById('ui-diff').textContent = state.diff;
+    if(document.getElementById('ui-score')) document.getElementById('ui-score').textContent = state.score;
 
     if (state.items) {
         if(document.getElementById('cnt-refresh')) document.getElementById('cnt-refresh').textContent = state.items.refresh;
@@ -83,38 +76,40 @@ export function updateGameOverUI() {
 
 export function setupDrag(onDropCallback) {
     window._onDropCallback = onDropCallback;
-    window.setupDragForSlot = setupDragForSlot; // 전역 등록
 }
 
-// 드래그 로직 (기존 4번 제외 요청으로 수정 안 함 - 기존 사용하시던 코드 유지)
-// 만약 드래그가 안 된다면 이전에 드린 'game-ui.js'의 setupDragForSlot 함수를 다시 넣으세요.
+// [드래그 로직]
 function setupDragForSlot(slot, index) {
-    // (기존 코드 유지)
-    // ... setupDragForSlot implementation ...
-    // 단, 여기서 좌표 문제 해결을 원치 않으셨으므로 기본 로직만 유지합니다.
-    // 만약 이전의 '보정된' 코드를 원하시면 이전 답변의 game-ui.js를 쓰세요.
-    // 여기서는 '전체 복붙' 요청에 맞추기 위해 가장 안정적인 버전을 넣어둡니다.
     const ghost = document.getElementById('ghost');
-    // ... (중략 - 이전 답변의 setupDragForSlot 코드와 동일하게 넣으시면 됩니다)
-    // (지면 관계상 생략하지 않고, 안정적인 버전을 아래에 넣습니다)
     
-    const getCellSize = () => {
+    // 현재 실제 셀 크기 측정 (오차 방지)
+    const getRealCellSize = () => {
         const gridEl = document.getElementById('grid-container');
+        if (!gridEl) return 40;
         const cell = gridEl.querySelector('.cell');
-        return cell ? cell.offsetWidth : 45;
+        // 셀이 있으면 그 크기, 없으면 계산
+        if (cell) return cell.offsetWidth;
+        const gap = 3; 
+        return (gridEl.offsetWidth - (state.gridSize - 1) * gap) / state.gridSize;
     };
+
     const start = (e) => {
         if(state.isLocked) return;
         state.dragIndex = index;
-        const cellSize = getCellSize();
+        const cellSize = getRealCellSize();
         const block = state.hand[index];
         if(!block) return;
+
+        // 오프셋: 셀 크기의 1.8배만큼 위로 (손가락에 안 가리게)
+        const yOffset = cellSize * 1.8; 
+
         ghost.innerHTML = '';
         ghost.style.display = 'grid';
         ghost.style.gridTemplateColumns = `repeat(${block.shape.w}, ${cellSize}px)`;
         ghost.style.gridTemplateRows = `repeat(${block.shape.h}, ${cellSize}px)`;
         ghost.style.gap = '3px';
         ghost.style.pointerEvents = 'none';
+        
         block.items.forEach((char, idx) => {
             const b = document.createElement('div');
             b.className = `cell b-${char}`; b.textContent = char;
@@ -123,57 +118,78 @@ function setupDragForSlot(slot, index) {
             b.style.gridRowStart = block.shape.map[idx][0] + 1;
             ghost.appendChild(b);
         });
+        
         slot.style.opacity = '0';
+        
         const getPos = (ev) => { return { x: (ev.changedTouches?ev.changedTouches[0]:ev).clientX, y: (ev.changedTouches?ev.changedTouches[0]:ev).clientY }; };
-        const updateGhost = (x,y) => { ghost.style.left = (x - ghost.offsetWidth/2)+'px'; ghost.style.top = (y - ghost.offsetHeight - 80)+'px'; };
+        const updateGhost = (x,y) => { 
+            ghost.style.left = (x - ghost.offsetWidth/2)+'px'; 
+            ghost.style.top = (y - ghost.offsetHeight - yOffset)+'px'; 
+        };
+        
         const init = getPos(e); ghost.style.display='grid'; updateGhost(init.x, init.y);
         
         const move = (me) => { 
             if(me.cancelable) me.preventDefault(); 
             const p = getPos(me); updateGhost(p.x, p.y); 
-            // 자석 로직 (기존 유지)
-            const grid = document.getElementById('grid-container');
-            const rect = grid.getBoundingClientRect();
-            const cs = (rect.width - (state.gridSize-1)*3)/state.gridSize;
-            const lx = (p.x - ghost.offsetWidth/2 + ghost.offsetWidth/2) - rect.left; // Ghost Center X
-            const ly = (p.y - ghost.offsetHeight - 80 + ghost.offsetHeight/2) - rect.top; // Ghost Center Y
             
-            let idx = -1;
-            if(lx>0 && lx<rect.width && ly>0 && ly<rect.height) {
-                const c = Math.floor(lx/cs); const r = Math.floor(ly/cs);
-                if(c>=0 && c<state.gridSize && r>=0 && r<state.gridSize) idx = r*state.gridSize+c;
-            }
+            // [중요] Ghost 중심점 기준 인덱스 찾기
+            const rect = ghost.getBoundingClientRect();
+            const cx = rect.left + rect.width/2;
+            const cy = rect.top + rect.height/2;
+            const idx = getMagnetIndex(cx, cy);
             
             document.querySelectorAll('.highlight-valid').forEach(el=>el.classList.remove('highlight-valid'));
             document.querySelectorAll('.will-merge').forEach(el=>el.classList.remove('will-merge'));
+            
+            // [하이라이트 유지] 기존 콜백 호출
             if(idx!==-1 && window._onDropCallback) window._onDropCallback(idx, true);
         };
+        
         const end = (ee) => {
             window.removeEventListener('mousemove', move); window.removeEventListener('touchmove', move);
             window.removeEventListener('mouseup', end); window.removeEventListener('touchend', end);
             
-            const p = getPos(ee);
-            const grid = document.getElementById('grid-container');
-            const rect = grid.getBoundingClientRect();
-            const cs = (rect.width - (state.gridSize-1)*3)/state.gridSize;
-            const lx = p.x - rect.left; // 마우스 위치 기준 (단순화)
-            const ly = p.y - 80 - rect.top; // 오프셋 반영
-            
-            let idx = -1;
-            if(lx>0 && lx<rect.width && ly>0 && ly<rect.height) {
-                const c = Math.floor(lx/cs); const r = Math.floor(ly/cs);
-                if(c>=0 && c<state.gridSize && r>=0 && r<state.gridSize) idx = r*state.gridSize+c;
-            }
+            const rect = ghost.getBoundingClientRect();
+            const cx = rect.left + rect.width/2;
+            const cy = rect.top + rect.height/2;
+            const idx = getMagnetIndex(cx, cy);
 
             let success = false;
             if(idx!==-1 && window._onDropCallback) success = window._onDropCallback(idx, false);
+            
             ghost.style.display='none';
             if(!success) { slot.style.opacity='1'; state.dragIndex=-1; }
             document.querySelectorAll('.highlight-valid').forEach(el=>el.classList.remove('highlight-valid'));
             document.querySelectorAll('.will-merge').forEach(el=>el.classList.remove('will-merge'));
         };
+        
         window.addEventListener('mousemove', move); window.addEventListener('touchmove', move, {passive:false});
         window.addEventListener('mouseup', end); window.addEventListener('touchend', end);
     };
     slot.onmousedown = start; slot.ontouchstart = start;
+}
+
+// [자석 로직 수정] 보드 실제 크기 기반 계산 (오차 제거)
+function getMagnetIndex(x, y) {
+    const grid = document.getElementById('grid-container');
+    if (!grid) return -1;
+    const rect = grid.getBoundingClientRect();
+    const gap = 3;
+    const padding = 5; 
+    
+    // 현재 셀 크기 역산
+    const cellSize = (rect.width - (state.gridSize - 1) * gap - (padding * 2)) / state.gridSize;
+    
+    // 범위 체크
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return -1;
+    
+    const lx = x - rect.left - padding;
+    const ly = y - rect.top - padding;
+    
+    const c = Math.floor(lx / (cellSize + gap));
+    const r = Math.floor(ly / (cellSize + gap));
+    
+    if(c >= 0 && c < state.gridSize && r >= 0 && r < state.gridSize) return r * state.gridSize + c;
+    return -1;
 }
