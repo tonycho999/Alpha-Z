@@ -1,8 +1,8 @@
 import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
-import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, limit, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
-// ... (getMinIdx, createRandomBlock 등 기존 로직 유지) ...
+// [1] 최소 생성 알파벳 인덱스 계산
 export function getMinIdx() {
     const bestIdx = ALPHABET.indexOf(state.best);
     if (bestIdx < 5) return 0; 
@@ -13,6 +13,8 @@ export function getMinIdx() {
     const maxAllowedMin = Math.floor((ALPHABET.indexOf(limitChar) - 3) / 2);
     return Math.min(calcMin, maxAllowedMin);
 }
+
+// [2] 랜덤 블록 생성
 export function createRandomBlock() {
     let pool;
     const r = Math.random();
@@ -36,6 +38,8 @@ export function createRandomBlock() {
     }
     return { shape, items };
 }
+
+// [3] 배치 가능 여부 확인
 export function canPlaceAnywhere(block) {
     const size = state.gridSize;
     for(let r=0; r<size; r++) {
@@ -50,6 +54,8 @@ export function canPlaceAnywhere(block) {
     }
     return false;
 }
+
+// [4] 연결된 블록 찾기 (BFS)
 export function getCluster(startIdx) {
     const char = state.grid[startIdx];
     if (!char) return [];
@@ -68,26 +74,22 @@ export function getCluster(startIdx) {
     }
     return cluster;
 }
-// ... (여기까지 기존 코드) ...
 
-// [핵심] DB 저장 함수 (안전장치 + 디버깅 로그)
+// [5] DB 저장 함수 (별 저장 로직 제거됨)
 export async function saveScoreToDB(username, isNewUser = false) {
-    console.log(`💾 저장 시도: ${username} (신규: ${isNewUser})`);
+    console.log(`💾 저장 시도: ${username}`);
 
     if (!db) {
         console.error("❌ DB 연결 실패");
         return { success: false, msg: "DB Connection Error" };
     }
     
-    // 1. 데이터 강제 보정 (HARD 모드 등 대비)
+    // 1. 데이터 준비
     const docId = username.trim();
     const safeDiff = state.diff || 'NORMAL'; 
     const safeBest = state.best || 'A';
-    const safeStars = Number(state.stars || 0);
+    // stars는 로컬 전용이므로 DB로 보낼 변수에서 제외합니다.
     const newScoreIndex = ALPHABET.indexOf(safeBest);
-
-    // 디버깅: 실제로 뭘 보내는지 콘솔에 찍음
-    console.log("📋 전송 데이터:", { id: docId, diff: safeDiff, best: safeBest, stars: safeStars });
 
     try {
         const docRef = doc(db, "leaderboard", docId);
@@ -98,25 +100,21 @@ export async function saveScoreToDB(username, isNewUser = false) {
             return { success: false, msg: "🚫 Username already taken." };
         }
         
-        // 기존 유저 점수 비교
+        // 기존 유저 점수 비교 (별 비교 로직 삭제됨)
         if (!isNewUser && docSnap.exists()) {
             const existingData = docSnap.data();
-            // 점수가 낮으면 저장 안 함
-            if (existingData.scoreIndex > newScoreIndex) {
-                 return { success: true, msg: "Score preserved (Higher score exists)." };
-            }
-            if (existingData.scoreIndex === newScoreIndex && existingData.stars >= safeStars) {
-                 return { success: true, msg: "Score preserved (Existing is better/equal)." };
+            // 기존 점수(알파벳)가 더 높거나 같으면 저장 안 함 (별 개수는 상관없음)
+            if (existingData.scoreIndex >= newScoreIndex) {
+                 return { success: true, msg: "Score preserved (Higher/Equal score exists)." };
             }
         }
         
-        // 저장
+        // 저장 (stars 필드 없음)
         await setDoc(docRef, {
             username: docId,
             bestChar: safeBest,
             difficulty: safeDiff, 
             scoreIndex: Number(newScoreIndex),
-            stars: Number(safeStars),
             timestamp: serverTimestamp()
         });
         
@@ -129,6 +127,7 @@ export async function saveScoreToDB(username, isNewUser = false) {
     }
 }
 
+// [6] 리더보드 가져오기 (전체 목록 + 별 정렬 삭제)
 export async function getLeaderboardData(targetDiff) {
     if (!db) return [];
     try {
@@ -136,9 +135,9 @@ export async function getLeaderboardData(targetDiff) {
         const q = query(
             leaderboardRef, 
             where("difficulty", "==", targetDiff), 
-            orderBy("scoreIndex", "desc"), 
-            orderBy("stars", "desc"), 
-            limit(50)
+            orderBy("scoreIndex", "desc")
+            // orderBy("stars") 삭제됨 (별 기준 정렬 안 함)
+            // limit(50) 삭제됨 -> 전체 목록 조회
         );
         const querySnapshot = await getDocs(q);
         const ranks = [];
