@@ -24,16 +24,14 @@
         </div>
 
         <div class="game-area">
-            <div class="next-zone">
-                <span style="font-size:10px; color:#888; margin-bottom:5px;">NEXT</span>
-                <div id="next-preview" class="shape-container"></div>
-            </div>
-            <div class="drag-zone">
-                <div id="source-block" class="shape-container"></div>
+            <div id="grid-container" class="grid-container"></div>
+
+            <div id="hand-container">
+                <div id="hand-0" class="hand-slot"></div>
+                <div id="hand-1" class="hand-slot"></div>
+                <div id="hand-2" class="hand-slot"></div>
             </div>
         </div>
-
-        <div id="grid-container" class="grid-container"></div>
 
         <div style="display:flex; width:100%; max-width:500px; gap:5px; margin-bottom:10px;">
             <button class="btn" style="flex:1; padding: 10px 0; font-size:0.85rem;" onclick="playBtnSound(); window.gameLogic.useRefresh()">
