@@ -36,25 +36,25 @@ export function createRandomBlock() {
     if (state.diff === 'EASY') {
         // EASY: 1블록 20%, 2블록 55%, 3블록 25%
         if (r < 0.20) pool = SHAPES_1; 
-        else if (r < 0.75) pool = SHAPES_2; // 0.20 + 0.55 = 0.75
+        else if (r < 0.70) pool = SHAPES_2; // 0.20 + 0.55 = 0.75
         else pool = SHAPES_3;
     } 
     else if (state.diff === 'NORMAL') {
-        // NORMAL: 1블록 15%, 2블록 60%, 3블록 25%
+        // NORMAL: 1블록 15%, 2블록 50%, 3블록 35%
         if (r < 0.15) pool = SHAPES_1; 
-        else if (r < 0.75) pool = SHAPES_2; // 0.15 + 0.60 = 0.75
+        else if (r < 0.65) pool = SHAPES_2; // 0.15 + 0.60 = 0.75
         else pool = SHAPES_3;
     }
     else if (state.diff === 'HARD') {
-        // HARD: 1블록 20%, 2블록 55%, 3블록 25% (Easy와 같지만 7x7 맵이라 어려움)
+        // HARD: 1블록 20%, 2블록 50%, 3블록 30% (Easy와 같지만 7x7 맵이라 어려움)
         if (r < 0.20) pool = SHAPES_1; 
-        else if (r < 0.75) pool = SHAPES_2; 
+        else if (r < 0.70) pool = SHAPES_2; 
         else pool = SHAPES_3;
     }
     else if (state.diff === 'HELL') {
         // HELL: 1블록 15%, 2블록 40%, 3블록 45%
-        if (r < 0.15) pool = SHAPES_1;
-        else if (r < 0.55) pool = SHAPES_2; // 0.15 + 0.40 = 0.55
+        if (r < 0.10) pool = SHAPES_1;
+        else if (r < 0.50) pool = SHAPES_2; // 0.10 + 0.40 = 0.50
         else pool = SHAPES_3;
     } 
     else {
