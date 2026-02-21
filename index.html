@@ -85,6 +85,13 @@
         let isMuted = localStorage.getItem('alpha_muted') === 'true';
         updateMuteIcon();
         
+        // Admin Check Logic
+        const isAdmin = localStorage.getItem('alpha_admin') === 'true';
+        if (isAdmin) {
+            const adContainer = document.getElementById('ad-container');
+            if (adContainer) adContainer.style.display = 'none';
+        }
+
         function toggleMute() {
             isMuted = !isMuted; 
             localStorage.setItem('alpha_muted', isMuted); 
@@ -100,6 +107,7 @@
             }
         }
         
+        // Button Sound Function
         window.playBtnSound = function() {
             if(isMuted) return;
             const audio = document.getElementById('s-button');
@@ -109,16 +117,15 @@
             }
         }
         
-        // [핵심 수정 부분] 클릭 시 game.html로 이동하며 쿼리 스트링으로 난이도 전달
+        // Start Game Redirect
         window.startGame = function(diff) {
             playBtnSound();
-            // 캐시 방지를 위해 타임스탬프(?t=...)를 함께 보낼 수 있습니다.
-            location.href = `game.html?difficulty=${diff}&t=${new Date().getTime()}`;
+            // Redirect to game.html with difficulty parameter
+            location.href = `game.html?diff=${diff}`;
         };
 
-        // --- Intro Popup Logic ---
+        // Intro Popup Logic
         document.addEventListener('DOMContentLoaded', () => {
-            // 별 표시 업데이트
             const savedStars = localStorage.getItem('alpha_stars') || 0;
             document.getElementById('idx-stars').textContent = savedStars;
 
