@@ -1,9 +1,9 @@
 :root {
-    --bg-color: #2c3e50; /* [수정] 배경색 (남색 계열) */
+    --bg-color: #2c3e50;
     --panel-bg: #1e1e1e;
     --gap: 3px; 
     --accent: #f1c40f; 
-    --text-color: #ecf0f1; /* 텍스트 색상 (밝은 회색) */
+    --text-color: #ecf0f1;
     --grid-size: 8;
 }
 
@@ -20,12 +20,7 @@ body {
 }
 
 body.main-bg { background-color: var(--bg-color); }
-
-/* 게임 모드 (모바일 상단 여백) */
-body.game-mode {
-    justify-content: flex-start;
-    padding-top: 20px;
-}
+body.game-mode { justify-content: flex-start; padding-top: 20px; }
 
 .screen { 
     display: flex; flex-direction: column; align-items: center; 
@@ -33,13 +28,11 @@ body.game-mode {
     width: 100%; min-height: 100vh; 
     padding: 10px; box-sizing: border-box;
 }
-body.game-mode .screen {
-    justify-content: flex-start;
-}
+body.game-mode .screen { justify-content: flex-start; }
 
 .admin-no-ad { display: none !important; }
 
-/* ================= Buttons ================= */
+/* Buttons */
 .btn {
     padding: 12px; margin: 4px; background: #34495e; color: white; border: none;
     border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center;
@@ -51,12 +44,12 @@ body.game-mode .screen {
 .btn-primary { background: var(--accent); color: #2c3e50; }
 .btn:disabled, .btn-disabled { background: #222 !important; color: #555 !important; box-shadow: none !important; cursor: not-allowed; transform: none !important; }
 
-/* ================= Header ================= */
+/* Header */
 .header { 
     width: 100%; max-width: 500px; 
     display: flex; justify-content: space-between; 
     padding: 10px 15px; 
-    background: #000; /* 헤더 검정 */
+    background: #000; 
     border-radius: 15px; 
     margin-bottom: 20px; 
     border: 1px solid #444;
@@ -65,13 +58,13 @@ body.game-mode .screen {
 .stat span { display: block; font-size: 11px; color: #aaa; text-align: center; margin-bottom: 2px; }
 .stat strong { display: block; font-size: 20px; color: var(--accent); text-align: center; }
 
-/* ================= Grid System (게임 보드) ================= */
+/* Grid System */
 .grid-container {
     width: 95vw; 
     max-width: 400px; 
     aspect-ratio: 1/1; 
-    background: #000; /* [수정] 보드판 완전 검정 */
-    border: 4px solid #34495e; /* 테두리로 구분감 */
+    background: #000; 
+    border: 4px solid #34495e; 
     border-radius: 16px; 
     padding: 5px; 
     box-sizing: border-box;
@@ -92,57 +85,38 @@ body.game-mode .screen {
 }
 .cell.empty { background: #111; box-shadow: none; }
 
-/* ================= Hand (Bottom Blocks) ================= */
+/* Hand */
 #hand-container {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 10px auto;
-    width: 100%;
-    max-width: 400px;
-    min-height: 110px; /* 높이 약간 확보 */
-    align-items: center;
+    display: flex; justify-content: center; gap: 10px; margin: 10px auto;
+    width: 100%; max-width: 400px; min-height: 110px; align-items: center;
 }
-
 .hand-slot {
-    width: 100px; /* 고정 크기 */
-    height: 100px; /* 고정 크기 */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.3); /* 반투명 검정 */
+    width: 100px; height: 100px;
+    display: flex; justify-content: center; align-items: center;
+    background: rgba(0, 0, 0, 0.3); 
     border-radius: 12px;
     border: 2px dashed rgba(255, 255, 255, 0.1);
     position: relative;
 }
+.mini-grid { pointer-events: none; }
 
-/* [중요] 슬롯 안의 블록 그림은 클릭 통과 (터치 씹힘 방지) */
-.mini-grid {
-    pointer-events: none; 
-}
-
-/* ================= Ghost Block (드래그) ================= */
+/* Ghost */
 #ghost { 
-    position: fixed; 
-    top: 0; left: 0;
+    position: fixed; top: 0; left: 0;
     pointer-events: none !important; 
-    z-index: 9999; 
-    display: none; 
-    gap: 3px; /* 그리드 갭과 동일하게 */
+    z-index: 9999; display: none; 
+    gap: 3px; 
     filter: drop-shadow(0px 10px 10px rgba(0,0,0,0.5));
-    opacity: 0.9;
-    transform: scale(1.1); 
+    opacity: 0.9; transform: scale(1.1); 
 }
 
-/* ================= Effects ================= */
+/* Effects */
 .highlight-valid { 
     background-color: rgba(255, 255, 255, 0.2) !important; 
     box-shadow: inset 0 0 0 2px #fff !important;
     z-index: 10 !important;
     border-radius: 6px; 
 }
-
-/* 합체 예측 (반짝임 효과) */
 .will-merge {
     transform: scale(1.1) !important;
     box-shadow: 0 0 15px gold !important;
@@ -156,36 +130,36 @@ body.game-mode .screen {
 .hammer-target { border: 2px solid #e74c3c !important; animation: pulse 1s infinite; }
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-/* ================= Block Colors ================= */
-.b-A { background: #e74c3c; } 
-.b-B { background: #3498db; } 
-.b-C { background: #2ecc71; color: #004d40; }
-.b-D { background: #f39c12; } 
-.b-E { background: #9b59b6; } 
-.b-F { background: #1abc9c; }
-.b-G { background: #f1c40f; color: #3e2723; } 
-.b-H { background: #e91e63; } 
-.b-I { background: #3f51b5; } 
-.b-J { background: #009688; } 
-.b-K { background: #673ab7; }
-.b-L { background: #ff5722; } 
-.b-M { background: #cddc39; color: #33691e; } 
-.b-N { background: #607d8b; }
+/* Block Colors */
+.b-A { background: #e74c3c; } .b-B { background: #3498db; } .b-C { background: #2ecc71; color: #004d40; }
+.b-D { background: #f39c12; } .b-E { background: #9b59b6; } .b-F { background: #1abc9c; }
+.b-G { background: #f1c40f; color: #3e2723; } .b-H { background: #e91e63; } .b-I { background: #3f51b5; } 
+.b-J { background: #009688; } .b-K { background: #673ab7; } .b-L { background: #ff5722; } 
+.b-M { background: #cddc39; color: #33691e; } .b-N { background: #607d8b; }
 .b-O, .b-P, .b-Q, .b-R, .b-S, .b-T, .b-U, .b-V, .b-W, .b-X, .b-Y { background: #546e7a; }
 .b-Z { background: linear-gradient(135deg, #FFD700, #FF8F00); box-shadow: 0 0 15px #FFD700; animation: glow 1s infinite alternate; }
-
 @keyframes glow { from { box-shadow: 0 0 10px #FFD700; } to { box-shadow: 0 0 20px #FFD700; } }
 
-/* ================= Popups ================= */
-.popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; }
-.popup-box { background: #222; border: 1px solid #444; padding: 25px; border-radius: 20px; text-align: center; width: 100%; max-width: 350px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+/* [수정] Popups (배경 투명도 0.85 -> 0.5로 변경) */
+.popup-overlay { 
+    position: fixed; inset: 0; 
+    background: rgba(0,0,0,0.5); /* 덜 어둡게 */
+    backdrop-filter: blur(5px); 
+    display: none; justify-content: center; align-items: center; 
+    z-index: 10000; padding: 20px; 
+}
+.popup-box { 
+    background: #222; border: 1px solid #444; padding: 25px; 
+    border-radius: 20px; text-align: center; 
+    width: 100%; max-width: 350px; max-height: 90vh; overflow-y: auto; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+}
 
-/* ================= Leaderboard ================= */
+/* Leaderboard */
 .leaderboard-container { width: 100%; max-width: 500px; padding: 10px; display: flex; flex-direction: column; gap: 12px; }
 .rank-item { display: flex; align-items: center; background: #1e1e1e; padding: 15px; border-radius: 15px; border: 1px solid #333; }
 .rank-1 { border: 1px solid gold; color: gold; }
 .rank-2 { border: 1px solid silver; color: silver; }
 .rank-3 { border: 1px solid #cd7f32; color: #cd7f32; }
 
-/* 유틸리티 */
 .hidden { display: none !important; }
