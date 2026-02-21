@@ -45,47 +45,36 @@ function checkGameOver() {
 }
 
 function showGameOverPopup() {
+    // [핵심 수정] 게임이 끝나면 저장된 상태와 점수를 삭제하여 다음 번에 0점으로 시작하게 함
+    localStorage.removeItem('alpha_gamestate');
+    localStorage.removeItem('alpha_score');
+
     const popup = document.getElementById('popup-over');
     if(popup) popup.style.display = 'flex';
     document.getElementById('over-best').textContent = state.best;
     
     const btnRevive = document.getElementById('btn-revive-ad');
     if(btnRevive) {
-        // [수정] 광고 시청 가능 여부 확인
         const adStatus = AdManager.checkAdStatus();
         
-        // 이미 부활했거나, 관리자이거나, 광고를 볼 수 없는 상태면 버튼 숨김/변경
         if(state.hasRevived) {
             btnRevive.style.display = 'none';
         } else if (state.isAdmin) {
-            btnRevive.style.display = 'none'; // 관리자는 부활 버튼 안 봄 (요청사항)
+            btnRevive.style.display = 'none'; 
         } else if (!adStatus.avail) {
-            // 쿨타임 중이면 버튼 비활성화 및 메시지 표시
             btnRevive.style.display = 'block';
             btnRevive.disabled = true;
             btnRevive.style.opacity = '0.5';
             btnRevive.textContent = `🚫 ${adStatus.msg}`;
         } else {
-            // 시청 가능
             btnRevive.style.display = 'block';
             btnRevive.disabled = false;
             btnRevive.style.opacity = '1';
             btnRevive.textContent = "📺 Revive (Get 1x1 Block)";
             btnRevive.onclick = () => {
                 AdManager.showRewardAd(() => {
-                    state.hasRevived = true;
-                    state.isReviveTurn = true;
-                    // 중앙 3x3 비우기
-                    const center = Math.floor(state.gridSize/2);
-                    for(let r=center-1; r<=center+1; r++){
-                        for(let c=center-1; c<=center+1; c++){
-                            const idx = r*state.gridSize+c;
-                            if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
-                        }
-                    }
-                    if(popup) popup.style.display = 'none';
-                    UI.renderGrid();
-                    checkHandAndRefill();
+                    // 부활 시 상태 복구 로직은 game-main.js의 tryReviveWithAd에서 처리
+                    window.gameLogic.tryReviveWithAd();
                 });
             };
         }
@@ -106,7 +95,7 @@ function showGameOverPopup() {
 
 export function nextTurn() { checkHandAndRefill(); }
 
-// 4. 드롭 시도 (하이라이트 유지)
+// 4. 드롭 시도
 export function handleDropAttempt(targetIdx, isPreview) {
     if(state.dragIndex === -1) return false;
     const block = state.hand[state.dragIndex];
@@ -138,7 +127,6 @@ export function handleDropAttempt(targetIdx, isPreview) {
             if(el) el.classList.add('highlight-valid');
         });
 
-        // 합체 예측
         block.items.forEach((char, idx) => {
             const myIdx = finalIndices[idx];
             const neighbors = [myIdx-1, myIdx+1, myIdx-size, myIdx+size];
