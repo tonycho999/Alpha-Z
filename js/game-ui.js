@@ -31,7 +31,7 @@ export function renderHand() {
         const block = state.hand[i];
         if (block) {
             const miniGrid = document.createElement('div');
-            miniGrid.style.pointerEvents = 'none'; // 터치 통과
+            miniGrid.style.pointerEvents = 'none';
             miniGrid.style.display = 'grid';
             miniGrid.style.gridTemplateColumns = `repeat(${block.shape.w}, 1fr)`;
             miniGrid.style.gridTemplateRows = `repeat(${block.shape.h}, 1fr)`;
@@ -77,10 +77,11 @@ export function setupDrag(onDropCallback) {
     window._onDropCallback = onDropCallback;
 }
 
+// [드래그 로직]
 function setupDragForSlot(slot, index) {
     const ghost = document.getElementById('ghost');
     
-    // [자석 오차 해결] 실제 셀 크기 측정
+    // 현재 셀 크기 측정
     const getRealCellSize = () => {
         const gridEl = document.getElementById('grid-container');
         if(!gridEl) return 40;
@@ -97,6 +98,7 @@ function setupDragForSlot(slot, index) {
         const block = state.hand[index];
         if(!block) return;
 
+        // 오프셋: 셀 크기의 1.8배만큼 위로 띄움 (손가락에 안 가리게)
         const yOffset = cellSize * 1.8; 
 
         ghost.innerHTML = '';
@@ -117,7 +119,10 @@ function setupDragForSlot(slot, index) {
         
         slot.style.opacity = '0';
         
-        const getPos = (ev) => { return { x: (ev.changedTouches?ev.changedTouches[0]:ev).clientX, y: (ev.changedTouches?ev.changedTouches[0]:ev).clientY }; };
+        const getPos = (ev) => { 
+            const t = ev.changedTouches ? ev.changedTouches[0] : (ev.touches ? ev.touches[0] : ev);
+            return { x: t.clientX, y: t.clientY }; 
+        };
         
         const updateGhost = (x,y) => { 
             ghost.style.left = (x - ghost.offsetWidth/2)+'px'; 
@@ -130,9 +135,12 @@ function setupDragForSlot(slot, index) {
             if(me.cancelable) me.preventDefault(); 
             const p = getPos(me); updateGhost(p.x, p.y); 
             
+            // [중요 수정] 판정 기준을 '블록 전체 중앙'에서 '첫 번째 칸(Top-Left)의 중앙'으로 변경
+            // 이렇게 해야 3칸짜리 긴 블록도 시작점이 정확하게 0,0으로 잡힘
             const rect = ghost.getBoundingClientRect();
-            const cx = rect.left + rect.width/2;
-            const cy = rect.top + rect.height/2;
+            const cx = rect.left + (cellSize / 2); // 좌측 + 반칸
+            const cy = rect.top + (cellSize / 2);  // 상단 + 반칸
+            
             const idx = getMagnetIndex(cx, cy);
             
             document.querySelectorAll('.highlight-valid').forEach(el=>el.classList.remove('highlight-valid'));
@@ -145,9 +153,10 @@ function setupDragForSlot(slot, index) {
             window.removeEventListener('mousemove', move); window.removeEventListener('touchmove', move);
             window.removeEventListener('mouseup', end); window.removeEventListener('touchend', end);
             
+            // 드롭 시에도 동일한 기준점 사용
             const rect = ghost.getBoundingClientRect();
-            const cx = rect.left + rect.width/2;
-            const cy = rect.top + rect.height/2;
+            const cx = rect.left + (cellSize / 2);
+            const cy = rect.top + (cellSize / 2);
             const idx = getMagnetIndex(cx, cy);
 
             let success = false;
@@ -165,15 +174,18 @@ function setupDragForSlot(slot, index) {
     slot.onmousedown = start; slot.ontouchstart = start;
 }
 
-// [자석 계산식] (오차 제거)
+// [자석 계산식]
 function getMagnetIndex(x, y) {
     const grid = document.getElementById('grid-container');
     if (!grid) return -1;
     const rect = grid.getBoundingClientRect();
     const gap = 3;
     const padding = 5; 
+    
+    // 현재 셀 크기 역산
     const cellSize = (rect.width - (state.gridSize - 1) * gap - (padding * 2)) / state.gridSize;
     
+    // 범위 체크
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return -1;
     
     const lx = x - rect.left - padding;
