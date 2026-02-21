@@ -175,3 +175,24 @@ body.game-mode .screen {
 
 /* 유틸리티 */
 .hidden { display: none !important; }
+
+/* style.css 맨 아래에 추가 */
+
+/* [추가] 합체 예측 효과 (반짝임) */
+.will-merge {
+    box-shadow: 0 0 15px 5px #fff, inset 0 0 10px #fff !important;
+    transform: scale(1.1) !important;
+    z-index: 10;
+    transition: all 0.1s;
+    border: 2px solid gold !important;
+}
+
+/* [추가] 점수판 스타일 (헤더 부분 보완) */
+.score-box {
+    background: rgba(0,0,0,0.5);
+    padding: 5px 10px;
+    border-radius: 10px;
+    border: 1px solid #444;
+    min-width: 60px;
+    text-align: center;
+}
