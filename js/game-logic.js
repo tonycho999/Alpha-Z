@@ -3,41 +3,45 @@ import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
 import { AudioMgr } from "./game-audio.js";
 
-// [이어하기 저장]
+// [저장] currentMax 포함하여 상태 완벽 저장
 export function saveGameState() {
     const saveData = {
         grid: state.grid,
         hand: state.hand,
         score: state.score,
         best: state.best,
+        currentMax: state.currentMax, // 중요: A블록 보장을 위해 필수
         items: state.items,
         stars: state.stars,
         diff: state.diff
     };
     localStorage.setItem('alpha_gamestate', JSON.stringify(saveData));
     
-    // 개별 데이터도 확실하게 저장
+    // 개별 값들도 백업 저장
     localStorage.setItem('alpha_score', state.score);
     localStorage.setItem('alpha_best', state.best);
     localStorage.setItem('alpha_stars', state.stars);
     localStorage.setItem('alpha_items', JSON.stringify(state.items));
 }
 
-// [블록 배치]
 export async function placeBlock(indices, block, onComplete) {
     if(state.isLocked) return;
     state.isLocked = true;
     try {
         AudioMgr.play('drop');
         indices.forEach((pos, i) => state.grid[pos] = block.items[i]);
+        
+        // 사용한 핸드 비우기
         state.hand[state.dragIndex] = null;
         state.dragIndex = -1; 
         
-        UI.renderGrid(); UI.renderHand(); 
+        UI.renderGrid(); 
+        UI.renderHand(); 
+        
         await wait(200);
         await handleMerge(indices); 
         
-        saveGameState(); // 매 턴 저장
+        saveGameState(); // 턴 종료 저장
 
     } catch (e) { console.error(e); } 
     finally { state.isLocked = false; if(onComplete) onComplete(); }
@@ -56,7 +60,6 @@ async function handleMerge(indices) {
         if (cluster.length >= 2) { 
             merged = true;
             const char = state.grid[idx];
-            // 보너스 점수 계산
             const bonus = cluster.length - 1; 
             const nextIdxVal = ALPHABET.indexOf(char) + bonus;
             const nextChar = ALPHABET[nextIdxVal];
@@ -64,7 +67,7 @@ async function handleMerge(indices) {
             
             let targetIdx = idx;
             if (nextChar) {
-                // 타겟 위치 선정 로직
+                // 합쳐질 중심점 찾기
                 for (let cIdx of cluster) {
                     const neighbors = [cIdx-1, cIdx+1, cIdx-state.gridSize, cIdx+state.gridSize];
                     for (let n of neighbors) {
@@ -73,7 +76,21 @@ async function handleMerge(indices) {
                          }
                     }
                 }
+                
+                // [중요] 현재 판 최고 기록 갱신 (블록 생성 레벨 조절용)
+                if (ALPHABET.indexOf(nextChar) > ALPHABET.indexOf(state.currentMax)) {
+                    state.currentMax = nextChar;
+                }
+                // 역대 최고 기록 갱신
+                if (ALPHABET.indexOf(nextChar) > ALPHABET.indexOf(state.best)) {
+                    state.best = nextChar;
+                    localStorage.setItem('alpha_best', state.best);
+                }
+            } else {
+                scoreGained += 1000; // Z 이후 보너스
             }
+            
+            // 병합 애니메이션
             const centerEl = document.getElementById(`cell-${targetIdx}`);
             for(let t of cluster) {
                 if(t === targetIdx) continue;
@@ -85,23 +102,24 @@ async function handleMerge(indices) {
                 }
             }
             await wait(300);
-            cluster.forEach(i => { state.grid[i] = null; });
             
+            // 데이터 업데이트
+            cluster.forEach(i => { state.grid[i] = null; });
             if (nextChar) {
                 state.grid[targetIdx] = nextChar;
                 nextGroup.set(targetIdx, nextChar);
-                if (ALPHABET.indexOf(nextChar) > ALPHABET.indexOf(state.best)) {
-                    state.best = nextChar;
-                    localStorage.setItem('alpha_best', state.best);
-                }
-            } else { scoreGained += 1000; }
+            }
+            
             AudioMgr.play('merge'); 
         }
     }
+    
     if (scoreGained > 0) {
         addScore(scoreGained);
         UI.renderGrid(); UI.updateUI();
     }
+    
+    // 연쇄 반응 체크
     if (merged && nextGroup.size > 0) {
         await wait(200);
         await handleMerge(Array.from(nextGroup.keys()));
@@ -122,52 +140,45 @@ async function checkAutoUpgrade() {
         }
     }
     if(upgraded) { 
-        UI.renderGrid(); await wait(300); await handleMerge(upgradeIndices); 
+        UI.renderGrid(); 
+        await wait(300); 
+        await handleMerge(upgradeIndices); 
     }
 }
 
-// [점수 및 스타 획득 로직 수정]
+// [점수 & 스타 획득 로직 수정 - 10000점 시작, 5000점 추가]
 function addScore(amount) {
     state.score += amount;
 
-    // [중요] 이미 획득한 스타 단계를 로드 (새로고침 시 중복 획득 방지)
+    // 이미 받은 스타 개수 로드
     if (typeof state.earnedStars === 'undefined') {
         state.earnedStars = parseInt(localStorage.getItem('alpha_earned_stars')) || 0;
     }
 
-    // 1. 현재 점수로 받아야 할 총 스타 개수 계산
     let calculatedStars = 0;
-    
     if (state.score >= 10000) {
-        // 기본 10,000점 도달 시 1개
+        // 기본 1개 (10000점)
         calculatedStars = 1;
-        
-        // 10,000점 이후 5,000점마다 추가 1개
+        // 추가 (매 5000점 마다)
         const extraScore = state.score - 10000;
         calculatedStars += Math.floor(extraScore / 5000);
     }
 
-    // 2. 받아야 할 스타가 이미 받은 스타보다 많으면 차이만큼 지급
+    // 받아야 할 스타가 더 많으면 차이만큼 지급
     if (calculatedStars > state.earnedStars) {
         const starsToAdd = calculatedStars - state.earnedStars;
-        
         if (starsToAdd > 0) {
             state.stars += starsToAdd;
-            state.earnedStars = calculatedStars; // 기록 갱신
+            state.earnedStars = calculatedStars;
             
-            // 저장
             localStorage.setItem('alpha_stars', state.stars);
             localStorage.setItem('alpha_earned_stars', state.earnedStars);
-            
-            // 효과음이나 알림을 원하시면 여기에 추가 가능
-            // alert(`⭐ Star Get! (+${starsToAdd})`); 
         }
     }
-
     UI.updateUI();
 }
 
-// [아이템 사용 및 구매 로직 통합]
+// [아이템 구매]
 export function buyItem(itemType, price) {
     if (state.stars >= price) {
         state.stars -= price;
