@@ -65,56 +65,55 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
-// [DB 저장] Score 저장 로직 수정 (Insufficient Error 해결용)
+// [DB 저장] Score 저장 로직
 export async function saveScoreToDB(username, isNewUser = false) {
-    if (!db) return { success: false, msg: "DB Connection Error" };
+    if (!db) return { success: false, msg: "DB Disconnected" };
     
     const docId = username.trim();
     const safeDiff = state.diff || 'NORMAL'; 
     const safeBest = state.best || 'A';
-    const currentScore = state.score || 0;
+    const currentScore = Number(state.score) || 0; // 숫자 변환
 
     try {
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
         
-        if (isNewUser && docSnap.exists()) return { success: false, msg: "Username taken." };
+        if (isNewUser && docSnap.exists()) return { success: false, msg: "Name taken." };
         if (!isNewUser && docSnap.exists()) {
             const existingData = docSnap.data();
-            // 점수가 기존보다 낮으면 저장 안함
-            if ((existingData.score || 0) >= currentScore) return { success: true, msg: "Score preserved." };
+            if ((existingData.score || 0) >= currentScore) return { success: true, msg: "Previous score higher." };
         }
         
-        // [중요] stars 제외, score 추가
+        // score 저장 (stars 제외)
         await setDoc(docRef, {
             username: docId,
             bestChar: safeBest,
             difficulty: safeDiff, 
-            score: Number(currentScore), 
+            score: currentScore, 
             timestamp: serverTimestamp()
         });
         return { success: true, msg: "Saved!" };
     } catch (e) { 
         console.error("DB Error:", e);
-        return { success: false, msg: e.message }; 
+        return { success: false, msg: "Error: " + e.message }; 
     }
 }
 
-// [리더보드] 점수 기준 정렬
+// [리더보드] Score 기준 정렬
 export async function getLeaderboardData(targetDiff) {
     if (!db) return [];
     try {
         const q = query(
             collection(db, "leaderboard"), 
             where("difficulty", "==", targetDiff), 
-            orderBy("score", "desc") // score 기준
+            orderBy("score", "desc") // 인덱스 생성 필요
         );
         const snapshot = await getDocs(q);
         const ranks = [];
         snapshot.forEach((doc) => ranks.push(doc.data()));
         return ranks;
     } catch (e) { 
-        console.error("Leaderboard Error:", e);
+        console.error("LB Error:", e);
         return []; 
     }
 }
