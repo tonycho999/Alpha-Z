@@ -28,8 +28,6 @@ window.gameLogic = {
     },
     saveScore: async () => {
         const nameInput = document.getElementById('username-input');
-        
-        // [버그 수정] 입력창 값과 로컬스토리지 값 중 '있는 것'을 가져오도록 순서 수정
         let name = '';
         if (nameInput && nameInput.value.trim()) {
             name = nameInput.value.trim();
@@ -39,14 +37,12 @@ window.gameLogic = {
 
         if(!name) { alert("Enter Name"); return; }
         
-        // [중요] 현재 난이도를 명시적으로 전달 (Easy가 Hell로 저장되는 문제 방지)
         const res = await Core.saveScoreToDB(name, state.diff, !!(nameInput && nameInput.value));
         
         if(res.success) {
             document.getElementById('save-msg').style.display = 'block';
             document.getElementById('btn-check-save').style.display = 'none';
             document.getElementById('btn-just-save').style.display = 'none';
-            // 성공한 이름은 로컬스토리지에 저장해둠
             localStorage.setItem('alpha_username', name);
         } else alert(res.msg);
     }
@@ -62,14 +58,18 @@ window.onload = () => {
 
         if(localStorage.getItem('alpha_stars')) state.stars = parseInt(localStorage.getItem('alpha_stars'));
         if(localStorage.getItem('alpha_items')) state.items = JSON.parse(localStorage.getItem('alpha_items'));
-        if(localStorage.getItem('alpha_best')) state.best = localStorage.getItem('alpha_best');
 
-        // URL 파라미터 처리 (대문자 강제 변환)
+        // URL 파라미터 처리 (난이도 확정)
         const params = new URLSearchParams(window.location.search);
         let diffParam = params.get('diff') || 'NORMAL';
         state.diff = diffParam.toUpperCase(); 
         
         initGridSize(state.diff); 
+
+        // [중요] 난이도가 확정된 후, 해당 난이도의 BEST 기록을 불러옴
+        // 예: alpha_best_EASY, alpha_best_HELL
+        const savedBest = localStorage.getItem(`alpha_best_${state.diff}`);
+        state.best = savedBest || 'A';
 
         const savedGame = localStorage.getItem('alpha_gamestate');
         let resumed = false;
@@ -81,7 +81,7 @@ window.onload = () => {
                     state.grid = loaded.grid;
                     state.hand = loaded.hand;
                     state.score = loaded.score;
-                    state.best = loaded.best;
+                    state.best = loaded.best; // 저장된 베스트 사용
                     state.stars = loaded.stars;
                     state.currentMax = loaded.currentMax || 'A'; 
                     if(loaded.items) state.items = loaded.items;
