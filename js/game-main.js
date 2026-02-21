@@ -5,13 +5,13 @@ import * as Flow from "./game-flow.js";
 import * as Logic from "./game-logic.js";
 import { AudioMgr } from "./game-audio.js";
 
-// HTML 버튼에서 호출할 함수 전역 등록
+// HTML 호출용 전역 등록
 window.gameLogic = {
     ...Flow, ...Logic, ...Core,
     useRefresh: () => {
         if(state.items.refresh > 0) {
             state.items.refresh--; 
-            Logic.buyItem('refresh', 0); // 개수 차감 후 저장 (가격 0원 꼼수)
+            Logic.buyItem('refresh', 0); // 사용 즉시 저장 (가격 0원)
             Flow.checkHandAndRefill(); 
             UI.updateUI();
         } else alert("No Refresh item!");
@@ -36,37 +36,33 @@ window.gameLogic = {
             UI.renderGrid(); UI.updateUI();
         } else alert("No Upgrade item!");
     },
-    tryReviveWithAd: () => { /* 광고 로직 */ },
+    tryReviveWithAd: () => { /* 광고 후 부활 로직 */ },
     saveScore: async () => {
         const nameInput = document.getElementById('username-input');
         const name = nameInput ? nameInput.value : localStorage.getItem('alpha_username');
-        if(!name) { alert("Please enter a name"); return; }
-        
-        const res = await Core.saveScoreToDB(name, !!nameInput); // 신규 유저 여부
+        if(!name) { alert("Enter Name"); return; }
+        const res = await Core.saveScoreToDB(name, !!nameInput);
         if(res.success) {
             document.getElementById('save-msg').style.display = 'block';
             document.getElementById('btn-check-save').style.display = 'none';
             document.getElementById('btn-just-save').style.display = 'none';
             localStorage.setItem('alpha_username', name);
-        } else {
-            alert(res.msg);
-        }
+        } else alert(res.msg);
     }
 };
 
 window.onload = () => {
     try {
-        console.log("🚀 Game Init");
+        console.log("🚀 Game Start");
         
-        // [소리] 전역 클릭 리스너 (버튼 소리 해결)
+        // 전역 클릭 소리 (HTML에 onclick 없어도 동작하게 보조)
         document.addEventListener('click', (e) => {
             if(e.target.closest('button, .btn, .hand-slot')) AudioMgr.play('button');
         });
 
-        // 1. 데이터 로드
-        if(localStorage.getItem('alpha_stars')) state.stars = parseInt(localStorage.getItem('alpha_stars'));
-        if(localStorage.getItem('alpha_items')) state.items = JSON.parse(localStorage.getItem('alpha_items'));
-        if(localStorage.getItem('alpha_best')) state.best = localStorage.getItem('alpha_best');
+        // 데이터 로드 확인
+        const savedItems = localStorage.getItem('alpha_items');
+        if(savedItems) state.items = JSON.parse(savedItems);
 
         const params = new URLSearchParams(window.location.search);
         const diff = params.get('diff') || 'NORMAL';
@@ -74,25 +70,20 @@ window.onload = () => {
         
         initGridSize(diff); 
 
-        // 2. [이어하기] 저장된 상태 로드
+        // [이어하기 로직]
         const savedGame = localStorage.getItem('alpha_gamestate');
         if (savedGame) {
             try {
                 const loaded = JSON.parse(savedGame);
-                // 난이도가 같을 때만 이어하기
                 if(loaded.diff === diff) {
                     state.grid = loaded.grid;
                     state.hand = loaded.hand;
                     state.score = loaded.score;
                     state.best = loaded.best;
                     state.stars = loaded.stars;
-                    console.log("Resume Game");
-                } else {
-                    Flow.checkHandAndRefill(); 
-                }
-            } catch(e) { 
-                Flow.checkHandAndRefill(); 
-            }
+                    console.log("Resume");
+                } else Flow.checkHandAndRefill(); 
+            } catch(e) { Flow.checkHandAndRefill(); }
         } else {
             Flow.checkHandAndRefill();
         }
@@ -100,11 +91,11 @@ window.onload = () => {
         const savedName = localStorage.getItem('alpha_username');
         if(savedName) checkAdmin(savedName);
 
-        UI.updateUI(); // UI 최초 렌더링
+        UI.updateUI(); // 화면 표시
 
     } catch (e) {
-        console.error("Critical Init Error:", e);
-        // 에러 발생 시 강제 게임 시작 (빈 화면 방지)
+        console.error("Init Fail:", e);
+        // 에러 시 강제 실행 (빈 화면 방지)
         initGridSize('NORMAL');
         UI.renderGrid();
         Flow.checkHandAndRefill();
