@@ -64,13 +64,13 @@
 
             <div id="area-new-user" style="display:none;">
                 <input type="text" id="username-input" placeholder="Enter Name" maxlength="12" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:none; text-align:center;">
-                <button class="btn btn-primary" style="width:100%;" id="btn-check-save">Save Record</button>
+                <button class="btn btn-primary" style="width:100%;" id="btn-check-save" onclick="window.gameLogic.saveScore()">Save Record</button>
             </div>
             
             <div id="area-exist-user" style="display:none;">
                 <div style="margin-bottom:5px; color:#aaa; font-size:0.9rem;">Player</div>
                 <div id="user-badge" style="color:var(--accent); font-weight:bold; margin-bottom:10px; font-size:1.4rem;">User</div>
-                <button class="btn btn-primary" style="width:100%;" id="btn-just-save">Update Best Score</button>
+                <button class="btn btn-primary" style="width:100%;" id="btn-just-save" onclick="window.gameLogic.saveScore()">Update Best Score</button>
             </div>
             
             <div id="save-msg" style="display:none; color:#2ecc71; margin:15px 0; font-weight:bold;">✅ Saved Successfully!</div>
