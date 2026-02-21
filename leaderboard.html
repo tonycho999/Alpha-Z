@@ -2,190 +2,79 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alpha-Z Leaderboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* 리더보드 전용 스타일 */
-        .rank-container {
-            width: 95%;
-            max-width: 600px;
-            margin: 0 auto;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid #444;
-            height: 80vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .tab-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            justify-content: center;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            background: #333;
-            border: 1px solid #555;
-            color: #aaa;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.9rem;
-        }
-
-        .tab-btn.active {
-            background: var(--accent); /* 노란색 */
-            color: #000;
-            border-color: var(--accent);
-            box-shadow: 0 0 10px rgba(241,196,15,0.5);
-        }
-
-        .rank-scroll {
-            flex: 1;
-            overflow-y: auto;
-            border: 1px solid #444;
-            border-radius: 8px;
-        }
-
-        /* 테이블 스타일 */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            color: #fff;
-            font-size: 0.95rem;
-        }
-
-        th {
-            background: #222;
-            padding: 12px;
-            position: sticky;
-            top: 0;
-            text-align: center;
-            border-bottom: 2px solid #555;
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #333;
-            text-align: center;
-        }
-
-        tr:nth-child(even) { background: rgba(255,255,255,0.03); }
-        
-        /* 1, 2, 3등 강조 */
-        tr:nth-child(1) td:first-child { color: gold; font-size: 1.2rem; }
-        tr:nth-child(2) td:first-child { color: silver; font-size: 1.1rem; }
-        tr:nth-child(3) td:first-child { color: #cd7f32; font-size: 1.1rem; }
-
-        .loading-text { text-align: center; padding: 20px; color: #888; }
-        
-        /* 돌아가기 버튼 */
-        .back-btn {
-            margin-top: 15px;
-            width: 100%;
-            padding: 12px;
-            background: #444;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
+        body { text-align: center; color: white; background: #121212; font-family: sans-serif; }
+        table { width: 90%; max-width: 500px; margin: 20px auto; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #333; }
+        th { color: var(--accent, gold); }
+        .rank-1 { color: gold; font-weight: bold; }
+        .rank-2 { color: silver; font-weight: bold; }
+        .rank-3 { color: #cd7f32; font-weight: bold; }
     </style>
 </head>
-<body class="main-bg" style="display:block; padding-top:20px;">
-
-    <h1 style="text-align:center; color:white; margin-bottom:20px; text-shadow:0 0 10px black;">🏆 HALL OF FAME</h1>
-
-    <div class="rank-container">
-        <div class="tab-buttons">
-            <button class="tab-btn active" onclick="loadTab('EASY')">EASY</button>
-            <button class="tab-btn" onclick="loadTab('NORMAL')">NORMAL</button>
-            <button class="tab-btn" onclick="loadTab('HARD')">HARD</button>
-            <button class="tab-btn" onclick="loadTab('HELL')">HELL</button>
-        </div>
-
-        <div class="rank-scroll">
-            <table id="rank-table">
-                <thead>
-                    <tr>
-                        <th width="15%">#</th>
-                        <th width="40%">NAME</th>
-                        <th width="20%">BLOCK</th>
-                        <th width="25%">STARS</th>
-                    </tr>
-                </thead>
-                <tbody id="rank-body">
-                    </tbody>
-            </table>
-            <div id="loading" class="loading-text">Loading...</div>
-        </div>
-
-        <button class="back-btn" onclick="location.href='/'">⬅ BACK TO GAME</button>
+<body>
+    <h1 style="margin-top: 30px; color: var(--accent, #f1c40f);">HALL OF FAME</h1>
+    
+    <div style="margin-bottom: 20px;">
+        <button class="btn" onclick="loadRank('EASY')">EASY</button>
+        <button class="btn" onclick="loadRank('NORMAL')">NORMAL</button>
+        <button class="btn" onclick="loadRank('HARD')">HARD</button>
+        <button class="btn" onclick="loadRank('HELL')">HELL</button>
     </div>
 
+    <h3 id="current-mode" style="color:#888;">LOADING...</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="15%">#</th>
+                <th width="50%">NAME</th>
+                <th width="35%">BEST BLOCK</th>
+                </tr>
+        </thead>
+        <tbody id="rank-list">
+            </tbody>
+    </table>
+
+    <button class="btn" style="margin-top: 30px; background: #444;" onclick="location.href='/'">🏠 MAIN MENU</button>
+
     <script type="module">
-        import * as Core from "./js/game-core.js";
+        import { getLeaderboardData } from "./js/game-core.js";
 
-        // 현재 선택된 탭 (기본값 EASY)
-        let currentTab = 'EASY';
+        window.loadRank = async (diff) => {
+            document.getElementById('current-mode').textContent = `- ${diff} MODE -`;
+            const list = document.getElementById('rank-list');
+            list.innerHTML = '<tr><td colspan="3">Loading...</td></tr>'; 
 
-        // 탭 변경 함수 (전역 등록)
-        window.loadTab = function(diff) {
-            currentTab = diff;
+            // 전체 목록 가져오기 (limit 없음)
+            const data = await getLeaderboardData(diff);
             
-            // 버튼 스타일 업데이트
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if(btn.textContent === diff) btn.classList.add('active');
-            });
-
-            fetchData();
-        }
-
-        async function fetchData() {
-            const tbody = document.getElementById('rank-body');
-            const loading = document.getElementById('loading');
-            
-            tbody.innerHTML = ''; // 기존 목록 초기화
-            loading.style.display = 'block'; // 로딩 표시
-
-            // Core에서 데이터 가져오기
-            const data = await Core.getLeaderboardData(currentTab);
-            
-            loading.style.display = 'none'; // 로딩 숨김
-
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="padding:20px; color:#666;">No records yet.</td></tr>';
+            list.innerHTML = '';
+            if(data.length === 0) {
+                list.innerHTML = '<tr><td colspan="3" style="color:#666;">No Records Yet</td></tr>';
                 return;
             }
 
-            // 테이블에 행(Row) 추가
             data.forEach((item, index) => {
-                const tr = document.createElement('tr');
+                const rankClass = index === 0 ? 'rank-1' : (index === 1 ? 'rank-2' : (index === 2 ? 'rank-3' : ''));
                 
-                // 순위, 이름, 최고블록, 별
-                tr.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td style="color:white; font-weight:bold;">${item.username || 'Unknown'}</td>
-                    <td><span class="cell b-${item.bestChar}" style="width:30px; height:30px; font-size:1rem; display:inline-flex; border-radius:4px;">${item.bestChar}</span></td>
-                    <td style="color:#f1c40f;">⭐ ${item.stars}</td>
+                // 스타 표시 제외하고 렌더링
+                const row = `
+                    <tr class="${rankClass}">
+                        <td>${index + 1}</td>
+                        <td>${item.username}</td>
+                        <td style="font-size:1.2rem; font-weight:bold;">${item.bestChar}</td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
+                list.innerHTML += row;
             });
-        }
+        };
 
-        // 페이지 로드 시 바로 실행
-        window.onload = () => loadTab('EASY');
+        // 기본 실행 (NORMAL 모드)
+        window.onload = () => loadRank('NORMAL');
     </script>
 </body>
 </html>
