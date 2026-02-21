@@ -27,10 +27,10 @@
         <div id="start-screen">
             <div style="margin-bottom:20px; color:var(--accent);">MY STARS: <span id="idx-stars">0</span></div>
             <div style="display: flex; flex-direction: column; gap: 15px; max-width: 300px; margin: 0 auto;">
-                <button class="btn btn-primary" onclick="playBtnSound(); startGame('EASY')">EASY</button>
-                <button class="btn btn-primary" onclick="playBtnSound(); startGame('NORMAL')">NORMAL</button>
-                <button class="btn btn-primary" onclick="playBtnSound(); startGame('HARD')">HARD</button>
-                <button class="btn btn-primary" onclick="playBtnSound(); startGame('HELL')">HELL</button>
+                <button class="btn btn-primary" onclick="startGame('EASY')">EASY</button>
+                <button class="btn btn-primary" onclick="startGame('NORMAL')">NORMAL</button>
+                <button class="btn btn-primary" onclick="startGame('HARD')">HARD</button>
+                <button class="btn btn-primary" onclick="startGame('HELL')">HELL</button>
             </div>
             <div style="display:flex; gap:10px; margin-top:20px; justify-content:center; max-width:300px; margin: 20px auto;">
                 <button class="btn" style="flex:1; background:#444;" onclick="playBtnSound(); location.href='shop.html'">🛒 SHOP</button>
@@ -50,73 +50,33 @@
                 <script type="text/javascript" src="https://www.highperformanceformat.com/8806e983d7b1aa394a76278f45c55249/invoke.js"></script>
             </div>
         </div>
-
-        <div id="game-screen" class="hidden">
-            <div style="display:flex; justify-content:space-between; width:95%; max-width:400px; margin-bottom:10px;">
-                <div class="best-badge">BEST: <span id="game-best-char">A</span></div>
-                <button class="btn" style="font-size:0.8rem; background:#555;" onclick="playBtnSound(); location.reload()">⬅ MENU</button>
-            </div>
-            <div id="grid-container" class="grid-container"></div>
-            <div id="ghost" class="ghost-block"></div>
-            <div id="hand-container" style="display: flex; justify-content: center; gap: 10px; margin: 10px auto; width: 100%; max-width: 400px; min-height: 90px;">
-                <div id="hand-0" class="hand-slot" style="width: 33%;"></div>
-                <div id="hand-1" class="hand-slot" style="width: 33%;"></div>
-                <div id="hand-2" class="hand-slot" style="width: 33%;"></div>
-            </div>
-        </div>
     </div>
 
     <div style="display:none;">
-        <audio id="s-drop" src="./assets/drop.mp3"></audio>
-        <audio id="s-merge" src="./assets/merge.mp3"></audio>
-        <audio id="s-over" src="./assets/over.mp3"></audio>
         <audio id="s-button" src="./assets/button.mp3"></audio>
-    </div>
-
-    <div id="popup-over" class="popup-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center;">
-         <div class="popup-box" style="background:#222; border:1px solid #444; padding:25px; border-radius:20px; text-align:center;">
-            <h2 style="color:tomato">GAME OVER</h2>
-            <p>BEST BLOCK: <span id="over-best" style="font-weight:bold; color:gold;"></span></p>
-            
-            <div id="area-new-user" style="display:none; margin-top:15px;">
-                 <input type="text" id="username-input" placeholder="Name" style="padding:10px;">
-                 <button id="btn-check-save" class="btn btn-primary" onclick="playBtnSound()">Save</button>
-            </div>
-            <div id="area-exist-user" style="display:none; margin-top:15px;">
-                 <p>Save as <span id="user-badge" style="color:#4CAF50;"></span>?</p>
-                 <button id="btn-just-save" class="btn btn-primary" onclick="playBtnSound()">Yes</button>
-            </div>
-            
-            <button id="btn-revive-ad" class="btn" style="width:100%; margin-top:10px; background:#e67e22;" onclick="playBtnSound()">📺 Watch Ad & Revive</button>
-            <button class="btn" style="width:100%; margin-top:15px; background:#555;" onclick="playBtnSound(); location.reload()">Replay</button>
-         </div>
     </div>
 
     <div id="intro-popup" class="popup-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:20000; justify-content:center; align-items:center;">
         <div class="popup-box" style="background:#222; border:1px solid var(--accent); padding:25px; border-radius:20px; text-align:center; max-width: 350px; width: 90%;">
             <h2 style="color:var(--accent); margin-bottom: 15px;">HOW TO PLAY</h2>
-            
             <ul class="intro-list">
                 <li>👆 <strong>Drag & Drop</strong> blocks onto the grid.</li>
                 <li>🧩 <strong>Connect 2</strong> or more identical letters.</li>
                 <li>✨ They <strong>Merge</strong> into the next letter (A -> B -> C).</li>
                 <li>🎯 Aim for the highest letter "Z"!</li>
             </ul>
-
             <div id="intro-pc" style="display:none;">
                 <div class="qr-container">
                     <img src="./alpha-z_QR.png" alt="Scan QR Code">
                 </div>
                 <p style="color:#aaa; font-size:0.9rem; margin-top:5px;">Scan to install on Mobile<br>for the best experience!</p>
             </div>
-
             <div id="intro-mobile" style="display:none;">
                 <label class="checkbox-container">
                     <input type="checkbox" id="dont-show-check">
                     Don't show this again
                 </label>
             </div>
-
             <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="closeIntro()">START GAME</button>
         </div>
     </div>
@@ -140,7 +100,6 @@
             }
         }
         
-        // [수정] 버튼 소리 재생 함수 (s-button 사용)
         window.playBtnSound = function() {
             if(isMuted) return;
             const audio = document.getElementById('s-button');
@@ -150,15 +109,19 @@
             }
         }
         
+        // [핵심 수정 부분] 클릭 시 game.html로 이동하며 쿼리 스트링으로 난이도 전달
         window.startGame = function(diff) {
-            document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('game-screen').classList.remove('hidden');
-            document.body.classList.add('game-mode');
-            if (window.initGame) window.initGame(diff);
+            playBtnSound();
+            // 캐시 방지를 위해 타임스탬프(?t=...)를 함께 보낼 수 있습니다.
+            location.href = `game.html?difficulty=${diff}&t=${new Date().getTime()}`;
         };
 
         // --- Intro Popup Logic ---
         document.addEventListener('DOMContentLoaded', () => {
+            // 별 표시 업데이트
+            const savedStars = localStorage.getItem('alpha_stars') || 0;
+            document.getElementById('idx-stars').textContent = savedStars;
+
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             const introPopup = document.getElementById('intro-popup');
             const pcContent = document.getElementById('intro-pc');
@@ -172,7 +135,6 @@
                     introPopup.style.display = 'flex';
                 }
             } else {
-                // PC Mode
                 pcContent.style.display = 'block';
                 mobileContent.style.display = 'none';
                 introPopup.style.display = 'flex';
@@ -182,17 +144,12 @@
         window.closeIntro = function() {
             const checkbox = document.getElementById('dont-show-check');
             const introPopup = document.getElementById('intro-popup');
-            
             if (window.playBtnSound) window.playBtnSound();
-
-            if (checkbox && checkbox.offsetParent !== null && checkbox.checked) {
+            if (checkbox && checkbox.checked) {
                 localStorage.setItem('alpha_intro_done', 'true');
             }
-
             introPopup.style.display = 'none';
         }
     </script>
-    <script type="module" src="./js/game-main.js?v=2.61"></script>
-    <script type="module" src="./js/index.js"></script>
 </body>
 </html>
