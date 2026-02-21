@@ -19,7 +19,11 @@ export const state = {
     score: parseInt(localStorage.getItem('alpha_score')) || 0,
     stars: parseInt(localStorage.getItem('alpha_stars')) || 0,
     items: safeLoad('alpha_items', { refresh:0, hammer:0, upgrade:0 }),
+    
+    // [중요] best는 '역대 최고 기록', currentMax는 '이번 판 최고 기록'
     best: localStorage.getItem('alpha_best') || 'A',
+    currentMax: 'A', 
+    
     isLocked: false, isReviveTurn: false, hasRevived: false,
     isAdmin: localStorage.getItem('alpha_admin') === 'true',
     diff: 'NORMAL', isHammerMode: false
@@ -35,14 +39,12 @@ export function checkAdmin(username) {
     return false;
 }
 
-// [핵심 수정] 광고 관리자 (쿨타임 & 일일제한)
 export const AdManager = {
-    COOLDOWN: 10 * 60 * 1000, // 10분
+    COOLDOWN: 10 * 60 * 1000, 
     DAILY_LIMIT: 10,
 
-    // 광고 시청 가능 여부 확인
     checkAdStatus: function() {
-        if (state.isAdmin) return { avail: true, msg: 'Admin' }; // 관리자는 무제한
+        if (state.isAdmin) return { avail: true, msg: 'Admin' };
 
         const now = Date.now();
         const lastTime = parseInt(localStorage.getItem('alpha_ad_last') || 0);
@@ -50,30 +52,22 @@ export const AdManager = {
         const lastDate = localStorage.getItem('alpha_ad_date') || '';
         const today = new Date().toDateString();
 
-        // 날짜 변경 시 횟수 초기화
         if(lastDate !== today) {
             localStorage.setItem('alpha_ad_cnt', 0);
             localStorage.setItem('alpha_ad_date', today);
             return { avail: true, msg: '' };
         }
 
-        // 1. 일일 제한 체크
-        if(count >= this.DAILY_LIMIT) {
-            return { avail: false, msg: 'Daily Limit Reached (10/10)' };
-        }
-
-        // 2. 쿨타임 체크
+        if(count >= this.DAILY_LIMIT) return { avail: false, msg: 'Daily Limit (10/10)' };
         if(now - lastTime < this.COOLDOWN) {
             const leftMin = Math.ceil((this.COOLDOWN - (now - lastTime)) / 60000);
-            return { avail: false, msg: `Wait ${leftMin}m for next ad` };
+            return { avail: false, msg: `Wait ${leftMin}m` };
         }
-
         return { avail: true, msg: '' };
     },
 
-    // 광고 시청 기록 저장
     recordWatch: function() {
-        if (state.isAdmin) return; // 관리자는 기록 안 함
+        if (state.isAdmin) return;
         const count = parseInt(localStorage.getItem('alpha_ad_cnt') || 0);
         localStorage.setItem('alpha_ad_last', Date.now());
         localStorage.setItem('alpha_ad_cnt', count + 1);
@@ -81,29 +75,13 @@ export const AdManager = {
     },
 
     showRewardAd: function(onSuccess) {
-        // 1. 상태 확인
         const status = this.checkAdStatus();
-        
-        if (state.isAdmin) {
-            alert("👑 Admin Pass: Reward Granted.");
-            onSuccess();
-            return;
-        }
+        if (state.isAdmin) { alert("👑 Admin Pass"); onSuccess(); return; }
+        if (!status.avail) { alert(`🚫 ${status.msg}`); return; }
 
-        if (!status.avail) {
-            alert(`🚫 Cannot watch ad yet.\nReason: ${status.msg}`);
-            return;
-        }
-
-        // 2. 광고 실행
         if(confirm("📺 Watch Ad to get reward?")) {
-            const win = window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
-            
-            // 3초 후 보상 지급 및 기록
-            setTimeout(() => {
-                this.recordWatch(); // 쿨타임 시작
-                onSuccess();
-            }, 3000);
+            window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
+            setTimeout(() => { this.recordWatch(); onSuccess(); }, 3000);
         }
     }
 };
