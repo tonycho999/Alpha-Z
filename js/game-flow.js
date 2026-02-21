@@ -22,7 +22,7 @@ export function checkHandAndRefill() {
         state.hand = [ Core.createRandomBlock(), Core.createRandomBlock(), Core.createRandomBlock() ];
         UI.renderHand();
         UI.setupDrag(handleDropAttempt); 
-        Logic.saveGameState(); // 새 핸드 받고 저장
+        Logic.saveGameState(); // 새 핸드 저장
         checkGameOver();
     } else {
         checkGameOver();
@@ -37,9 +37,7 @@ function checkGameOver() {
             if (Core.canPlaceAnywhere(state.hand[i])) { canPlace = true; break; }
         }
     }
-    // 손패가 다 빈 상태면 리필되므로 게임오버 아님
     const isHandEmpty = state.hand.every(b => b === null);
-
     if (!canPlace && !isHandEmpty) {
         AudioMgr.play('over');
         showGameOverPopup();
@@ -53,11 +51,26 @@ function showGameOverPopup() {
     
     const btnRevive = document.getElementById('btn-revive-ad');
     if(btnRevive) {
-        // [수정] 이미 부활했거나, 관리자(isAdmin)이면 버튼 숨김
-        if(state.hasRevived || state.isAdmin) {
+        // [수정] 광고 시청 가능 여부 확인
+        const adStatus = AdManager.checkAdStatus();
+        
+        // 이미 부활했거나, 관리자이거나, 광고를 볼 수 없는 상태면 버튼 숨김/변경
+        if(state.hasRevived) {
             btnRevive.style.display = 'none';
-        } else {
+        } else if (state.isAdmin) {
+            btnRevive.style.display = 'none'; // 관리자는 부활 버튼 안 봄 (요청사항)
+        } else if (!adStatus.avail) {
+            // 쿨타임 중이면 버튼 비활성화 및 메시지 표시
             btnRevive.style.display = 'block';
+            btnRevive.disabled = true;
+            btnRevive.style.opacity = '0.5';
+            btnRevive.textContent = `🚫 ${adStatus.msg}`;
+        } else {
+            // 시청 가능
+            btnRevive.style.display = 'block';
+            btnRevive.disabled = false;
+            btnRevive.style.opacity = '1';
+            btnRevive.textContent = "📺 Revive (Get 1x1 Block)";
             btnRevive.onclick = () => {
                 AdManager.showRewardAd(() => {
                     state.hasRevived = true;
@@ -67,7 +80,7 @@ function showGameOverPopup() {
                     for(let r=center-1; r<=center+1; r++){
                         for(let c=center-1; c<=center+1; c++){
                             const idx = r*state.gridSize+c;
-                            if(idx >= 0 && idx < state.grid.length) state.grid[idx] = null;
+                            if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
                         }
                     }
                     if(popup) popup.style.display = 'none';
@@ -77,7 +90,8 @@ function showGameOverPopup() {
             };
         }
     }
-    // 유저 UI 처리
+    
+    // 유저 UI
     const name = localStorage.getItem('alpha_username');
     const existArea = document.getElementById('area-exist-user');
     const newArea = document.getElementById('area-new-user');
