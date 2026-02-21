@@ -1,8 +1,7 @@
-import { ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, state } from "./game-data.js";
+import { ALPHABET, state } from "./game-data.js";
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
-// ... (getMinIdx, createRandomBlock, canPlaceAnywhere, getCluster 기존 로직 유지 - 생략 없이 그대로 두세요) ...
 export function getMinIdx() {
     const bestIdx = ALPHABET.indexOf(state.best);
     if (bestIdx < 5) return 0; 
@@ -17,13 +16,10 @@ export function getMinIdx() {
 export function createRandomBlock() {
     let pool;
     const r = Math.random();
-    if (state.diff === 'EASY') {
-        if (r < 0.2) pool = SHAPES_1; else if (r < 0.5) pool = SHAPES_2; else pool = SHAPES_3;
-    } else if (state.diff === 'HELL') {
-        if (r < 0.1) pool = SHAPES_2; else pool = SHAPES_3;
-    } else { 
-        if (r < 0.1) pool = SHAPES_1; else if (r < 0.4) pool = SHAPES_2; else pool = SHAPES_3;
-    }
+    if (state.diff === 'EASY') { if (r < 0.2) pool = SHAPES_1; else if (r < 0.5) pool = SHAPES_2; else pool = SHAPES_3; } 
+    else if (state.diff === 'HELL') { if (r < 0.1) pool = SHAPES_2; else pool = SHAPES_3; } 
+    else { if (r < 0.1) pool = SHAPES_1; else if (r < 0.4) pool = SHAPES_2; else pool = SHAPES_3; }
+    
     const shape = pool[Math.floor(Math.random() * pool.length)];
     const minIdx = getMinIdx();
     const items = [];
@@ -72,71 +68,51 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
-// [핵심 수정] DB 저장 함수 (Score 포함)
+// [DB 저장] 점수(Score) 저장 추가
 export async function saveScoreToDB(username, isNewUser = false) {
-    console.log(`💾 저장 시도: ${username}`);
-
-    if (!db) {
-        console.error("❌ DB 연결 실패");
-        return { success: false, msg: "DB Connection Error" };
-    }
-    
+    if (!db) return { success: false, msg: "DB Error" };
     const docId = username.trim();
     const safeDiff = state.diff || 'NORMAL'; 
     const safeBest = state.best || 'A';
-    const currentScore = state.score || 0; // [추가] 현재 점수
+    const currentScore = state.score || 0;
 
     try {
         const docRef = doc(db, "leaderboard", docId);
         const docSnap = await getDoc(docRef);
         
-        if (isNewUser && docSnap.exists()) {
-            return { success: false, msg: "🚫 Username already taken." };
-        }
-        
-        // 기존 점수보다 낮으면 저장 안 함 (점수 기준)
+        if (isNewUser && docSnap.exists()) return { success: false, msg: "Username taken." };
         if (!isNewUser && docSnap.exists()) {
             const existingData = docSnap.data();
-            if (existingData.score >= currentScore) {
-                 return { success: true, msg: "Score preserved (Higher/Equal score exists)." };
-            }
+            // 점수 기준 비교
+            if (existingData.score >= currentScore) return { success: true, msg: "Score preserved." };
         }
         
-        // 저장 (stars 제외, score 추가)
         await setDoc(docRef, {
             username: docId,
             bestChar: safeBest,
             difficulty: safeDiff, 
-            score: Number(currentScore), // [중요] 점수 저장
+            score: Number(currentScore), // 점수 저장
             timestamp: serverTimestamp()
         });
-        
-        console.log("✅ 저장 성공!");
-        return { success: true, msg: "Saved Successfully!" };
-
-    } catch (e) { 
-        console.error("🔥 DB 저장 에러:", e);
-        return { success: false, msg: e.message }; 
-    }
+        return { success: true, msg: "Saved!" };
+    } catch (e) { return { success: false, msg: e.message }; }
 }
 
-// [핵심 수정] 리더보드 가져오기 (Score 기준 정렬)
+// [리더보드] 점수 기준 정렬
 export async function getLeaderboardData(targetDiff) {
     if (!db) return [];
     try {
-        const leaderboardRef = collection(db, "leaderboard");
         const q = query(
-            leaderboardRef, 
+            collection(db, "leaderboard"), 
             where("difficulty", "==", targetDiff), 
-            orderBy("score", "desc") // [중요] 점수 내림차순 정렬
-            // 주의: 이 쿼리를 처음 실행하면 콘솔에 "인덱스 필요" 에러가 뜹니다. 링크 클릭해서 만드세요.
+            orderBy("score", "desc") // 점수 내림차순
         );
-        const querySnapshot = await getDocs(q);
+        const snapshot = await getDocs(q);
         const ranks = [];
-        querySnapshot.forEach((doc) => ranks.push(doc.data()));
+        snapshot.forEach((doc) => ranks.push(doc.data()));
         return ranks;
     } catch (e) { 
-        console.error("Error fetching leaderboard:", e);
+        console.error(e); 
         return []; 
     }
 }
