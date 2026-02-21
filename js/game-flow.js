@@ -4,58 +4,42 @@ import * as UI from "./game-ui.js";
 import * as Logic from "./game-logic.js";
 import { AudioMgr } from "./game-audio.js";
 
-// 1. Cell Click (Hammer Mode)
+// 1. 셀 클릭
 export function handleCellClick(idx) {
     if(state.isHammerMode && state.grid[idx]) {
         state.grid[idx] = null;
         state.isHammerMode = false;
         document.getElementById('grid-container').classList.remove('hammer-mode');
-        UI.renderGrid(); 
-        UI.updateUI();
-        checkHandAndRefill(); // Check if this action cleared space for game over check
+        UI.renderGrid(); UI.updateUI();
+        checkHandAndRefill();
     }
 }
 
-// 2. Hand Refill Logic - [CRITICAL FIX]
+// 2. 핸드 리필
 export function checkHandAndRefill() {
-    // Check if all slots are null
     const isEmpty = state.hand.every(b => b === null);
-    
     if (isEmpty) {
-        // Generate 3 NEW blocks
-        state.hand = [ 
-            Core.createRandomBlock(), 
-            Core.createRandomBlock(), 
-            Core.createRandomBlock() 
-        ];
-        
+        state.hand = [ Core.createRandomBlock(), Core.createRandomBlock(), Core.createRandomBlock() ];
         UI.renderHand();
-        // Re-bind drag events to new blocks
         UI.setupDrag(handleDropAttempt); 
-        
-        // Save state immediately after refill
-        Logic.saveGameState();
+        Logic.saveGameState(); // 새 핸드 받고 저장
+        checkGameOver();
+    } else {
+        checkGameOver();
     }
-    
-    checkGameOver();
 }
 
-// 3. Game Over Check
+// 3. 게임 오버
 function checkGameOver() {
     let canPlace = false;
     for (let i = 0; i < 3; i++) {
         if (state.hand[i] !== null) {
-            // If at least one block can be placed, game continues
-            if (Core.canPlaceAnywhere(state.hand[i])) { 
-                canPlace = true; 
-                break; 
-            }
+            if (Core.canPlaceAnywhere(state.hand[i])) { canPlace = true; break; }
         }
     }
-    // Only game over if hand is NOT empty (meaning we have blocks but can't place them)
-    // If hand is empty, it will be refilled, so not game over.
+    // 손패가 다 빈 상태면 리필되므로 게임오버 아님
     const isHandEmpty = state.hand.every(b => b === null);
-    
+
     if (!canPlace && !isHandEmpty) {
         AudioMgr.play('over');
         showGameOverPopup();
@@ -69,7 +53,8 @@ function showGameOverPopup() {
     
     const btnRevive = document.getElementById('btn-revive-ad');
     if(btnRevive) {
-        if(state.hasRevived) {
+        // [수정] 이미 부활했거나, 관리자(isAdmin)이면 버튼 숨김
+        if(state.hasRevived || state.isAdmin) {
             btnRevive.style.display = 'none';
         } else {
             btnRevive.style.display = 'block';
@@ -77,8 +62,7 @@ function showGameOverPopup() {
                 AdManager.showRewardAd(() => {
                     state.hasRevived = true;
                     state.isReviveTurn = true;
-                    
-                    // Clear center 3x3
+                    // 중앙 3x3 비우기
                     const center = Math.floor(state.gridSize/2);
                     for(let r=center-1; r<=center+1; r++){
                         for(let c=center-1; c<=center+1; c++){
@@ -86,7 +70,6 @@ function showGameOverPopup() {
                             if(idx >= 0 && idx < state.grid.length) state.grid[idx] = null;
                         }
                     }
-                    
                     if(popup) popup.style.display = 'none';
                     UI.renderGrid();
                     checkHandAndRefill();
@@ -94,11 +77,10 @@ function showGameOverPopup() {
             };
         }
     }
-    
+    // 유저 UI 처리
     const name = localStorage.getItem('alpha_username');
     const existArea = document.getElementById('area-exist-user');
     const newArea = document.getElementById('area-new-user');
-    
     if(name) {
          if(existArea) { existArea.style.display = 'block'; document.getElementById('user-badge').textContent = name; }
          if(newArea) newArea.style.display = 'none';
@@ -110,7 +92,7 @@ function showGameOverPopup() {
 
 export function nextTurn() { checkHandAndRefill(); }
 
-// 4. Drop Attempt Logic (Preserved Highlight)
+// 4. 드롭 시도 (하이라이트 유지)
 export function handleDropAttempt(targetIdx, isPreview) {
     if(state.dragIndex === -1) return false;
     const block = state.hand[state.dragIndex];
@@ -137,13 +119,12 @@ export function handleDropAttempt(targetIdx, isPreview) {
     if (!possible) return false;
 
     if(isPreview) {
-        // [Highlight Logic - Preserved]
         finalIndices.forEach(i => {
             const el = document.getElementById(`cell-${i}`);
             if(el) el.classList.add('highlight-valid');
         });
 
-        // Merge Prediction Highlight
+        // 합체 예측
         block.items.forEach((char, idx) => {
             const myIdx = finalIndices[idx];
             const neighbors = [myIdx-1, myIdx+1, myIdx-size, myIdx+size];
@@ -161,7 +142,6 @@ export function handleDropAttempt(targetIdx, isPreview) {
         });
         return true;
     } else {
-        // Actual Drop
         Logic.placeBlock(finalIndices, block, checkHandAndRefill);
         return true;
     }
