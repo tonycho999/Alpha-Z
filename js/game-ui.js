@@ -236,8 +236,8 @@ function getMagnetIndex(x, y) {
 
     // 만약 8x8 보드일 때만 자꾸 윗칸에 놓인다면? -> 숫자를 키워서 아래로 내림
     if (state.gridSize === 7) {
-        correctionX = 10;
-        correctionY = -10; 
+        correctionX = 0;
+        correctionY = -20; 
     }
     // 만약 9x9 보드일 때 자꾸 아랫칸에 놓인다면? -> 음수로 만들어서 위로 올림
     else if (state.gridSize === 8) {
