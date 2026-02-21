@@ -19,10 +19,10 @@
     <h1 style="margin-top: 30px; color: #f1c40f;">HALL OF FAME</h1>
     
     <div class="mode-selector">
-        <button class="btn" onclick="loadRank('EASY')">EASY</button>
-        <button class="btn" onclick="loadRank('NORMAL')">NORMAL</button>
-        <button class="btn" onclick="loadRank('HARD')">HARD</button>
-        <button class="btn" onclick="loadRank('HELL')">HELL</button>
+        <button class="btn" onclick="playBtnSound(); loadRank('EASY')">EASY</button>
+        <button class="btn" onclick="playBtnSound(); loadRank('NORMAL')">NORMAL</button>
+        <button class="btn" onclick="playBtnSound(); loadRank('HARD')">HARD</button>
+        <button class="btn" onclick="playBtnSound(); loadRank('HELL')">HELL</button>
     </div>
 
     <h3 id="current-mode" style="color:#aaa; font-weight:normal; margin-bottom: 15px;">LOADING...</h3>
@@ -38,7 +38,17 @@
         <tbody id="rank-list"></tbody>
     </table>
 
-    <button class="btn" style="margin: 30px auto; background: #444;" onclick="location.href='/'">🏠 MAIN MENU</button>
+    <button class="btn" style="margin: 30px auto; background: #444;" onclick="playBtnSound(); location.href='/'">🏠 MAIN MENU</button>
+
+    <div style="display:none;">
+        <audio id="s-button" src="./assets/button.mp3"></audio>
+    </div>
+    <script>
+        window.playBtnSound = function() {
+            var audio = document.getElementById('s-button');
+            if(audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
+        };
+    </script>
 
     <script type="module">
         import { getLeaderboardData } from "./js/game-core.js";
