@@ -56,7 +56,6 @@ export function renderHand() {
     }
 }
 
-// UI 업데이트 (아이템 개수 및 점수)
 export function updateUI() {
     if(document.getElementById('ui-best')) document.getElementById('ui-best').textContent = state.best;
     if(document.getElementById('ui-stars')) document.getElementById('ui-stars').textContent = state.stars;
@@ -78,20 +77,17 @@ export function setupDrag(onDropCallback) {
     window._onDropCallback = onDropCallback;
 }
 
-// [드래그 로직]
 function setupDragForSlot(slot, index) {
     const ghost = document.getElementById('ghost');
     
+    // [자석 오차 해결] 실제 셀 크기 측정
     const getRealCellSize = () => {
         const gridEl = document.getElementById('grid-container');
         if(!gridEl) return 40;
         const cell = gridEl.querySelector('.cell');
         if(cell) return cell.offsetWidth;
-        // 셀이 없으면 계산
         const rect = gridEl.getBoundingClientRect();
-        const gap = 3;
-        const padding = 5;
-        return (rect.width - (state.gridSize - 1) * gap - (padding * 2)) / state.gridSize;
+        return (rect.width - (state.gridSize - 1) * 3) / state.gridSize;
     };
 
     const start = (e) => {
@@ -101,7 +97,6 @@ function setupDragForSlot(slot, index) {
         const block = state.hand[index];
         if(!block) return;
 
-        // [오차 해결] 손가락보다 위로 띄움
         const yOffset = cellSize * 1.8; 
 
         ghost.innerHTML = '';
@@ -135,7 +130,6 @@ function setupDragForSlot(slot, index) {
             if(me.cancelable) me.preventDefault(); 
             const p = getPos(me); updateGhost(p.x, p.y); 
             
-            // [자석] Ghost 중심점 기준
             const rect = ghost.getBoundingClientRect();
             const cx = rect.left + rect.width/2;
             const cy = rect.top + rect.height/2;
@@ -144,7 +138,6 @@ function setupDragForSlot(slot, index) {
             document.querySelectorAll('.highlight-valid').forEach(el=>el.classList.remove('highlight-valid'));
             document.querySelectorAll('.will-merge').forEach(el=>el.classList.remove('will-merge'));
             
-            // 하이라이트/Merge 미리보기 (기존 기능 유지)
             if(idx!==-1 && window._onDropCallback) window._onDropCallback(idx, true);
         };
         
@@ -172,15 +165,13 @@ function setupDragForSlot(slot, index) {
     slot.onmousedown = start; slot.ontouchstart = start;
 }
 
-// [핵심] 자석 좌표 계산 (오차 제거)
+// [자석 계산식] (오차 제거)
 function getMagnetIndex(x, y) {
     const grid = document.getElementById('grid-container');
     if (!grid) return -1;
     const rect = grid.getBoundingClientRect();
     const gap = 3;
     const padding = 5; 
-    
-    // 현재 셀 크기 역산 (정확도 높음)
     const cellSize = (rect.width - (state.gridSize - 1) * gap - (padding * 2)) / state.gridSize;
     
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return -1;
