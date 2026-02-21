@@ -5,7 +5,7 @@ import * as Flow from "./game-flow.js";
 import * as Logic from "./game-logic.js";
 import { AudioMgr } from "./game-audio.js";
 
-// [중요] HTML 버튼과 연결되는 전역 함수 등록
+// Global Game Logic Binding
 window.gameLogic = {
     ...Flow, ...Logic, ...Core,
     useRefresh: () => Logic.useRefresh(() => Flow.checkHandAndRefill()),
@@ -13,7 +13,6 @@ window.gameLogic = {
     useUpgrade: () => Logic.useUpgrade(),
     tryReviveWithAd: () => {
         AdManager.showRewardAd(() => {
-            // 부활 로직: 중앙 3x3 비우기
             state.hasRevived = true;
             const center = Math.floor(state.gridSize/2);
             for(let r=center-1; r<=center+1; r++){
@@ -45,19 +44,25 @@ window.onload = () => {
     try {
         console.log("🚀 Game Start");
         
-        // 전역 클릭 소리 (보조)
         document.addEventListener('click', (e) => {
             if(e.target.closest('button, .btn, .hand-slot')) AudioMgr.play('button');
         });
+
+        // 1. Load Data
+        if(localStorage.getItem('alpha_stars')) state.stars = parseInt(localStorage.getItem('alpha_stars'));
+        if(localStorage.getItem('alpha_items')) state.items = JSON.parse(localStorage.getItem('alpha_items'));
+        if(localStorage.getItem('alpha_best')) state.best = localStorage.getItem('alpha_best');
 
         const params = new URLSearchParams(window.location.search);
         const diff = params.get('diff') || 'NORMAL';
         state.diff = diff;
         
-        // [이어하기 로직]
-        const savedGame = localStorage.getItem('alpha_gamestate');
         initGridSize(diff); 
 
+        // 2. Resume or New Game
+        const savedGame = localStorage.getItem('alpha_gamestate');
+        let resumed = false;
+        
         if (savedGame) {
             try {
                 const loaded = JSON.parse(savedGame);
@@ -69,22 +74,33 @@ window.onload = () => {
                     state.stars = loaded.stars;
                     if(loaded.items) state.items = loaded.items;
                     console.log("Resume");
-                } else Flow.checkHandAndRefill(); 
-            } catch(e) { Flow.checkHandAndRefill(); }
-        } else {
+                    resumed = true;
+                }
+            } catch(e) { console.error(e); }
+        }
+        
+        if (!resumed) {
+            // [CRITICAL] New Game: Ensure hand is empty to trigger refill
+            state.hand = [null, null, null];
             Flow.checkHandAndRefill();
+        } else {
+            // If resumed, ensure hand UI is rendered
+            UI.renderHand();
+            UI.setupDrag(Flow.handleDropAttempt);
         }
 
         const savedName = localStorage.getItem('alpha_username');
         if(savedName) checkAdmin(savedName);
 
-        UI.updateUI(); // UI 최초 그리기
+        UI.renderGrid();
+        UI.updateUI();
 
     } catch (e) {
         console.error("Init Fail:", e);
-        // 에러 시 강제 실행 (빈 화면 방지)
         initGridSize('NORMAL');
         UI.renderGrid();
+        // Force Refill on Error
+        state.hand = [null, null, null];
         Flow.checkHandAndRefill();
     }
 };
