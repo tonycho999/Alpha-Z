@@ -1,5 +1,6 @@
 import { state, ALPHABET } from "./game-data.js";
 
+// 1. 그리드 렌더링
 export function renderGrid() {
     const gridEl = document.getElementById('grid-container');
     if (!gridEl) return;
@@ -22,6 +23,7 @@ export function renderGrid() {
     });
 }
 
+// 2. 핸드 렌더링
 export function renderHand() {
     for (let i = 0; i < 3; i++) {
         const slot = document.getElementById(`hand-${i}`);
@@ -56,11 +58,11 @@ export function renderHand() {
     }
 }
 
-// [핵심 수정] UI 업데이트 (현재 보드 최고 블록 표시)
+// [BEST 표시 수정] 현재 보드판에서 가장 높은 블록 찾기
 export function updateUI() {
-    // 1. 현재 보드에서 가장 높은 알파벳 찾기
+    // 1. 보드 스캔
     let currentMaxChar = 'A';
-    let maxIdx = 0;
+    let maxIdx = -1;
 
     if (state.grid && state.grid.length > 0) {
         state.grid.forEach(char => {
@@ -74,7 +76,7 @@ export function updateUI() {
         });
     }
 
-    // 2. UI 반영
+    // 2. UI 적용 (ui-best에 현재 보드 최고 블록 표시)
     if(document.getElementById('ui-best')) document.getElementById('ui-best').textContent = currentMaxChar;
     if(document.getElementById('ui-stars')) document.getElementById('ui-stars').textContent = state.stars;
     if(document.getElementById('ui-diff')) document.getElementById('ui-diff').textContent = state.diff;
@@ -88,9 +90,6 @@ export function updateUI() {
 }
 
 export function updateGameOverUI() {
-    // 게임 오버 시에는 '역사상 최고 기록'을 보여줄지, '이번 판 최고 기록'을 보여줄지 결정해야 하는데
-    // 보통 게임 오버 팝업은 state.best(역사적 최고)를 보여주는 것이 일반적입니다.
-    // 만약 이것도 이번 판 기록으로 바꾸고 싶으시면 위 로직을 그대로 쓰시면 됩니다.
     document.getElementById('over-best').textContent = state.best;
 }
 
@@ -98,10 +97,10 @@ export function setupDrag(onDropCallback) {
     window._onDropCallback = onDropCallback;
 }
 
+// [자석 보정] 
 function setupDragForSlot(slot, index) {
     const ghost = document.getElementById('ghost');
     
-    // [자석 오차 해결] 실제 셀 크기 측정
     const getRealCellSize = () => {
         const gridEl = document.getElementById('grid-container');
         if(!gridEl) return 40;
@@ -118,7 +117,6 @@ function setupDragForSlot(slot, index) {
         const block = state.hand[index];
         if(!block) return;
 
-        // [오차 해결] 손가락 위로 띄움
         const yOffset = cellSize * 1.8; 
 
         ghost.innerHTML = '';
@@ -140,7 +138,6 @@ function setupDragForSlot(slot, index) {
         slot.style.opacity = '0';
         
         const getPos = (ev) => { return { x: (ev.changedTouches?ev.changedTouches[0]:ev).clientX, y: (ev.changedTouches?ev.changedTouches[0]:ev).clientY }; };
-        
         const updateGhost = (x,y) => { 
             ghost.style.left = (x - ghost.offsetWidth/2)+'px'; 
             ghost.style.top = (y - ghost.offsetHeight - yOffset)+'px'; 
@@ -152,8 +149,8 @@ function setupDragForSlot(slot, index) {
             if(me.cancelable) me.preventDefault(); 
             const p = getPos(me); updateGhost(p.x, p.y); 
             
-            // [자석] Ghost의 '첫 번째 칸(Top-Left)' 중앙 기준
             const rect = ghost.getBoundingClientRect();
+            // 자석 기준: 첫 번째 칸(Top-Left)의 중앙
             const cx = rect.left + (cellSize / 2);
             const cy = rect.top + (cellSize / 2);
             const idx = getMagnetIndex(cx, cy);
@@ -188,7 +185,6 @@ function setupDragForSlot(slot, index) {
     slot.onmousedown = start; slot.ontouchstart = start;
 }
 
-// [자석 계산식]
 function getMagnetIndex(x, y) {
     const grid = document.getElementById('grid-container');
     if (!grid) return -1;
