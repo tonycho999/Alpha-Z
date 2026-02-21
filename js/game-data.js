@@ -2,26 +2,20 @@ export const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 export const SHAPES_1 = [{ id: '1a', map: [[0,0]], w:1, h:1 }];
 export const SHAPES_2 = [{ id: '2h', map: [[0,0], [0,1]], w:2, h:1 }, { id: '2v', map: [[0,0], [1,0]], w:1, h:2 }];
-export const SHAPES_3 = [
-    { id: '3h', map: [[0,0], [0,1], [0,2]], w:3, h:1 },
-    { id: '3v', map: [[0,0], [1,0], [2,0]], w:1, h:3 },
-    { id: '3Lt', map: [[0,0], [0,1], [1,0]], w:2, h:2 },
-    { id: '3Lb', map: [[0,0], [1,0], [1,1]], w:2, h:2 },
-    { id: '3Rt', map: [[0,0], [0,1], [1,1]], w:2, h:2 },
-    { id: '3Rb', map: [[0,0], [1,0], [0,1]], w:2, h:2 }
-];
+export const SHAPES_3 = [ { id: '3h', map: [[0,0], [0,1], [0,2]], w:3, h:1 }, { id: '3v', map: [[0,0], [1,0], [2,0]], w:1, h:3 }, { id: '3Lt', map: [[0,0], [0,1], [1,0]], w:2, h:2 }, { id: '3Lb', map: [[0,0], [1,0], [1,1]], w:2, h:2 }, { id: '3Rt', map: [[0,0], [0,1], [1,1]], w:2, h:2 }, { id: '3Rb', map: [[0,0], [1,0], [0,1]], w:2, h:2 } ];
 
 export const state = {
     gridSize: 8, grid: [], hand: [null, null, null], dragIndex: -1,
     score: 0, 
     stars: parseInt(localStorage.getItem('alpha_stars')) || 0,
+    // 아이템 로드 (없으면 0)
     items: JSON.parse(localStorage.getItem('alpha_items')) || { refresh:0, hammer:0, upgrade:0 },
     best: localStorage.getItem('alpha_best') || 'A',
     isLocked: false, isReviveTurn: false, hasRevived: false,
     isAdmin: false, diff: 'NORMAL', isHammerMode: false
 };
 
-// [관리자 체크]
+// [관리자 확인]
 export function checkAdmin(username) {
     const admins = ['tony', 'min', 'sara', 'hyun', 'madhel'];
     if(username && admins.includes(username.toLowerCase())) {
@@ -35,17 +29,12 @@ export function checkAdmin(username) {
 // [광고 관리자]
 export const AdManager = {
     showRewardAd: function(onSuccess) {
-        // 1. 관리자 여부 확인 (state 또는 로컬스토리지)
         const isAdminLocal = localStorage.getItem('alpha_admin') === 'true';
-        
         if(state.isAdmin || isAdminLocal) {
-            // [관리자] 광고 패스
-            alert("👑 Admin Pass: Reward Granted instantly.");
+            alert("👑 Admin Pass: Reward Granted.");
             onSuccess(); 
             return;
         }
-
-        // 2. 일반 유저
         if(confirm("📺 Watch Ad to get reward?")) {
             window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
             setTimeout(() => { onSuccess(); }, 3000);
