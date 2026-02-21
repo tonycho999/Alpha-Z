@@ -72,7 +72,7 @@ export async function saveScoreToDB(username, isNewUser = false) {
     const docId = username.trim();
     const safeDiff = state.diff || 'NORMAL'; 
     const safeBest = state.best || 'A';
-    const currentScore = Number(state.score) || 0; // 숫자 변환
+    const currentScore = Number(state.score) || 0;
 
     try {
         const docRef = doc(db, "leaderboard", docId);
@@ -81,10 +81,9 @@ export async function saveScoreToDB(username, isNewUser = false) {
         if (isNewUser && docSnap.exists()) return { success: false, msg: "Name taken." };
         if (!isNewUser && docSnap.exists()) {
             const existingData = docSnap.data();
-            if ((existingData.score || 0) >= currentScore) return { success: true, msg: "Previous score higher." };
+            if ((existingData.score || 0) >= currentScore) return { success: true, msg: "Score preserved." };
         }
         
-        // score 저장 (stars 제외)
         await setDoc(docRef, {
             username: docId,
             bestChar: safeBest,
@@ -99,14 +98,13 @@ export async function saveScoreToDB(username, isNewUser = false) {
     }
 }
 
-// [리더보드] Score 기준 정렬
 export async function getLeaderboardData(targetDiff) {
     if (!db) return [];
     try {
         const q = query(
             collection(db, "leaderboard"), 
             where("difficulty", "==", targetDiff), 
-            orderBy("score", "desc") // 인덱스 생성 필요
+            orderBy("score", "desc")
         );
         const snapshot = await getDocs(q);
         const ranks = [];
