@@ -1,42 +1,32 @@
-import { state, initGridSize, checkAdmin } from "./game-data.js";
+import { state, initGridSize, checkAdmin, AdManager } from "./game-data.js";
 import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
 import * as Flow from "./game-flow.js";
 import * as Logic from "./game-logic.js";
 import { AudioMgr } from "./game-audio.js";
 
-// HTML 호출용 전역 등록
+// [중요] HTML 버튼과 연결되는 전역 함수 등록
 window.gameLogic = {
     ...Flow, ...Logic, ...Core,
-    useRefresh: () => {
-        if(state.items.refresh > 0) {
-            state.items.refresh--; 
-            Logic.buyItem('refresh', 0); // 사용 즉시 저장 (가격 0원)
-            Flow.checkHandAndRefill(); 
-            UI.updateUI();
-        } else alert("No Refresh item!");
+    useRefresh: () => Logic.useRefresh(() => Flow.checkHandAndRefill()),
+    useHammer: () => Logic.useHammer(),
+    useUpgrade: () => Logic.useUpgrade(),
+    tryReviveWithAd: () => {
+        AdManager.showRewardAd(() => {
+            // 부활 로직: 중앙 3x3 비우기
+            state.hasRevived = true;
+            const center = Math.floor(state.gridSize/2);
+            for(let r=center-1; r<=center+1; r++){
+                for(let c=center-1; c<=center+1; c++){
+                    const idx = r*state.gridSize+c;
+                    if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
+                }
+            }
+            document.getElementById('popup-over').style.display = 'none';
+            UI.renderGrid();
+            Flow.checkHandAndRefill();
+        });
     },
-    useHammer: () => {
-        if(state.items.hammer > 0) {
-            state.items.hammer--; 
-            Logic.buyItem('hammer', 0);
-            state.isHammerMode = true;
-            document.getElementById('grid-container').classList.add('hammer-mode');
-            alert("Click a block to remove!"); 
-            UI.updateUI();
-        } else alert("No Hammer item!");
-    },
-    useUpgrade: () => {
-        if(state.items.upgrade > 0) {
-            state.items.upgrade--; 
-            Logic.buyItem('upgrade', 0);
-            state.grid.forEach((char, i) => {
-                if(char) state.grid[i] = state.ALPHABET[state.ALPHABET.indexOf(char)+1] || char;
-            });
-            UI.renderGrid(); UI.updateUI();
-        } else alert("No Upgrade item!");
-    },
-    tryReviveWithAd: () => { /* 광고 후 부활 로직 */ },
     saveScore: async () => {
         const nameInput = document.getElementById('username-input');
         const name = nameInput ? nameInput.value : localStorage.getItem('alpha_username');
@@ -55,23 +45,19 @@ window.onload = () => {
     try {
         console.log("🚀 Game Start");
         
-        // 전역 클릭 소리 (HTML에 onclick 없어도 동작하게 보조)
+        // 전역 클릭 소리 (보조)
         document.addEventListener('click', (e) => {
             if(e.target.closest('button, .btn, .hand-slot')) AudioMgr.play('button');
         });
-
-        // 데이터 로드 확인
-        const savedItems = localStorage.getItem('alpha_items');
-        if(savedItems) state.items = JSON.parse(savedItems);
 
         const params = new URLSearchParams(window.location.search);
         const diff = params.get('diff') || 'NORMAL';
         state.diff = diff;
         
-        initGridSize(diff); 
-
         // [이어하기 로직]
         const savedGame = localStorage.getItem('alpha_gamestate');
+        initGridSize(diff); 
+
         if (savedGame) {
             try {
                 const loaded = JSON.parse(savedGame);
@@ -81,6 +67,7 @@ window.onload = () => {
                     state.score = loaded.score;
                     state.best = loaded.best;
                     state.stars = loaded.stars;
+                    if(loaded.items) state.items = loaded.items;
                     console.log("Resume");
                 } else Flow.checkHandAndRefill(); 
             } catch(e) { Flow.checkHandAndRefill(); }
@@ -91,7 +78,7 @@ window.onload = () => {
         const savedName = localStorage.getItem('alpha_username');
         if(savedName) checkAdmin(savedName);
 
-        UI.updateUI(); // 화면 표시
+        UI.updateUI(); // UI 최초 그리기
 
     } catch (e) {
         console.error("Init Fail:", e);
