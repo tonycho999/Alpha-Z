@@ -12,10 +12,22 @@ export const SHAPES_3 = [
 ];
 
 export const state = {
-    gridSize: 8, grid: [], hand: [null, null, null], dragIndex: -1,
-    score: 0, stars: 0, best: 'A',
-    isLocked: false, isReviveTurn: false, hasRevived: false, hasReachedO: false,
-    isAdmin: false, diff: 'NORMAL', isHammerMode: false, nextBlock: null 
+    gridSize: 8, 
+    grid: [], 
+    hand: [null, null, null], 
+    dragIndex: -1,
+    score: 0, 
+    // [수정] 초기화 시 로컬 스토리지 값 확인
+    stars: parseInt(localStorage.getItem('alpha_stars')) || 0, 
+    best: 'A',
+    isLocked: false, 
+    isReviveTurn: false, 
+    hasRevived: false, 
+    hasReachedO: false,
+    isAdmin: false, 
+    diff: 'NORMAL', 
+    isHammerMode: false, 
+    nextBlock: null 
 };
 
 // [관리자 체크]
