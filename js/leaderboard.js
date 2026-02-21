@@ -1,83 +1,81 @@
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
 window.loadRank = async function(difficulty) {
-    // 1. 탭 버튼 스타일 업데이트
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-        // 텍스트에 난이도가 포함되어 있으면 활성화 (예: "EASY (9x9)")
-        if (btn.innerText.includes(difficulty)) {
-            btn.classList.add('active');
-        }
+    // 1. 버튼 스타일 업데이트 (선택된 모드 강조)
+    const btns = document.querySelectorAll('.mode-selector .btn');
+    btns.forEach(btn => {
+        if(btn.textContent === difficulty) btn.classList.add('active');
+        else btn.classList.remove('active');
     });
 
+    // 2. UI 초기화
+    document.getElementById('current-mode').textContent = `- ${difficulty} MODE -`;
     const list = document.getElementById('rank-list');
-    const loading = document.getElementById('loading-text');
-    
-    // 초기화
-    list.innerHTML = '';
-    loading.style.display = 'block';
+    list.innerHTML = '<div style="padding:20px; color:#aaa;">Loading...</div>';
 
     try {
-        // 2. 해당 난이도의 데이터만 가져오기
-        const q = query(collection(db, "leaderboard"), where("difficulty", "==", difficulty));
-        const querySnapshot = await getDocs(q);
-        
-        loading.style.display = 'none';
-        
-        if(querySnapshot.empty) {
-            list.innerHTML = '<div style="padding:40px; text-align:center; color:#888;">No records yet.<br>Be the first challenger!</div>';
+        if (!db) {
+            list.innerHTML = '<div style="padding:20px; color:red;">DB Error</div>';
             return;
         }
 
-        // 3. 데이터 변환 및 정렬 (클라이언트 사이드)
-        let records = [];
-        querySnapshot.forEach((doc) => records.push(doc.data()));
+        // 3. DB 쿼리 (점수 기준 내림차순)
+        const q = query(
+            collection(db, "leaderboard"), 
+            where("difficulty", "==", difficulty),
+            orderBy("score", "desc")
+        );
         
-        // [수정됨] 정렬 로직: 1순위 블록등급(scoreIndex), 2순위 별(stars)
-        records.sort((a, b) => {
-            if (b.scoreIndex !== a.scoreIndex) {
-                return b.scoreIndex - a.scoreIndex; // 블록 높은 순
-            }
-            return (b.stars || 0) - (a.stars || 0); // 별 많은 순
-        });
+        const querySnapshot = await getDocs(q);
+        
+        list.innerHTML = '';
+        if(querySnapshot.empty) {
+            list.innerHTML = '<div style="padding:40px; color:#888;">No records yet.<br>Be the first challenger!</div>';
+            return;
+        }
 
-        // 상위 50명 자르기
-        records = records.slice(0, 50);
-
-        // 4. [디자인 적용] HTML 그리기
-        records.forEach((data, index) => {
-            const rank = index + 1;
+        let rank = 1;
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
             const item = document.createElement('div');
             
-            // CSS 클래스 적용 (rank-1, rank-2, rank-3 등)
-            item.className = `rank-item ${rank <= 3 ? 'rank-' + rank : ''}`;
+            // 1~3등 스타일 클래스
+            const rankClass = rank <= 3 ? `rank-${rank}` : '';
+            item.className = `rank-item ${rankClass}`;
             
-            // 메달 아이콘
-            let rankDisplay = rank;
-            if(rank === 1) rankDisplay = '🥇';
-            else if(rank === 2) rankDisplay = '🥈';
-            else if(rank === 3) rankDisplay = '🥉';
+            // 메달 표시
+            let medal = rank;
+            if(rank === 1) medal = '🥇';
+            else if(rank === 2) medal = '🥈';
+            else if(rank === 3) medal = '🥉';
 
-            // HTML 구조 (style.css의 디자인 활용)
+            // HTML 생성
             item.innerHTML = `
-                <div class="rank-number">${rankDisplay}</div>
-                <div class="rank-name">${data.username}</div>
-                <div class="rank-stats">
-                    <div class="rank-best">${data.bestChar} Block</div>
-                    <div class="rank-stars">⭐ ${data.stars || 0}</div>
+                <div class="rank-num">${medal}</div>
+                <div class="rank-info">
+                    <span class="rank-name">${data.username}</span>
+                    <span class="rank-detail">Best Block: <strong>${data.bestChar || '?'}</strong></span>
                 </div>
+                <div class="rank-score">${(data.score || 0).toLocaleString()}</div>
             `;
+            
             list.appendChild(item);
+            rank++;
         });
 
     } catch (e) {
-        console.error("Firebase Query Error: ", e);
-        loading.innerHTML = '<span style="color:#e74c3c">Failed to load rankings.</span>';
+        console.error("Leaderboard Error:", e);
+        list.innerHTML = `<div style="padding:20px; color:#e74c3c;">Failed to load data.<br><small>${e.message}</small></div>`;
+        
+        // 인덱스 에러일 경우 콘솔 확인 안내
+        if(e.message.includes("index")) {
+            console.log("🔥 Please create the index in Firebase Console via the link in the error message above.");
+        }
     }
-}
+};
 
-// 창이 켜지면 자동으로 EASY 랭킹 로드
+// 페이지 로드 시 기본 실행
 window.onload = () => {
-    loadRank('EASY');
+    loadRank('NORMAL');
 };
