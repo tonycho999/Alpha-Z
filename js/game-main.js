@@ -5,27 +5,34 @@ import * as Flow from "./game-flow.js";
 import * as Logic from "./game-logic.js";
 import { AudioMgr } from "./game-audio.js";
 
-// 글로벌 함수 연결
 window.gameLogic = {
     ...Flow, ...Logic, ...Core,
     useRefresh: () => Logic.useRefresh(() => Flow.checkHandAndRefill()),
     useHammer: () => Logic.useHammer(),
     useUpgrade: () => Logic.useUpgrade(),
     tryReviveWithAd: () => {
-        AdManager.showRewardAd(() => {
-            state.hasRevived = true;
-            // 중앙 3x3 비우기
-            const center = Math.floor(state.gridSize/2);
-            for(let r=center-1; r<=center+1; r++){
-                for(let c=center-1; c<=center+1; c++){
-                    const idx = r*state.gridSize+c;
-                    if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
-                }
+        // game-flow.js의 클릭 이벤트에서 AdManager.showRewardAd를 이미 호출했으므로
+        // 여기서는 성공 시의 콜백 로직만 수행하면 됩니다.
+        // 하지만 game-flow에서 직접 호출하는 구조로 되어 있으므로 이중 호출 방지를 위해 로직 유지
+        
+        // (game-flow.js에서 호출할 때 이미 광고를 봤다고 가정하고 내부 로직 실행)
+        state.hasRevived = true;
+        
+        // 중앙 3x3 비우기
+        const center = Math.floor(state.gridSize/2);
+        for(let r=center-1; r<=center+1; r++){
+            for(let c=center-1; c<=center+1; c++){
+                const idx = r*state.gridSize+c;
+                if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
             }
-            document.getElementById('popup-over').style.display = 'none';
-            UI.renderGrid();
-            Flow.checkHandAndRefill();
-        });
+        }
+        document.getElementById('popup-over').style.display = 'none';
+        
+        // [중요] 부활했으므로 게임 상태 다시 저장 (점수 유지)
+        Logic.saveGameState();
+        
+        UI.renderGrid();
+        Flow.checkHandAndRefill();
     },
     saveScore: async () => {
         const nameInput = document.getElementById('username-input');
@@ -46,7 +53,6 @@ window.onload = () => {
     try {
         console.log("🚀 Game Start");
         
-        // 버튼 소리 전역 바인딩
         document.addEventListener('click', (e) => {
             if(e.target.closest('button, .btn, .hand-slot')) AudioMgr.play('button');
         });
@@ -69,14 +75,12 @@ window.onload = () => {
         if (savedGame) {
             try {
                 const loaded = JSON.parse(savedGame);
-                // 난이도가 같을 때만 이어하기
                 if(loaded.diff === diff) {
                     state.grid = loaded.grid;
                     state.hand = loaded.hand;
                     state.score = loaded.score;
                     state.best = loaded.best;
                     state.stars = loaded.stars;
-                    // [중요] 저장된 currentMax 로드
                     state.currentMax = loaded.currentMax || 'A'; 
                     if(loaded.items) state.items = loaded.items;
                     console.log("Resume");
@@ -86,9 +90,15 @@ window.onload = () => {
         }
         
         if (!resumed) {
-            // [중요] 새 게임: 반드시 currentMax를 A로 리셋해야 함
+            // [중요] 새 게임 시작 시 초기화
+            console.log("New Game Started");
+            state.score = 0; // 점수 0점
             state.currentMax = 'A';
             state.hand = [null, null, null];
+            
+            // 혹시 남아있을지 모를 점수 기록 삭제
+            localStorage.removeItem('alpha_score');
+            
             Flow.checkHandAndRefill();
         } else {
             UI.renderHand();
@@ -99,15 +109,16 @@ window.onload = () => {
         if(savedName) checkAdmin(savedName);
 
         UI.renderGrid();
-        UI.updateUI();
+        UI.updateUI(); // 0점 반영
 
     } catch (e) {
         console.error("Init Fail:", e);
-        // 에러 시 강제 초기화
         initGridSize('NORMAL');
         UI.renderGrid();
+        state.score = 0;
         state.hand = [null, null, null];
         state.currentMax = 'A'; 
         Flow.checkHandAndRefill();
+        UI.updateUI();
     }
 };
