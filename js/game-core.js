@@ -1,4 +1,4 @@
-import { ALPHABET, state } from "./game-data.js";
+import { ALPHABET, state, SHAPES_1, SHAPES_2, SHAPES_3 } from "./game-data.js";
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
@@ -6,10 +6,7 @@ export function getMinIdx() {
     const bestIdx = ALPHABET.indexOf(state.best);
     if (bestIdx < 5) return 0; 
     let calcMin = Math.floor((bestIdx - 3) / 2);
-    let limitChar = 'T';
-    if (state.diff === 'HELL') limitChar = 'N';
-    else if (state.diff === 'NORMAL' || state.diff === 'HARD') limitChar = 'R';
-    const maxAllowedMin = Math.floor((ALPHABET.indexOf(limitChar) - 3) / 2);
+    const maxAllowedMin = Math.floor((ALPHABET.indexOf('T') - 3) / 2);
     return Math.min(calcMin, maxAllowedMin);
 }
 
@@ -68,9 +65,10 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
-// [DB 저장] 점수(Score) 저장 추가
+// [DB 저장] Score 필드 추가
 export async function saveScoreToDB(username, isNewUser = false) {
-    if (!db) return { success: false, msg: "DB Error" };
+    if (!db) return { success: false, msg: "DB Connection Error" };
+    
     const docId = username.trim();
     const safeDiff = state.diff || 'NORMAL'; 
     const safeBest = state.best || 'A';
@@ -83,7 +81,7 @@ export async function saveScoreToDB(username, isNewUser = false) {
         if (isNewUser && docSnap.exists()) return { success: false, msg: "Username taken." };
         if (!isNewUser && docSnap.exists()) {
             const existingData = docSnap.data();
-            // 점수 기준 비교
+            // 점수가 기존보다 낮으면 저장 안함
             if (existingData.score >= currentScore) return { success: true, msg: "Score preserved." };
         }
         
@@ -91,11 +89,14 @@ export async function saveScoreToDB(username, isNewUser = false) {
             username: docId,
             bestChar: safeBest,
             difficulty: safeDiff, 
-            score: Number(currentScore), // 점수 저장
+            score: Number(currentScore), // 점수 필수 저장
             timestamp: serverTimestamp()
         });
         return { success: true, msg: "Saved!" };
-    } catch (e) { return { success: false, msg: e.message }; }
+    } catch (e) { 
+        console.error("DB Error:", e);
+        return { success: false, msg: e.message }; 
+    }
 }
 
 // [리더보드] 점수 기준 정렬
@@ -112,7 +113,7 @@ export async function getLeaderboardData(targetDiff) {
         snapshot.forEach((doc) => ranks.push(doc.data()));
         return ranks;
     } catch (e) { 
-        console.error(e); 
+        console.error("Leaderboard Error:", e);
         return []; 
     }
 }
