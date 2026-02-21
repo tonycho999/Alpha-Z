@@ -1,4 +1,4 @@
-import { state } from "./game-data.js";
+import { state, ALPHABET } from "./game-data.js";
 
 export function renderGrid() {
     const gridEl = document.getElementById('grid-container');
@@ -31,7 +31,7 @@ export function renderHand() {
         const block = state.hand[i];
         if (block) {
             const miniGrid = document.createElement('div');
-            miniGrid.style.pointerEvents = 'none';
+            miniGrid.style.pointerEvents = 'none'; // 터치 통과
             miniGrid.style.display = 'grid';
             miniGrid.style.gridTemplateColumns = `repeat(${block.shape.w}, 1fr)`;
             miniGrid.style.gridTemplateRows = `repeat(${block.shape.h}, 1fr)`;
@@ -56,8 +56,26 @@ export function renderHand() {
     }
 }
 
+// [핵심 수정] UI 업데이트 (현재 보드 최고 블록 표시)
 export function updateUI() {
-    if(document.getElementById('ui-best')) document.getElementById('ui-best').textContent = state.best;
+    // 1. 현재 보드에서 가장 높은 알파벳 찾기
+    let currentMaxChar = 'A';
+    let maxIdx = 0;
+
+    if (state.grid && state.grid.length > 0) {
+        state.grid.forEach(char => {
+            if (char) {
+                const idx = ALPHABET.indexOf(char);
+                if (idx > maxIdx) {
+                    maxIdx = idx;
+                    currentMaxChar = char;
+                }
+            }
+        });
+    }
+
+    // 2. UI 반영
+    if(document.getElementById('ui-best')) document.getElementById('ui-best').textContent = currentMaxChar;
     if(document.getElementById('ui-stars')) document.getElementById('ui-stars').textContent = state.stars;
     if(document.getElementById('ui-diff')) document.getElementById('ui-diff').textContent = state.diff;
     if(document.getElementById('ui-score')) document.getElementById('ui-score').textContent = state.score;
@@ -70,6 +88,9 @@ export function updateUI() {
 }
 
 export function updateGameOverUI() {
+    // 게임 오버 시에는 '역사상 최고 기록'을 보여줄지, '이번 판 최고 기록'을 보여줄지 결정해야 하는데
+    // 보통 게임 오버 팝업은 state.best(역사적 최고)를 보여주는 것이 일반적입니다.
+    // 만약 이것도 이번 판 기록으로 바꾸고 싶으시면 위 로직을 그대로 쓰시면 됩니다.
     document.getElementById('over-best').textContent = state.best;
 }
 
@@ -77,11 +98,10 @@ export function setupDrag(onDropCallback) {
     window._onDropCallback = onDropCallback;
 }
 
-// [드래그 로직]
 function setupDragForSlot(slot, index) {
     const ghost = document.getElementById('ghost');
     
-    // 현재 셀 크기 측정
+    // [자석 오차 해결] 실제 셀 크기 측정
     const getRealCellSize = () => {
         const gridEl = document.getElementById('grid-container');
         if(!gridEl) return 40;
@@ -98,7 +118,7 @@ function setupDragForSlot(slot, index) {
         const block = state.hand[index];
         if(!block) return;
 
-        // 오프셋: 셀 크기의 1.8배만큼 위로 띄움 (손가락에 안 가리게)
+        // [오차 해결] 손가락 위로 띄움
         const yOffset = cellSize * 1.8; 
 
         ghost.innerHTML = '';
@@ -119,10 +139,7 @@ function setupDragForSlot(slot, index) {
         
         slot.style.opacity = '0';
         
-        const getPos = (ev) => { 
-            const t = ev.changedTouches ? ev.changedTouches[0] : (ev.touches ? ev.touches[0] : ev);
-            return { x: t.clientX, y: t.clientY }; 
-        };
+        const getPos = (ev) => { return { x: (ev.changedTouches?ev.changedTouches[0]:ev).clientX, y: (ev.changedTouches?ev.changedTouches[0]:ev).clientY }; };
         
         const updateGhost = (x,y) => { 
             ghost.style.left = (x - ghost.offsetWidth/2)+'px'; 
@@ -135,12 +152,10 @@ function setupDragForSlot(slot, index) {
             if(me.cancelable) me.preventDefault(); 
             const p = getPos(me); updateGhost(p.x, p.y); 
             
-            // [중요 수정] 판정 기준을 '블록 전체 중앙'에서 '첫 번째 칸(Top-Left)의 중앙'으로 변경
-            // 이렇게 해야 3칸짜리 긴 블록도 시작점이 정확하게 0,0으로 잡힘
+            // [자석] Ghost의 '첫 번째 칸(Top-Left)' 중앙 기준
             const rect = ghost.getBoundingClientRect();
-            const cx = rect.left + (cellSize / 2); // 좌측 + 반칸
-            const cy = rect.top + (cellSize / 2);  // 상단 + 반칸
-            
+            const cx = rect.left + (cellSize / 2);
+            const cy = rect.top + (cellSize / 2);
             const idx = getMagnetIndex(cx, cy);
             
             document.querySelectorAll('.highlight-valid').forEach(el=>el.classList.remove('highlight-valid'));
@@ -153,7 +168,6 @@ function setupDragForSlot(slot, index) {
             window.removeEventListener('mousemove', move); window.removeEventListener('touchmove', move);
             window.removeEventListener('mouseup', end); window.removeEventListener('touchend', end);
             
-            // 드롭 시에도 동일한 기준점 사용
             const rect = ghost.getBoundingClientRect();
             const cx = rect.left + (cellSize / 2);
             const cy = rect.top + (cellSize / 2);
@@ -181,11 +195,8 @@ function getMagnetIndex(x, y) {
     const rect = grid.getBoundingClientRect();
     const gap = 3;
     const padding = 5; 
-    
-    // 현재 셀 크기 역산
     const cellSize = (rect.width - (state.gridSize - 1) * gap - (padding * 2)) / state.gridSize;
     
-    // 범위 체크
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return -1;
     
     const lx = x - rect.left - padding;
