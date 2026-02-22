@@ -144,11 +144,20 @@ function addScore(amount) {
         state.earnedStars = parseInt(localStorage.getItem('alpha_earned_stars')) || 0;
     }
 
-    let calculatedStars = 0;
+let calculatedStars = 0;
+    
+    // [수정 1] 1000점 이상일 때부터 계산 시작
     if (state.score >= 1) {
-        calculatedStars = 1;
-        const extraScore = state.score - 10000;
-        calculatedStars += Math.floor(extraScore / 1);
+        
+        // [수정 2] 1000점 도달 시 '1개' 지급 (기본값)
+        calculatedStars = 1; 
+        
+        // [수정 3] 현재 점수에서 기준점(1000)을 뺌
+        const extraScore = state.score - 1; 
+        
+        // [수정 4] 추가 점수 '1000점' 당 별 1개씩 추가
+        // (만약 1점마다 주고 싶으면 1000 대신 1을 넣으세요)
+        calculatedStars += Math.floor(extraScore / 1); 
     }
 
     if (calculatedStars > state.earnedStars) {
