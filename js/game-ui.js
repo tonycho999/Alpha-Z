@@ -6,6 +6,8 @@ let draggedBlock = null;
 
 export function renderGrid() {
     const container = document.getElementById('grid-container');
+    if (!container) return; // 안전 장치 추가
+
     container.innerHTML = '';
     container.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
     container.style.gridTemplateRows = `repeat(${state.gridSize}, 1fr)`;
@@ -29,17 +31,17 @@ export function renderGrid() {
 
 export function renderHand() {
     const container = document.getElementById('hand-container');
+    if (!container) return; // 안전 장치 추가
+
     container.innerHTML = '';
     
     state.hand.forEach((block, idx) => {
         const slot = document.createElement('div');
         slot.classList.add('hand-slot');
-        // 슬롯에도 인덱스는 남겨둠 (참조용)
         slot.dataset.index = idx;
 
         if (block) {
             const preview = createBlockPreview(block);
-            // 블록 자체에 인덱스를 명확히 부여
             preview.dataset.index = idx; 
             slot.appendChild(preview);
         }
@@ -54,11 +56,7 @@ function createBlockPreview(block) {
     wrapper.style.gridTemplateRows = `repeat(${block.shape.h}, 25px)`;
     wrapper.style.gap = '2px';
     
-    // [중요 수정] 블록 자체가 클릭을 받아야 하므로 pointerEvents 'none' 제거
-    // wrapper.style.pointerEvents = 'none'; (삭제됨)
     wrapper.style.cursor = 'grab'; 
-    
-    // [중요 수정] 모바일에서 드래그 시 화면 스크롤 방지
     wrapper.style.touchAction = 'none'; 
 
     const map = block.shape.map;
@@ -93,10 +91,16 @@ function createBlockPreview(block) {
     return wrapper;
 }
 
+// [핵심 수정 부분: updateUI 안전 장치 추가]
 export function updateUI() {
-    document.getElementById('score-val').textContent = state.score;
-    document.getElementById('best-val').textContent = state.best;
-    document.getElementById('star-val').textContent = state.stars;
+    // 요소를 먼저 찾고, 존재할 때만 값을 넣습니다.
+    const scoreEl = document.getElementById('score-val');
+    const bestEl = document.getElementById('best-val');
+    const starEl = document.getElementById('star-val');
+
+    if (scoreEl) scoreEl.textContent = state.score;
+    if (bestEl) bestEl.textContent = state.best;
+    if (starEl) starEl.textContent = state.stars;
     
     const rBtn = document.getElementById('btn-refresh');
     const hBtn = document.getElementById('btn-hammer');
@@ -128,13 +132,10 @@ export function updateUI() {
     }
 }
 
-// [수정된 setupDrag: 블록(div) 자체에 이벤트 연결]
 export function setupDrag(onDrop) {
-    // .hand-slot 안에 있는 div(블록)만 정확히 타겟팅
     const blocks = document.querySelectorAll('.hand-slot > div');
     
     blocks.forEach(block => {
-        // 기존 이벤트 제거 (안전장치)
         block.onmousedown = null;
         block.ontouchstart = null;
 
@@ -146,11 +147,9 @@ export function setupDrag(onDrop) {
 function startDrag(e, blockEl, isTouch, onDrop) {
     if(state.isLocked) return;
     
-    // 이벤트 전파 방지 (중복 클릭 방지)
     e.stopPropagation(); 
     if (e.cancelable) e.preventDefault();
     
-    // 블록 자체에 있는 data-index 사용
     const idx = parseInt(blockEl.dataset.index);
     if(isNaN(idx) || state.hand[idx] === null) return;
 
@@ -158,8 +157,8 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     draggedBlock = blockEl.cloneNode(true);
     
     draggedBlock.style.position = 'fixed';
-    draggedBlock.style.zIndex = '9999'; // z-index 최상위 보장
-    draggedBlock.style.pointerEvents = 'none'; // 드래그 중인 유령은 클릭 통과
+    draggedBlock.style.zIndex = '9999'; 
+    draggedBlock.style.pointerEvents = 'none'; 
     draggedBlock.style.opacity = '0.9';
     draggedBlock.style.transform = 'scale(1.1)'; 
     
@@ -181,11 +180,9 @@ function startDrag(e, blockEl, isTouch, onDrop) {
         const cy = isTouch ? event.touches[0].clientY : event.clientY;
         moveAt(cx, cy);
 
-        // 하이라이트 제거
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
         document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
 
-        // 드래그 중인 요소 숨기고 아래 요소 확인
         draggedBlock.style.visibility = 'hidden';
         const elemBelow = document.elementFromPoint(cx, cy);
         draggedBlock.style.visibility = 'visible';
@@ -194,7 +191,7 @@ function startDrag(e, blockEl, isTouch, onDrop) {
             const cell = elemBelow.closest('.cell');
             if(cell) {
                 const cellId = parseInt(cell.id.split('-')[1]);
-                onDrop(cellId, true); // 미리보기
+                onDrop(cellId, true); 
             }
         }
     }
@@ -217,7 +214,7 @@ function startDrag(e, blockEl, isTouch, onDrop) {
             const cell = elemBelow.closest('.cell');
             if(cell) {
                 const cellId = parseInt(cell.id.split('-')[1]);
-                dropped = onDrop(cellId, false); // 실제 드롭
+                dropped = onDrop(cellId, false); 
             }
         }
 
@@ -228,7 +225,6 @@ function startDrag(e, blockEl, isTouch, onDrop) {
         if(!dropped) state.dragIndex = -1; 
     }
 
-    // passive: false 필수 (모바일 스크롤 방지)
     document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onMove, {passive: false});
     document.addEventListener(isTouch ? 'touchend' : 'mouseup', onEnd);
 }
