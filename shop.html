@@ -11,6 +11,7 @@
         .item-info { text-align: left; }
         .item-name { font-weight: bold; font-size: 1.1rem; color: #fff; display: block; }
         .item-desc { font-size: 0.8rem; color: #aaa; }
+        .item-count { font-size: 0.9rem; color: var(--accent); font-weight: bold; margin-left: 5px; }
         .btn:disabled { background: #555 !important; color: #999 !important; cursor: not-allowed; opacity: 0.7; }
     </style>
 </head>
@@ -23,15 +24,26 @@
 
         <div style="width:100%; max-width:350px;">
             <div class="item-card">
-                <div class="item-info"><span class="item-name">🔨 HAMMER</span><span class="item-desc">Remove 1 block</span></div>
+                <div class="item-info">
+                    <span class="item-name">🔨 HAMMER <span id="cnt-hammer" class="item-count">(0)</span></span>
+                    <span class="item-desc">Remove 1 block</span>
+                </div>
                 <button class="btn btn-primary" onclick="playBtnSound(); buyItem('hammer', 1)">1 ⭐</button>
             </div>
+            
             <div class="item-card">
-                <div class="item-info"><span class="item-name">🔄 REFRESH</span><span class="item-desc">New Hand blocks</span></div>
+                <div class="item-info">
+                    <span class="item-name">🔄 REFRESH <span id="cnt-refresh" class="item-count">(0)</span></span>
+                    <span class="item-desc">New Hand blocks</span>
+                </div>
                 <button class="btn btn-primary" onclick="playBtnSound(); buyItem('refresh', 1)">1 ⭐</button>
             </div>
+            
             <div class="item-card">
-                <div class="item-info"><span class="item-name">🆙 UPGRADE</span><span class="item-desc">Upgrade lowest block</span></div>
+                <div class="item-info">
+                    <span class="item-name">🆙 UPGRADE <span id="cnt-upgrade" class="item-count">(0)</span></span>
+                    <span class="item-desc">Upgrade lowest block</span>
+                </div>
                 <button class="btn btn-primary" onclick="playBtnSound(); buyItem('upgrade', 5)">5 ⭐</button>
             </div>
         </div>
@@ -67,6 +79,13 @@
         const btn = document.getElementById('btn-ad-reward');
         const adSection = document.getElementById('ad-section');
         
+        // 아이템 보유량 표시 요소
+        const cntEl = {
+            hammer: document.getElementById('cnt-hammer'),
+            refresh: document.getElementById('cnt-refresh'),
+            upgrade: document.getElementById('cnt-upgrade')
+        };
+        
         let currentStars = parseInt(localStorage.getItem('alpha_stars')) || 0;
         
         // 관리자 확인
@@ -74,8 +93,24 @@
         if(savedName) checkAdmin(savedName);
         const isAdmin = localStorage.getItem('alpha_admin') === 'true';
 
-        function updateStars() { if(starEl) starEl.textContent = currentStars; }
-        updateStars();
+        // [UI 갱신 함수] 스타 및 아이템 보유량 업데이트
+        function updateShopUI() { 
+            if(starEl) starEl.textContent = currentStars;
+            
+            // 로컬스토리지에서 최신 아이템 정보 가져오기
+            let items = { refresh:0, hammer:0, upgrade:0 };
+            try { 
+                items = JSON.parse(localStorage.getItem('alpha_items')) || items; 
+            } catch(e){}
+
+            // 화면에 반영
+            if(cntEl.hammer) cntEl.hammer.textContent = `(${items.hammer || 0})`;
+            if(cntEl.refresh) cntEl.refresh.textContent = `(${items.refresh || 0})`;
+            if(cntEl.upgrade) cntEl.upgrade.textContent = `(${items.upgrade || 0})`;
+        }
+        
+        // 초기 실행
+        updateShopUI();
 
         window.buyItem = function(type, cost) {
             if(currentStars >= cost) {
@@ -89,19 +124,17 @@
                     items[type] = (items[type] || 0) + 1;
                     localStorage.setItem('alpha_items', JSON.stringify(items));
                     
-                    updateStars();
+                    updateShopUI(); // 즉시 UI 갱신
                     alert(`Purchased ${type}!`);
                 }
             } else { alert("Not enough stars!"); }
         };
 
-        // [수정됨] 광고 버튼 로직 (쿨타임 반영)
+        // 광고 버튼 로직
         if(btn) {
             if(isAdmin) {
-                // 관리자는 광고 섹션 숨김
                 if(adSection) adSection.style.display = 'none';
             } else {
-                // 일반 유저: 상태 체크
                 const status = AdManager.checkAdStatus();
                 
                 if (status.avail) {
@@ -112,13 +145,12 @@
                         AdManager.showRewardAd(() => {
                             currentStars += 2;
                             localStorage.setItem('alpha_stars', currentStars);
-                            updateStars();
+                            updateShopUI();
                             alert("You got 2 Stars!");
-                            location.reload(); // 버튼 상태 갱신을 위해 새로고침
+                            location.reload(); 
                         });
                     };
                 } else {
-                    // 쿨타임 중이거나 제한 도달 시 비활성화
                     btn.textContent = `🚫 ${status.msg}`;
                     btn.disabled = true;
                 }
