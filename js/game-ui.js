@@ -4,8 +4,10 @@ import { AudioMgr } from "./game-audio.js";
 
 let draggedBlock = null;
 let currentScale = 1; 
+let dragW = 1; // 드래그 중인 블록의 가로 칸 수
+let dragH = 1; // 드래그 중인 블록의 세로 칸 수
 
-// 손가락보다 얼마나 위로 띄울지 (시야 확보)
+// [설정] 손가락과 블록 사이 거리 (시야 확보용)
 const TOUCH_OFFSET_Y = 100; 
 
 export function renderGrid() {
@@ -43,8 +45,12 @@ export function renderHand() {
         const slot = document.createElement('div');
         slot.classList.add('hand-slot');
         slot.dataset.index = idx;
-
+        
+        // [중요] 블록의 크기 정보를 슬롯에 저장해둠 (드래그 시 오차 계산용)
         if (block) {
+            slot.dataset.w = block.shape.w;
+            slot.dataset.h = block.shape.h;
+            
             const preview = createBlockPreview(block);
             preview.dataset.index = idx; 
             slot.appendChild(preview);
@@ -154,8 +160,13 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     e.stopPropagation(); 
     if (e.cancelable) e.preventDefault();
     
+    const slot = blockEl.parentElement;
     const idx = parseInt(blockEl.dataset.index);
     if(isNaN(idx) || state.hand[idx] === null) return;
+
+    // 블록 크기 정보 가져오기 (없으면 1로 기본값)
+    dragW = parseInt(slot.dataset.w) || 1;
+    dragH = parseInt(slot.dataset.h) || 1;
 
     state.dragIndex = idx;
     draggedBlock = blockEl.cloneNode(true);
@@ -173,7 +184,6 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     draggedBlock.style.zIndex = '9999'; 
     draggedBlock.style.pointerEvents = 'none'; 
     draggedBlock.style.opacity = '0.9';
-    // 확대 적용 (중심점 기준)
     draggedBlock.style.transform = `scale(${targetScale})`; 
     draggedBlock.style.transformOrigin = 'center center'; 
     draggedBlock.style.boxShadow = '0 15px 30px rgba(0,0,0,0.4)';
@@ -186,12 +196,37 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     moveAt(clientX, clientY);
 
     function moveAt(pageX, pageY) {
-        // [오차 해결 핵심]
-        // visualWidth(확대된 크기)를 빼는 게 아니라, offsetWidth(원래 크기)의 절반을 빼야
-        // transformOrigin: center와 맞물려 정확히 중앙에 위치합니다.
-        
+        // 시각적 위치: 손가락 위에 블록 중앙이 오도록 (시야 확보)
         draggedBlock.style.left = (pageX - draggedBlock.offsetWidth / 2) + 'px';
         draggedBlock.style.top = (pageY - draggedBlock.offsetHeight / 2 - TOUCH_OFFSET_Y) + 'px'; 
+    }
+
+    // [자석 감지 위치 계산 함수]
+    function getSensorCoordinates(cx, cy) {
+        // 기본 위치: 손가락 위치에서 시야 확보값(TOUCH_OFFSET_Y)만큼 올린 곳
+        let sensorX = cx;
+        let sensorY = cy - TOUCH_OFFSET_Y;
+
+        // [동적 오차 보정]
+        // 블록이 클수록(dragW, dragH가 1보다 클수록) 판정 기준을 오른쪽/아래로 이동
+        // 1칸짜리는 (1-1)=0 이므로 보정 없음.
+        
+        // 가로 보정: 오른쪽으로 1/3칸 정도 밀기
+        // (25 * currentScale)은 화면상 1칸의 대략적 픽셀 크기
+        const cellSize = 25 * currentScale;
+        
+        // 가로: 칸이 많을수록 오른쪽으로 살짝 보정
+        if (dragW > 1) {
+            sensorX += (dragW - 1) * (cellSize * 0.35); 
+        }
+
+        // 세로: 칸이 많을수록 아래로 많이 보정 (요청하신 사항)
+        // 2칸: 반칸, 3칸: 1칸 정도 내려가도록 가중치 부여
+        if (dragH > 1) {
+            sensorY += (dragH - 1) * (cellSize * 0.55); 
+        }
+
+        return { x: sensorX, y: sensorY };
     }
 
     function onMove(event) {
@@ -200,16 +235,17 @@ function startDrag(e, blockEl, isTouch, onDrop) {
         const cx = isTouch ? event.touches[0].clientX : event.clientX;
         const cy = isTouch ? event.touches[0].clientY : event.clientY;
         
+        // 1. 눈에 보이는 블록 이동
         moveAt(cx, cy);
 
+        // 2. 하이라이트 초기화
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
         document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
 
         draggedBlock.style.visibility = 'hidden';
 
-        // [자석 감지 좌표] 손가락 위치가 아니라 '블록이 떠 있는 위치' 기준
-        const sensorX = cx;
-        const sensorY = cy - TOUCH_OFFSET_Y;
+        // 3. 보정된 감지 위치 사용
+        const { x: sensorX, y: sensorY } = getSensorCoordinates(cx, cy);
 
         const elemBelow = document.elementFromPoint(sensorX, sensorY);
         draggedBlock.style.visibility = 'visible';
@@ -237,8 +273,8 @@ function startDrag(e, blockEl, isTouch, onDrop) {
         
         draggedBlock.style.visibility = 'hidden';
 
-        const sensorX = cx;
-        const sensorY = cy - TOUCH_OFFSET_Y;
+        // 드롭 시에도 동일한 보정 좌표 사용
+        const { x: sensorX, y: sensorY } = getSensorCoordinates(cx, cy);
 
         const elemBelow = document.elementFromPoint(sensorX, sensorY);
         
