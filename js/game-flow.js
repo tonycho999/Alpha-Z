@@ -14,17 +14,22 @@ export function handleCellClick(idx) {
     }
 }
 
+// [핵심 수정 함수]
 export function checkHandAndRefill() {
     const isEmpty = state.hand.every(b => b === null);
+    
     if (isEmpty) {
+        // 핸드가 다 비었으면 새로 채움
         state.hand = [ Core.createRandomBlock(), Core.createRandomBlock(), Core.createRandomBlock() ];
         UI.renderHand();
-        UI.setupDrag(handleDropAttempt); 
         Logic.saveGameState(); 
-        checkGameOver();
-    } else {
-        checkGameOver();
     }
+    
+    // [중요] 핸드를 새로 채웠든(Refill), 하나만 썼든(Use)
+    // 화면(UI)은 새로 그려졌으므로, 드래그 이벤트를 반드시 다시 연결해야 합니다.
+    UI.setupDrag(handleDropAttempt); 
+    
+    checkGameOver();
 }
 
 function checkGameOver() {
@@ -76,15 +81,13 @@ function showGameOverPopup() {
         }
     }
 
-    // 2. 게임 종료 후 [Main Menu] 버튼 (여기에만 광고 적용)
+    // 2. 메인 메뉴 버튼 (광고 적용)
     const btnMenu = document.getElementById('btn-go-home');
     if(btnMenu) {
-        // 기존 이벤트 제거를 위해 새로 복제하거나 덮어쓰기
         const newBtn = btnMenu.cloneNode(true);
         btnMenu.parentNode.replaceChild(newBtn, btnMenu);
         
         newBtn.onclick = () => {
-            // 쿨타임이면 광고 스킵하고 바로 이동, 아니면 광고 보고 이동
             AdManager.showRewardAd(() => {
                 location.reload();
             });
