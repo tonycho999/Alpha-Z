@@ -49,7 +49,7 @@ export function checkAdmin(username) {
     return false;
 }
 
-// [AdManager: 10분 쿨타임 및 PWA 외부 브라우저 지원]
+// [AdManager: 관리자 패스 + 10분 쿨타임 + PWA 외부 브라우저]
 export const AdManager = {
     COOLDOWN: 10 * 60 * 1000, // 10분
 
@@ -72,16 +72,23 @@ export const AdManager = {
     },
 
     showRewardAd: function(onSuccess) {
+        // [1. 관리자 프리패스: 광고 없이 즉시 성공]
+        if (state.isAdmin) {
+            // console.log("👑 Admin Pass");
+            onSuccess();
+            return;
+        }
+
         const status = this.checkAdStatus();
         
-        // [핵심] 쿨타임 중이면 광고 없이 바로 성공 콜백 실행 (메뉴 이동 등 기능 유지)
+        // [2. 쿨타임 패스: 쿨타임 중이면 광고 없이 성공 (기능 유지)]
         if (!status.avail) {
             onSuccess(); 
             return;
         }
 
+        // [3. 일반 유저 광고 시청]
         if(confirm("📺 Watch Ad to support us?")) {
-            // PWA/모바일 환경 대응: 외부 브라우저로 강제 오픈
             const adUrl = 'https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb';
             
             const link = document.createElement('a');
@@ -92,9 +99,8 @@ export const AdManager = {
             link.click();
             document.body.removeChild(link);
 
-            // 광고 시청 간주 (3초 후 처리)
             setTimeout(() => { 
-                this.recordWatch(); // 쿨타임 시작
+                this.recordWatch(); 
                 onSuccess(); 
             }, 3000);
         }
