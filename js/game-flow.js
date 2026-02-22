@@ -49,23 +49,20 @@ function showGameOverPopup() {
     if(popup) popup.style.display = 'flex';
     document.getElementById('over-best').textContent = state.best;
     
-    // 저장 메시지 초기화
     const saveMsg = document.getElementById('save-msg');
     if(saveMsg) saveMsg.style.display = 'none';
 
-    // 부활 버튼 로직
+    // 1. 부활 버튼
     const btnRevive = document.getElementById('btn-revive-ad');
     if(btnRevive) {
         const adStatus = AdManager.checkAdStatus();
         if(state.hasRevived) {
-            btnRevive.style.display = 'none';
-        } else if (state.isAdmin) {
-            btnRevive.style.display = 'none'; 
-        } else if (!adStatus.avail) {
-            btnRevive.style.display = 'block';
-            btnRevive.disabled = true;
-            btnRevive.style.opacity = '0.5';
-            btnRevive.textContent = `🚫 ${adStatus.msg}`;
+             btnRevive.style.display = 'none';
+        } else if (!adStatus.avail && !state.isAdmin) {
+             btnRevive.style.display = 'block';
+             btnRevive.disabled = true;
+             btnRevive.style.opacity = '0.5';
+             btnRevive.textContent = `🚫 ${adStatus.msg}`;
         } else {
             btnRevive.style.display = 'block';
             btnRevive.disabled = false;
@@ -78,17 +75,30 @@ function showGameOverPopup() {
             };
         }
     }
+
+    // 2. 게임 종료 후 [Main Menu] 버튼 (여기에만 광고 적용)
+    const btnMenu = document.getElementById('btn-go-home');
+    if(btnMenu) {
+        // 기존 이벤트 제거를 위해 새로 복제하거나 덮어쓰기
+        const newBtn = btnMenu.cloneNode(true);
+        btnMenu.parentNode.replaceChild(newBtn, btnMenu);
+        
+        newBtn.onclick = () => {
+            // 쿨타임이면 광고 스킵하고 바로 이동, 아니면 광고 보고 이동
+            AdManager.showRewardAd(() => {
+                location.reload();
+            });
+        };
+    }
     
-    // 유저 UI 처리 (버튼 텍스트 변경)
+    // 유저 UI 처리
     const name = localStorage.getItem('alpha_username');
     const existArea = document.getElementById('area-exist-user');
     const newArea = document.getElementById('area-new-user');
-    
-    // [중요] 기존 유저일 경우 버튼 텍스트를 'Update' 대신 'Save Score'로 변경
     const btnExistSave = document.getElementById('btn-just-save');
     if(btnExistSave) {
         btnExistSave.style.display = 'block';
-        btnExistSave.textContent = "Save Score"; // "Update" 대신 중립적인 표현 사용
+        btnExistSave.textContent = "Save Score";
     }
     const btnNewSave = document.getElementById('btn-check-save');
     if(btnNewSave) btnNewSave.style.display = 'block';
