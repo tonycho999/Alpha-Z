@@ -5,8 +5,8 @@ import { AudioMgr } from "./game-audio.js";
 let draggedBlock = null;
 let currentScale = 1; 
 
-// [설정] 손가락보다 얼마나 위로 띄울지 (픽셀 단위)
-const TOUCH_OFFSET_Y = 80; 
+// 손가락보다 얼마나 위로 띄울지 (시야 확보)
+const TOUCH_OFFSET_Y = 100; 
 
 export function renderGrid() {
     const container = document.getElementById('grid-container');
@@ -160,12 +160,12 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     state.dragIndex = idx;
     draggedBlock = blockEl.cloneNode(true);
     
-    // [보드 칸 크기에 맞춰 비율 계산]
+    // [크기 계산]
     const boardCell = document.querySelector('.cell');
     let targetScale = 1.0;
     if (boardCell) {
         const cellWidth = boardCell.offsetWidth;
-        targetScale = cellWidth / 25; // 25px(기본) 대비 확대 비율
+        targetScale = cellWidth / 25; 
     }
     currentScale = targetScale;
 
@@ -173,10 +173,10 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     draggedBlock.style.zIndex = '9999'; 
     draggedBlock.style.pointerEvents = 'none'; 
     draggedBlock.style.opacity = '0.9';
-    // 확대 적용
+    // 확대 적용 (중심점 기준)
     draggedBlock.style.transform = `scale(${targetScale})`; 
     draggedBlock.style.transformOrigin = 'center center'; 
-    draggedBlock.style.boxShadow = '0 15px 30px rgba(0,0,0,0.4)'; // 그림자 강화
+    draggedBlock.style.boxShadow = '0 15px 30px rgba(0,0,0,0.4)';
 
     document.body.appendChild(draggedBlock);
 
@@ -186,14 +186,12 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     moveAt(clientX, clientY);
 
     function moveAt(pageX, pageY) {
-        // [핵심] 실제 눈에 보이는 크기 계산
-        const visualWidth = draggedBlock.offsetWidth * currentScale;
-        const visualHeight = draggedBlock.offsetHeight * currentScale;
-
-        // [시야 확보] 손가락 위치(pageX, pageY)보다 블록을 위로 올림(TOUCH_OFFSET_Y)
-        // 블록의 정중앙이 '손가락 위 80px' 지점에 오도록 설정
-        draggedBlock.style.left = (pageX - visualWidth / 2) + 'px';
-        draggedBlock.style.top = (pageY - visualHeight / 2 - TOUCH_OFFSET_Y) + 'px'; 
+        // [오차 해결 핵심]
+        // visualWidth(확대된 크기)를 빼는 게 아니라, offsetWidth(원래 크기)의 절반을 빼야
+        // transformOrigin: center와 맞물려 정확히 중앙에 위치합니다.
+        
+        draggedBlock.style.left = (pageX - draggedBlock.offsetWidth / 2) + 'px';
+        draggedBlock.style.top = (pageY - draggedBlock.offsetHeight / 2 - TOUCH_OFFSET_Y) + 'px'; 
     }
 
     function onMove(event) {
@@ -202,18 +200,14 @@ function startDrag(e, blockEl, isTouch, onDrop) {
         const cx = isTouch ? event.touches[0].clientX : event.clientX;
         const cy = isTouch ? event.touches[0].clientY : event.clientY;
         
-        // 1. 블록 위치 이동 (손가락보다 위에 그려짐)
         moveAt(cx, cy);
 
-        // 2. 하이라이트 초기화
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
         document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
 
         draggedBlock.style.visibility = 'hidden';
 
-        // [핵심 자석 보정]
-        // 손가락 위치(cx, cy)가 아니라, "블록이 실제로 떠 있는 위치(중심점)"를 기준으로 검사해야 함
-        // 블록은 시각적으로 (cx, cy - TOUCH_OFFSET_Y)에 떠 있음.
+        // [자석 감지 좌표] 손가락 위치가 아니라 '블록이 떠 있는 위치' 기준
         const sensorX = cx;
         const sensorY = cy - TOUCH_OFFSET_Y;
 
@@ -224,7 +218,7 @@ function startDrag(e, blockEl, isTouch, onDrop) {
             const cell = elemBelow.closest('.cell');
             if(cell) {
                 const cellId = parseInt(cell.id.split('-')[1]);
-                onDrop(cellId, true); // 미리보기
+                onDrop(cellId, true); 
             }
         }
     }
@@ -243,7 +237,6 @@ function startDrag(e, blockEl, isTouch, onDrop) {
         
         draggedBlock.style.visibility = 'hidden';
 
-        // [핵심 자석 보정] 드롭할 때도 동일하게 "블록 중심점" 기준으로 판정
         const sensorX = cx;
         const sensorY = cy - TOUCH_OFFSET_Y;
 
@@ -253,7 +246,7 @@ function startDrag(e, blockEl, isTouch, onDrop) {
             const cell = elemBelow.closest('.cell');
             if(cell) {
                 const cellId = parseInt(cell.id.split('-')[1]);
-                dropped = onDrop(cellId, false); // 실제 배치
+                dropped = onDrop(cellId, false); 
             }
         }
 
