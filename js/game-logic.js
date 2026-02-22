@@ -145,10 +145,10 @@ function addScore(amount) {
     }
 
     let calculatedStars = 0;
-    if (state.score >= 10000) {
+    if (state.score >= 1) {
         calculatedStars = 1;
         const extraScore = state.score - 10000;
-        calculatedStars += Math.floor(extraScore / 5000);
+        calculatedStars += Math.floor(extraScore / 1);
     }
 
     if (calculatedStars > state.earnedStars) {
