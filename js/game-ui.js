@@ -3,6 +3,7 @@ import * as Logic from "./game-logic.js";
 import { AudioMgr } from "./game-audio.js";
 
 let draggedBlock = null;
+let currentScale = 1; // 현재 확대 비율 저장용 변수
 
 export function renderGrid() {
     const container = document.getElementById('grid-container');
@@ -56,6 +57,7 @@ function createBlockPreview(block) {
     wrapper.style.gridTemplateRows = `repeat(${block.shape.h}, 25px)`;
     wrapper.style.gap = '2px';
     
+    // 블록 자체에 터치/클릭 기능 부여
     wrapper.style.cursor = 'grab'; 
     wrapper.style.touchAction = 'none'; 
 
@@ -91,8 +93,8 @@ function createBlockPreview(block) {
     return wrapper;
 }
 
-// [UI 업데이트: ID를 안전하게 찾아서 값 넣기]
 export function updateUI() {
+    // HTML ID 확인 (ui-score 등)
     const scoreEl = document.getElementById('ui-score');
     const bestEl = document.getElementById('ui-best');
     const starEl = document.getElementById('ui-stars');
@@ -134,9 +136,11 @@ export function updateUI() {
 }
 
 export function setupDrag(onDrop) {
+    // .hand-slot 바로 아래의 div(블록)을 찾습니다.
     const blocks = document.querySelectorAll('.hand-slot > div');
     
     blocks.forEach(block => {
+        // 중복 방지
         block.onmousedown = null;
         block.ontouchstart = null;
 
@@ -157,27 +161,51 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     state.dragIndex = idx;
     draggedBlock = blockEl.cloneNode(true);
     
-    // [확대 효과 강화]
+    // [핵심] 보드판 실제 칸 크기 측정
+    const boardCell = document.querySelector('.cell');
+    let targetScale = 1.0;
+    
+    if (boardCell) {
+        // (보드 칸 크기) / (핸드 블록 기본 크기 25px)
+        const cellWidth = boardCell.offsetWidth;
+        // 약간의 오차를 줄이고 보기 좋게 하기 위해 25보다 살짝 작은 값으로 나누거나 그대로 사용
+        // 여기서는 정확한 매칭을 위해 25로 나눕니다.
+        targetScale = cellWidth / 25;
+    }
+    
+    // 전역 변수에 저장 (moveAt에서 사용)
+    currentScale = targetScale;
+
     draggedBlock.style.position = 'fixed';
     draggedBlock.style.zIndex = '9999'; 
     draggedBlock.style.pointerEvents = 'none'; 
-    // 기존 1.1 -> 1.3으로 키우고, 그림자 추가
-    draggedBlock.style.transform = 'scale(1.3)'; 
     draggedBlock.style.opacity = '0.9';
-    draggedBlock.style.boxShadow = '0 10px 20px rgba(0,0,0,0.3)'; // 붕 뜬 느낌 추가
+    // 계산된 비율 적용 (손가락에 가려지지 않게 살짝 위로 올리려면 translateY 추가 가능)
+    draggedBlock.style.transform = `scale(${targetScale})`; 
+    draggedBlock.style.transformOrigin = 'center center'; // 확대 기준점 중앙
     
+    // 그림자 추가
+    draggedBlock.style.boxShadow = '0 10px 20px rgba(0,0,0,0.3)';
+
     document.body.appendChild(draggedBlock);
 
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
     
-    // 초기 위치 잡기
     moveAt(clientX, clientY);
 
     function moveAt(pageX, pageY) {
-        // 커서가 블록의 정중앙에 오도록 계산
-        draggedBlock.style.left = (pageX - draggedBlock.offsetWidth / 2) + 'px';
-        draggedBlock.style.top = (pageY - draggedBlock.offsetHeight / 2) + 'px';
+        // [중요] 확대된 크기만큼 중심점 보정
+        // offsetWidth는 원래 크기(25px 기준)이므로 scale을 곱해야 실제 화면상 크기가 나옵니다.
+        const visualWidth = draggedBlock.offsetWidth * currentScale;
+        const visualHeight = draggedBlock.offsetHeight * currentScale;
+
+        // 터치 지점이 블록의 정중앙에 오도록 설정
+        draggedBlock.style.left = (pageX - visualWidth / 2) + 'px';
+        draggedBlock.style.top = (pageY - visualHeight / 2) + 'px'; 
+        
+        // (옵션) 손가락에 가려 안 보인다면 Y축을 조금 올려주세요:
+        // draggedBlock.style.top = (pageY - visualHeight / 2 - 50) + 'px'; 
     }
 
     function onMove(event) {
