@@ -1,9 +1,10 @@
-import { state, ALPHABET, AdManager } from "./game-data.js";
+import { state, ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, AdManager } from "./game-data.js";
 import * as Core from "./game-core.js";
-import * as UI from "./game-ui.js";
+import * as UI from "./game-ui.js"; 
 import { AudioMgr } from "./game-audio.js";
+import { db } from "./firebase-config.js";
 
-// [수정] 난이도별 BEST 저장
+// [저장] 게임 상태 로컬스토리지 저장
 export function saveGameState() {
     const saveData = {
         grid: state.grid,
@@ -19,12 +20,12 @@ export function saveGameState() {
     
     // 개별 값 저장
     localStorage.setItem('alpha_score', state.score);
-    // [중요] 난이도별로 베스트 분리 저장 (예: alpha_best_HELL)
     localStorage.setItem(`alpha_best_${state.diff}`, state.best);
     localStorage.setItem('alpha_stars', state.stars);
     localStorage.setItem('alpha_items', JSON.stringify(state.items));
 }
 
+// [블록 배치]
 export async function placeBlock(indices, block, onComplete) {
     if(state.isLocked) return;
     state.isLocked = true;
@@ -46,6 +47,7 @@ export async function placeBlock(indices, block, onComplete) {
     finally { state.isLocked = false; if(onComplete) onComplete(); }
 }
 
+// [머지 로직]
 async function handleMerge(indices) {
     let merged = false;
     const nextGroup = new Map();
@@ -66,6 +68,7 @@ async function handleMerge(indices) {
             
             let targetIdx = idx;
             if (nextChar) {
+                // 합쳐질 위치 결정 (가능하면 다음 단계 블록 근처로)
                 for (let cIdx of cluster) {
                     const neighbors = [cIdx-1, cIdx+1, cIdx-state.gridSize, cIdx+state.gridSize];
                     for (let n of neighbors) {
@@ -75,18 +78,19 @@ async function handleMerge(indices) {
                     }
                 }
                 
+                // 현재 게임 최고 기록 갱신
                 if (ALPHABET.indexOf(nextChar) > ALPHABET.indexOf(state.currentMax)) {
                     state.currentMax = nextChar;
                 }
                 
-                // [수정] 난이도별 베스트 기록 갱신
+                // 역대 최고 기록 갱신
                 if (ALPHABET.indexOf(nextChar) > ALPHABET.indexOf(state.best)) {
                     state.best = nextChar;
-                    // 즉시 로컬스토리지에도 모드별 키로 저장
                     localStorage.setItem(`alpha_best_${state.diff}`, state.best);
                 }
-            } else { scoreGained += 1000; }
+            } else { scoreGained += 1000; } // Z 이상은 점수 보너스
             
+            // 병합 애니메이션
             const centerEl = document.getElementById(`cell-${targetIdx}`);
             for(let t of cluster) {
                 if(t === targetIdx) continue;
@@ -98,6 +102,7 @@ async function handleMerge(indices) {
                 }
             }
             await wait(300);
+            
             cluster.forEach(i => { state.grid[i] = null; });
             if (nextChar) {
                 state.grid[targetIdx] = nextChar;
@@ -112,6 +117,7 @@ async function handleMerge(indices) {
         UI.renderGrid(); UI.updateUI();
     }
     
+    // 연쇄 머지 또는 자동 업그레이드 체크
     if (merged && nextGroup.size > 0) {
         await wait(200);
         await handleMerge(Array.from(nextGroup.keys()));
@@ -120,6 +126,7 @@ async function handleMerge(indices) {
     }
 }
 
+// [자동 업그레이드 체크] (판에 너무 낮은 블록이 혼자 남았을 때)
 async function checkAutoUpgrade() {
     const minIdx = Core.getMinIdx();
     let upgraded = false;
@@ -138,32 +145,23 @@ async function checkAutoUpgrade() {
     }
 }
 
-// js/game-logic.js
-
+// [점수 및 스타 추가]
 export function addScore(amount) {
     const oldScore = state.score;
     state.score += amount;
 
-    // [수정된 스타 계산 공식]
-    // 규칙: 5000점 달성 시 1개, 그 후 1000점마다 1개 추가
-    
-    // 1. 점수별 스타 개수 계산 함수 (내부 헬퍼)
+    // 스타 계산: 5000점 달성 시 1개, 이후 1000점마다 1개
     const calcStars = (score) => {
-        if (score < 5000) return 0; // 5000점 미만은 없음
-        // 5000점에서 1개 + (나머지 점수 / 1000)
+        if (score < 5000) return 0;
         return 1 + Math.floor((score - 5000) / 1000);
     };
 
     const oldStarsEarned = calcStars(oldScore);
     const newStarsEarned = calcStars(state.score);
-    
-    // 2. 이번 판에 새로 획득한 스타만큼만 추가 (기존 보유량 보존)
     const earned = newStarsEarned - oldStarsEarned;
 
     if (earned > 0) {
         state.stars += earned;
-        
-        // 스타 획득 효과
         const starEl = document.getElementById('ui-stars');
         if(starEl) {
             starEl.style.transform = 'scale(1.5)';
@@ -171,7 +169,7 @@ export function addScore(amount) {
         }
     }
 
-    // 최고 기록 갱신
+    // 점수 갱신 시 최고 기록도 한 번 더 체크
     const currentIdx = ALPHABET.indexOf(state.currentMax);
     const bestIdx = ALPHABET.indexOf(state.best);
     if (currentIdx > bestIdx) {
@@ -183,6 +181,7 @@ export function addScore(amount) {
     saveGameState();
 }
 
+// [아이템 구매]
 export function buyItem(itemType, price) {
     if (state.stars >= price) {
         state.stars -= price;
@@ -200,30 +199,36 @@ export function buyItem(itemType, price) {
     }
 }
 
+// [아이템 사용: 새로고침]
 export function useRefresh(onRefill) {
     if(state.items.refresh > 0) {
-        state.items.refresh--; saveGameState();
-        onRefill(); UI.updateUI();
+        state.items.refresh--; 
+        saveGameState();
+        onRefill(); 
+        UI.updateUI();
     } else alert("No Refresh item!");
 }
 
+// [아이템 사용: 망치]
 export function useHammer() {
     if(state.items.hammer > 0) {
-        state.items.hammer--; saveGameState();
+        state.items.hammer--; 
+        saveGameState();
         state.isHammerMode = true;
         document.getElementById('grid-container').classList.add('hammer-mode');
-        alert("Click a block to remove!"); UI.updateUI();
+        alert("Click a block to remove!"); 
+        UI.updateUI();
     } else alert("No Hammer item!");
 }
 
-export function useUpgrade() {
-    // 아이템이 있는지 확인
+// [아이템 사용: 업그레이드 (수정됨)]
+export async function useUpgrade() {
     if (state.items.upgrade > 0) {
         
-        // 1. 현재 보드에서 가장 낮은 알파벳 순서(Index) 찾기
         let minIdx = 999;
         let hasBlock = false;
 
+        // 1. 최저 레벨 찾기
         state.grid.forEach(char => {
             if (char) {
                 const idx = ALPHABET.indexOf(char);
@@ -234,39 +239,39 @@ export function useUpgrade() {
             }
         });
 
-        // 보드에 블록이 하나도 없으면 아이템 사용 취소
         if (!hasBlock) {
             alert("No blocks to upgrade!");
             return;
         }
 
-        // 2. 아이템 사용 처리
+        // 2. 아이템 소모
         state.items.upgrade--; 
         saveGameState();
 
-        let upgraded = false;
+        let upgradedIndices = [];
 
-        // 3. 가장 낮은 단계의 블록만 업그레이드
+        // 3. 최저 레벨 블록들만 업그레이드
         state.grid.forEach((char, i) => {
             if (char) {
                 const currentIdx = ALPHABET.indexOf(char);
-                // 현재 블록이 '가장 낮은 블록'인 경우에만 업그레이드
                 if (currentIdx === minIdx) {
                     const nextChar = ALPHABET[currentIdx + 1];
-                    // Z 이상으로 넘어가지는 않도록 보호
                     if (nextChar) {
                         state.grid[i] = nextChar;
-                        upgraded = true;
+                        upgradedIndices.push(i); // 변경된 위치 저장
                     }
                 }
             }
         });
 
-        if (upgraded) {
+        // 4. 반영 및 자동 머지 실행
+        if (upgradedIndices.length > 0) {
             UI.renderGrid();
             AudioMgr.play('merge');
-            // (선택사항) 업그레이드 후 자동으로 합쳐지게 하려면 아래 주석 해제
-            // handleMerge([...Array(state.gridSize*state.gridSize).keys()]); 
+            
+            // [핵심] 업그레이드된 블록들에 대해 머지 체크
+            await wait(200);
+            await handleMerge(upgradedIndices);
         }
         
         UI.updateUI();
