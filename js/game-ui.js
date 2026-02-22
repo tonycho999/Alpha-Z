@@ -6,7 +6,7 @@ let draggedBlock = null;
 
 export function renderGrid() {
     const container = document.getElementById('grid-container');
-    if (!container) return; // 안전 장치 추가
+    if (!container) return; 
 
     container.innerHTML = '';
     container.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
@@ -31,7 +31,7 @@ export function renderGrid() {
 
 export function renderHand() {
     const container = document.getElementById('hand-container');
-    if (!container) return; // 안전 장치 추가
+    if (!container) return; 
 
     container.innerHTML = '';
     
@@ -91,16 +91,18 @@ function createBlockPreview(block) {
     return wrapper;
 }
 
-// [핵심 수정 부분: updateUI 안전 장치 추가]
+// [핵심 수정: HTML ID와 일치시킴]
 export function updateUI() {
-    // 요소를 먼저 찾고, 존재할 때만 값을 넣습니다.
-    const scoreEl = document.getElementById('score-val');
-    const bestEl = document.getElementById('best-val');
-    const starEl = document.getElementById('star-val');
+    // HTML에 있는 ID: ui-score, ui-best, ui-stars, ui-diff
+    const scoreEl = document.getElementById('ui-score');
+    const bestEl = document.getElementById('ui-best');
+    const starEl = document.getElementById('ui-stars');
+    const diffEl = document.getElementById('ui-diff'); // 난이도 표시 추가
 
     if (scoreEl) scoreEl.textContent = state.score;
     if (bestEl) bestEl.textContent = state.best;
     if (starEl) starEl.textContent = state.stars;
+    if (diffEl) diffEl.textContent = state.diff; // 난이도 업데이트
     
     const rBtn = document.getElementById('btn-refresh');
     const hBtn = document.getElementById('btn-hammer');
