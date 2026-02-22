@@ -34,8 +34,12 @@ export function renderHand() {
     state.hand.forEach((block, idx) => {
         const slot = document.createElement('div');
         slot.classList.add('hand-slot');
+        // 슬롯 자체에 인덱스 정보 저장 (드래그 안정성 확보)
+        slot.dataset.index = idx;
+
         if (block) {
             const preview = createBlockPreview(block);
+            // 내부 div에도 인덱스 저장 (하위 호환)
             preview.dataset.index = idx; 
             slot.appendChild(preview);
         }
@@ -49,7 +53,7 @@ function createBlockPreview(block) {
     wrapper.style.gridTemplateColumns = `repeat(${block.shape.w}, 25px)`;
     wrapper.style.gridTemplateRows = `repeat(${block.shape.h}, 25px)`;
     wrapper.style.gap = '2px';
-    wrapper.style.pointerEvents = 'none'; 
+    wrapper.style.pointerEvents = 'none'; // 클릭 통과 (부모인 slot이 받음)
 
     const map = block.shape.map;
     const w = block.shape.w;
@@ -121,22 +125,40 @@ export function updateUI() {
     }
 }
 
+// [수정된 setupDrag: 슬롯 자체에 이벤트를 걸어 안정성 확보]
 export function setupDrag(onDrop) {
-    const slots = document.querySelectorAll('.hand-slot div');
+    const slots = document.querySelectorAll('.hand-slot');
+    
     slots.forEach(slot => {
-        slot.onmousedown = e => startDrag(e, slot, false, onDrop);
-    });
-    slots.forEach(slot => {
-        slot.ontouchstart = e => startDrag(e, slot, true, onDrop);
+        // 기존 이벤트 제거 (중복 방지)
+        slot.onmousedown = null;
+        slot.ontouchstart = null;
+
+        // 마우스 이벤트
+        slot.onmousedown = e => {
+            // 슬롯 안에 블록(div)이 있을 때만 드래그 시작
+            const blockDiv = slot.querySelector('div');
+            if(blockDiv) startDrag(e, blockDiv, false, onDrop);
+        };
+
+        // 터치 이벤트
+        slot.ontouchstart = e => {
+            const blockDiv = slot.querySelector('div');
+            if(blockDiv) startDrag(e, blockDiv, true, onDrop);
+        };
     });
 }
 
 function startDrag(e, slotEl, isTouch, onDrop) {
     if(state.isLocked) return;
-    e.preventDefault();
+    // 터치 스크롤 방지 등 기본 동작 막기
+    if (e.cancelable) e.preventDefault();
     
-    const idx = parseInt(slotEl.dataset.index);
-    if(state.hand[idx] === null) return;
+    // 부모나 자신에게서 data-index 찾기
+    const idxStr = slotEl.dataset.index || slotEl.parentElement.dataset.index;
+    const idx = parseInt(idxStr);
+
+    if(isNaN(idx) || state.hand[idx] === null) return;
 
     state.dragIndex = idx;
     draggedBlock = slotEl.cloneNode(true);
@@ -159,6 +181,9 @@ function startDrag(e, slotEl, isTouch, onDrop) {
     }
 
     function onMove(event) {
+        // 모바일 터치 시 기본 스크롤 막기
+        if(event.cancelable) event.preventDefault();
+
         const cx = isTouch ? event.touches[0].clientX : event.clientX;
         const cy = isTouch ? event.touches[0].clientY : event.clientY;
         moveAt(cx, cy);
@@ -187,6 +212,7 @@ function startDrag(e, slotEl, isTouch, onDrop) {
         document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
 
         let dropped = false;
+        // 터치 엔드 시점엔 changedTouches 사용
         const cx = isTouch ? event.changedTouches[0].clientX : event.clientX;
         const cy = isTouch ? event.changedTouches[0].clientY : event.clientY;
         
@@ -201,11 +227,14 @@ function startDrag(e, slotEl, isTouch, onDrop) {
             }
         }
 
-        draggedBlock.remove();
-        draggedBlock = null;
+        if (draggedBlock) {
+            draggedBlock.remove();
+            draggedBlock = null;
+        }
         if(!dropped) state.dragIndex = -1; 
     }
 
+    // {passive: false} 옵션은 모바일 터치 스크롤 방지를 위해 중요함
     document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onMove, {passive: false});
     document.addEventListener(isTouch ? 'touchend' : 'mouseup', onEnd);
 }
