@@ -4,8 +4,6 @@ import { AudioMgr } from "./game-audio.js";
 
 let draggedBlock = null;
 let currentScale = 1; 
-let dragW = 1; 
-let dragH = 1; 
 
 // [설정] 손가락과 블록 사이 거리 (시야 확보)
 const TOUCH_OFFSET_Y = 100; 
@@ -47,9 +45,6 @@ export function renderHand() {
         slot.dataset.index = idx;
         
         if (block) {
-            slot.dataset.w = block.shape.w;
-            slot.dataset.h = block.shape.h;
-            
             const preview = createBlockPreview(block);
             preview.dataset.index = idx; 
             slot.appendChild(preview);
@@ -159,12 +154,8 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     e.stopPropagation(); 
     if (e.cancelable) e.preventDefault();
     
-    const slot = blockEl.parentElement;
     const idx = parseInt(blockEl.dataset.index);
     if(isNaN(idx) || state.hand[idx] === null) return;
-
-    dragW = parseInt(slot.dataset.w) || 1;
-    dragH = parseInt(slot.dataset.h) || 1;
 
     state.dragIndex = idx;
     draggedBlock = blockEl.cloneNode(true);
@@ -172,7 +163,8 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     // [크기 계산]
     const boardCell = document.querySelector('.cell');
     let targetScale = 1.0;
-    // 계산을 위해 실제 보드판의 좌표 정보를 가져옵니다.
+    
+    // 그리드 전체 영역 정보 가져오기 (좌표 계산용)
     const gridContainer = document.getElementById('grid-container');
     const gridRect = gridContainer ? gridContainer.getBoundingClientRect() : null;
 
@@ -198,53 +190,41 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     moveAt(clientX, clientY);
 
     function moveAt(pageX, pageY) {
-        // 시각적 이동: 손가락 위에 블록 표시 (시야 확보)
+        // 블록의 정중앙이 손가락 위에 오도록 배치
         draggedBlock.style.left = (pageX - draggedBlock.offsetWidth / 2) + 'px';
         draggedBlock.style.top = (pageY - draggedBlock.offsetHeight / 2 - TOUCH_OFFSET_Y) + 'px'; 
     }
 
-    // [진짜 자석 모드: 수학적 그리드 계산 함수]
-    // 손가락 위치나 특정 점을 검사하는 게 아니라,
-    // "떠 있는 블록의 중심"이 "보드판의 몇 행 몇 열"에 있는지를 수학적으로 계산합니다.
+    // [핵심 로직: 첫 번째 칸(Top-Left) 중심 기준 자석]
     function getMagnetIndex() {
         if (!gridRect || !boardCell) return -1;
 
-        // 1. 현재 떠 있는 블록의 '시각적 중심 좌표' 계산
-        // draggedBlock의 위치는 left, top에 저장되어 있음 (이미 TOUCH_OFFSET_Y 적용됨)
+        // 1. 현재 떠 있는 블록의 실제 위치 가져오기
         const blockRect = draggedBlock.getBoundingClientRect();
-        const blockCenterX = blockRect.left + blockRect.width / 2;
-        const blockCenterY = blockRect.top + blockRect.height / 2;
+        
+        // 2. 화면상 1칸의 크기 계산
+        const cellSize = gridRect.width / state.gridSize;
 
-        // 2. 보드판 내에서의 상대 좌표 (Relative Position)
-        const relativeX = blockCenterX - gridRect.left;
-        const relativeY = blockCenterY - gridRect.top;
+        // 3. "첫 번째 칸(0,0)"의 중심점 좌표 구하기
+        // blockRect.left는 블록의 왼쪽 끝입니다.
+        // 여기에 cellSize 절반을 더하면 첫 번째 칸의 중심 X좌표가 됩니다.
+        const firstCellCenterX = blockRect.left + (cellSize / 2);
+        const firstCellCenterY = blockRect.top + (cellSize / 2);
 
-        // 3. 현재 1칸의 실제 크기 (반응형 대응)
-        const realCellSize = boardCell.offsetWidth; 
-        // gap(여백)이 있다면 포함해서 계산해야 함. CSS gap이 5px라면 +5 필요할 수 있음.
-        // 현재 CSS에서 gap: 5px; 라고 가정 시 미세 조정. (보통 cellWidth에 포함 안됨)
-        // 안전하게 gridRect.width / gridSize 로 계산하는 게 가장 정확함.
-        const calculatedCellSize = gridRect.width / state.gridSize;
+        // 4. 이 점이 보드판의 몇 번째 칸에 있는지 계산
+        const relativeX = firstCellCenterX - gridRect.left;
+        const relativeY = firstCellCenterY - gridRect.top;
 
-        // 4. 행(Row), 열(Col) 계산 (반올림 사용 X, 내림 사용)
-        // "블록의 중심이 위치한 칸"을 찾습니다.
-        const centerCol = Math.floor(relativeX / calculatedCellSize);
-        const centerRow = Math.floor(relativeY / calculatedCellSize);
+        const col = Math.floor(relativeX / cellSize);
+        const row = Math.floor(relativeY / cellSize);
 
-        // 5. 범위 벗어남 체크
-        if (centerCol < 0 || centerCol >= state.gridSize || 
-            centerRow < 0 || centerRow >= state.gridSize) {
+        // 5. 범위 체크
+        if (col < 0 || col >= state.gridSize || row < 0 || row >= state.gridSize) {
             return -1;
         }
 
-        // 6. [핵심] 중심 좌표를 '앵커(Top-Left)' 좌표로 변환
-        // 예: 가로 3칸짜리 블록의 중심을 잡고 있다면, 실제 놓일 위치(왼쪽 끝)는 중심에서 -1칸 옆임.
-        const anchorCol = centerCol - Math.floor(dragW / 2);
-        const anchorRow = centerRow - Math.floor(dragH / 2);
-
-        // 7. 최종 인덱스 반환
-        const targetIdx = anchorRow * state.gridSize + anchorCol;
-        return targetIdx;
+        // 6. 결과 반환 (이 위치가 곧 블록의 시작점)
+        return row * state.gridSize + col;
     }
 
     function onMove(event) {
@@ -253,17 +233,19 @@ function startDrag(e, blockEl, isTouch, onDrop) {
         const cx = isTouch ? event.touches[0].clientX : event.clientX;
         const cy = isTouch ? event.touches[0].clientY : event.clientY;
         
-        // 1. 블록 이동
         moveAt(cx, cy);
 
-        // 2. 하이라이트 초기화
+        // 하이라이트 초기화
         document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
         document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
 
-        // 3. 자석 좌표 계산 (elementFromPoint 사용 안 함!)
+        draggedBlock.style.visibility = 'hidden';
+
+        // 새로운 자석 좌표 계산
         const targetIdx = getMagnetIndex();
 
-        // 4. 유효한 인덱스면 미리보기 실행
+        draggedBlock.style.visibility = 'visible';
+
         if(targetIdx >= 0 && targetIdx < state.gridSize * state.gridSize) {
             onDrop(targetIdx, true); 
         }
@@ -278,9 +260,10 @@ function startDrag(e, blockEl, isTouch, onDrop) {
 
         let dropped = false;
         
-        // 드롭 시에도 동일한 수학적 계산 사용
         const targetIdx = getMagnetIndex();
         
+        draggedBlock.style.visibility = 'hidden';
+
         if(targetIdx >= 0 && targetIdx < state.gridSize * state.gridSize) {
             dropped = onDrop(targetIdx, false); // 실제 드롭
         }
