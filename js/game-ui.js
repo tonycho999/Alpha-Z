@@ -1,206 +1,211 @@
-import { state, ALPHABET } from "./game-data.js";
+import { state, ALPHABET, AdManager } from "./game-data.js";
+import * as Logic from "./game-logic.js";
+import { AudioMgr } from "./game-audio.js";
 
-// 1. 그리드 렌더링
+let draggedBlock = null;
+
 export function renderGrid() {
-    const gridEl = document.getElementById('grid-container');
-    if (!gridEl) return;
-    gridEl.innerHTML = '';
-    gridEl.style.display = 'grid';
-    gridEl.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
-    gridEl.style.gridTemplateRows = `repeat(${state.gridSize}, 1fr)`;
-    gridEl.style.gap = '3px';
+    const container = document.getElementById('grid-container');
+    container.innerHTML = '';
+    container.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
+    container.style.gridTemplateRows = `repeat(${state.gridSize}, 1fr)`;
+
     state.grid.forEach((char, idx) => {
         const cell = document.createElement('div');
+        cell.classList.add('cell');
         cell.id = `cell-${idx}`;
-        cell.className = 'cell';
-        if(state.isHammerMode) cell.classList.add('hammer-target');
-        if (char) { cell.classList.add(`b-${char}`); cell.textContent = char; } 
-        else { cell.classList.add('empty'); }
+        if (char) {
+            cell.textContent = char;
+            cell.classList.add(`b-${char}`);
+        }
         cell.onclick = () => {
-             if(window.gameLogic && window.gameLogic.handleCellClick) window.gameLogic.handleCellClick(idx);
+             if(state.isHammerMode && window.gameLogic) {
+                 window.gameLogic.handleCellClick(idx);
+             }
         };
-        gridEl.appendChild(cell);
+        container.appendChild(cell);
     });
 }
 
-// 2. 핸드 렌더링
 export function renderHand() {
-    for (let i = 0; i < 3; i++) {
-        const slot = document.getElementById(`hand-${i}`);
-        if (!slot) continue;
-        slot.innerHTML = '';
-        slot.style.opacity = '1';
-        const block = state.hand[i];
+    const container = document.getElementById('hand-container');
+    container.innerHTML = '';
+    
+    state.hand.forEach((block, idx) => {
+        const slot = document.createElement('div');
+        slot.classList.add('hand-slot');
         if (block) {
-            const miniGrid = document.createElement('div');
-            miniGrid.style.pointerEvents = 'none'; // 터치 통과
-            miniGrid.style.display = 'grid';
-            miniGrid.style.gridTemplateColumns = `repeat(${block.shape.w}, 1fr)`;
-            miniGrid.style.gridTemplateRows = `repeat(${block.shape.h}, 1fr)`;
-            miniGrid.style.gap = '2px';
-            miniGrid.style.width = (block.shape.w * 35) + 'px'; 
-            miniGrid.style.height = (block.shape.h * 35) + 'px';
-            miniGrid.style.justifySelf = 'center'; miniGrid.style.alignSelf = 'center';
-            block.items.forEach((char, idx) => {
-                const cell = document.createElement('div');
-                cell.className = `cell b-${char}`;
-                cell.textContent = char;
-                cell.style.fontSize = '1.2rem';
+            const preview = createBlockPreview(block);
+            preview.dataset.index = idx; 
+            slot.appendChild(preview);
+        }
+        container.appendChild(slot);
+    });
+}
+
+function createBlockPreview(block) {
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'grid';
+    wrapper.style.gridTemplateColumns = `repeat(${block.shape.w}, 25px)`;
+    wrapper.style.gridTemplateRows = `repeat(${block.shape.h}, 25px)`;
+    wrapper.style.gap = '2px';
+    wrapper.style.pointerEvents = 'none'; 
+
+    const map = block.shape.map;
+    const w = block.shape.w;
+    const h = block.shape.h;
+    
+    for(let r=0; r<h; r++) {
+        for(let c=0; c<w; c++) {
+            const isBlock = map.some(p => p[0]===r && p[1]===c);
+            const cell = document.createElement('div');
+            cell.style.width = '25px';
+            cell.style.height = '25px';
+            cell.style.borderRadius = '4px';
+            
+            if(isBlock) {
+                const itemIndex = map.findIndex(p => p[0]===r && p[1]===c);
+                const char = block.items[itemIndex];
+                cell.className = `b-${char}`;
+                cell.style.color = '#fff';
+                cell.style.fontSize = '12px';
+                cell.style.fontWeight = 'bold';
                 cell.style.display = 'flex';
-                cell.style.justifyContent = 'center'; cell.style.alignItems = 'center';
-                cell.style.gridColumnStart = block.shape.map[idx][1] + 1;
-                cell.style.gridRowStart = block.shape.map[idx][0] + 1;
-                miniGrid.appendChild(cell);
-            });
-            slot.appendChild(miniGrid);
-            setupDragForSlot(slot, i);
+                cell.style.justifyContent = 'center';
+                cell.style.alignItems = 'center';
+                cell.textContent = char;
+            } else {
+                cell.style.background = 'transparent';
+            }
+            wrapper.appendChild(cell);
+        }
+    }
+    return wrapper;
+}
+
+export function updateUI() {
+    document.getElementById('score-val').textContent = state.score;
+    document.getElementById('best-val').textContent = state.best;
+    document.getElementById('star-val').textContent = state.stars;
+    
+    const rBtn = document.getElementById('btn-refresh');
+    const hBtn = document.getElementById('btn-hammer');
+    const uBtn = document.getElementById('btn-upgrade');
+
+    if(rBtn) rBtn.innerHTML = `🔄 100<br>(${state.items.refresh})`;
+    if(hBtn) hBtn.innerHTML = `🔨 200<br>(${state.items.hammer})`;
+    if(uBtn) uBtn.innerHTML = `⬆️ 300<br>(${state.items.upgrade})`;
+
+    // [상점 광고 버튼: 쿨타임 시 비활성화]
+    const shopAdBtn = document.getElementById('btn-shop-ad');
+    if(shopAdBtn) {
+        const status = AdManager.checkAdStatus();
+        if(!status.avail && !state.isAdmin) {
+            // 쿨타임: 비활성화
+            shopAdBtn.disabled = true;
+            shopAdBtn.style.opacity = '0.5';
+            shopAdBtn.innerHTML = `📺 Free 50★<br><span style="font-size:0.7em">${status.msg}</span>`;
+        } else {
+            // 가능: 활성화
+            shopAdBtn.disabled = false;
+            shopAdBtn.style.opacity = '1';
+            shopAdBtn.innerHTML = `📺 Free 50★`;
+            shopAdBtn.onclick = () => {
+                AdManager.showRewardAd(() => {
+                    state.stars += 50;
+                    Logic.saveGameState();
+                    updateUI();
+                });
+            };
         }
     }
 }
 
-// [BEST 표시 수정] 현재 보드판에서 가장 높은 블록 찾기
-export function updateUI() {
-    // 1. 보드 스캔
-    let currentMaxChar = 'A';
-    let maxIdx = -1;
+export function setupDrag(onDrop) {
+    const slots = document.querySelectorAll('.hand-slot div');
+    slots.forEach(slot => {
+        slot.onmousedown = e => startDrag(e, slot, false, onDrop);
+    });
+    slots.forEach(slot => {
+        slot.ontouchstart = e => startDrag(e, slot, true, onDrop);
+    });
+}
 
-    if (state.grid && state.grid.length > 0) {
-        state.grid.forEach(char => {
-            if (char) {
-                const idx = ALPHABET.indexOf(char);
-                if (idx > maxIdx) {
-                    maxIdx = idx;
-                    currentMaxChar = char;
-                }
+function startDrag(e, slotEl, isTouch, onDrop) {
+    if(state.isLocked) return;
+    e.preventDefault();
+    
+    const idx = parseInt(slotEl.dataset.index);
+    if(state.hand[idx] === null) return;
+
+    state.dragIndex = idx;
+    draggedBlock = slotEl.cloneNode(true);
+    
+    draggedBlock.style.position = 'fixed';
+    draggedBlock.style.zIndex = '1000';
+    draggedBlock.style.pointerEvents = 'none';
+    draggedBlock.style.opacity = '0.9';
+    draggedBlock.style.transform = 'scale(1.2)'; 
+    
+    document.body.appendChild(draggedBlock);
+
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    moveAt(clientX, clientY);
+
+    function moveAt(pageX, pageY) {
+        draggedBlock.style.left = pageX - draggedBlock.offsetWidth / 2 + 'px';
+        draggedBlock.style.top = pageY - draggedBlock.offsetHeight / 2 + 'px';
+    }
+
+    function onMove(event) {
+        const cx = isTouch ? event.touches[0].clientX : event.clientX;
+        const cy = isTouch ? event.touches[0].clientY : event.clientY;
+        moveAt(cx, cy);
+
+        document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
+        document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
+
+        draggedBlock.style.visibility = 'hidden';
+        const elemBelow = document.elementFromPoint(cx, cy);
+        draggedBlock.style.visibility = 'visible';
+
+        if(elemBelow) {
+            const cell = elemBelow.closest('.cell');
+            if(cell) {
+                const cellId = parseInt(cell.id.split('-')[1]);
+                onDrop(cellId, true);
             }
-        });
+        }
     }
 
-    // 2. UI 적용 (ui-best에 현재 보드 최고 블록 표시)
-    if(document.getElementById('ui-best')) document.getElementById('ui-best').textContent = currentMaxChar;
-    if(document.getElementById('ui-stars')) document.getElementById('ui-stars').textContent = state.stars;
-    if(document.getElementById('ui-diff')) document.getElementById('ui-diff').textContent = state.diff;
-    if(document.getElementById('ui-score')) document.getElementById('ui-score').textContent = state.score;
+    function onEnd(event) {
+        document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onMove);
+        document.removeEventListener(isTouch ? 'touchend' : 'mouseup', onEnd);
+        
+        document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
+        document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
 
-    if (state.items) {
-        if(document.getElementById('cnt-refresh')) document.getElementById('cnt-refresh').textContent = state.items.refresh;
-        if(document.getElementById('cnt-hammer')) document.getElementById('cnt-hammer').textContent = state.items.hammer;
-        if(document.getElementById('cnt-upgrade')) document.getElementById('cnt-upgrade').textContent = state.items.upgrade;
+        let dropped = false;
+        const cx = isTouch ? event.changedTouches[0].clientX : event.clientX;
+        const cy = isTouch ? event.changedTouches[0].clientY : event.clientY;
+        
+        draggedBlock.style.visibility = 'hidden';
+        const elemBelow = document.elementFromPoint(cx, cy);
+        
+        if(elemBelow) {
+            const cell = elemBelow.closest('.cell');
+            if(cell) {
+                const cellId = parseInt(cell.id.split('-')[1]);
+                dropped = onDrop(cellId, false);
+            }
+        }
+
+        draggedBlock.remove();
+        draggedBlock = null;
+        if(!dropped) state.dragIndex = -1; 
     }
-}
 
-export function updateGameOverUI() {
-    document.getElementById('over-best').textContent = state.best;
-}
-
-export function setupDrag(onDropCallback) {
-    window._onDropCallback = onDropCallback;
-}
-
-// [자석 보정] 
-function setupDragForSlot(slot, index) {
-    const ghost = document.getElementById('ghost');
-    
-    const getRealCellSize = () => {
-        const gridEl = document.getElementById('grid-container');
-        if(!gridEl) return 40;
-        const cell = gridEl.querySelector('.cell');
-        if(cell) return cell.offsetWidth;
-        const rect = gridEl.getBoundingClientRect();
-        return (rect.width - (state.gridSize - 1) * 3) / state.gridSize;
-    };
-
-    const start = (e) => {
-        if(state.isLocked) return;
-        state.dragIndex = index;
-        const cellSize = getRealCellSize();
-        const block = state.hand[index];
-        if(!block) return;
-
-        const yOffset = cellSize * 1.8; 
-
-        ghost.innerHTML = '';
-        ghost.style.display = 'grid';
-        ghost.style.gridTemplateColumns = `repeat(${block.shape.w}, ${cellSize}px)`;
-        ghost.style.gridTemplateRows = `repeat(${block.shape.h}, ${cellSize}px)`;
-        ghost.style.gap = '3px';
-        ghost.style.pointerEvents = 'none';
-        
-        block.items.forEach((char, idx) => {
-            const b = document.createElement('div');
-            b.className = `cell b-${char}`; b.textContent = char;
-            b.style.fontSize = (cellSize*0.55)+'px';
-            b.style.gridColumnStart = block.shape.map[idx][1] + 1;
-            b.style.gridRowStart = block.shape.map[idx][0] + 1;
-            ghost.appendChild(b);
-        });
-        
-        slot.style.opacity = '0';
-        
-        const getPos = (ev) => { return { x: (ev.changedTouches?ev.changedTouches[0]:ev).clientX, y: (ev.changedTouches?ev.changedTouches[0]:ev).clientY }; };
-        const updateGhost = (x,y) => { 
-            ghost.style.left = (x - ghost.offsetWidth/2)+'px'; 
-            ghost.style.top = (y - ghost.offsetHeight - yOffset)+'px'; 
-        };
-        
-        const init = getPos(e); ghost.style.display='grid'; updateGhost(init.x, init.y);
-        
-        const move = (me) => { 
-            if(me.cancelable) me.preventDefault(); 
-            const p = getPos(me); updateGhost(p.x, p.y); 
-            
-            const rect = ghost.getBoundingClientRect();
-            // 자석 기준: 첫 번째 칸(Top-Left)의 중앙
-            const cx = rect.left + (cellSize / 2);
-            const cy = rect.top + (cellSize / 2);
-            const idx = getMagnetIndex(cx, cy);
-            
-            document.querySelectorAll('.highlight-valid').forEach(el=>el.classList.remove('highlight-valid'));
-            document.querySelectorAll('.will-merge').forEach(el=>el.classList.remove('will-merge'));
-            
-            if(idx!==-1 && window._onDropCallback) window._onDropCallback(idx, true);
-        };
-        
-        const end = (ee) => {
-            window.removeEventListener('mousemove', move); window.removeEventListener('touchmove', move);
-            window.removeEventListener('mouseup', end); window.removeEventListener('touchend', end);
-            
-            const rect = ghost.getBoundingClientRect();
-            const cx = rect.left + (cellSize / 2);
-            const cy = rect.top + (cellSize / 2);
-            const idx = getMagnetIndex(cx, cy);
-
-            let success = false;
-            if(idx!==-1 && window._onDropCallback) success = window._onDropCallback(idx, false);
-            
-            ghost.style.display='none';
-            if(!success) { slot.style.opacity='1'; state.dragIndex=-1; }
-            document.querySelectorAll('.highlight-valid').forEach(el=>el.classList.remove('highlight-valid'));
-            document.querySelectorAll('.will-merge').forEach(el=>el.classList.remove('will-merge'));
-        };
-        
-        window.addEventListener('mousemove', move); window.addEventListener('touchmove', move, {passive:false});
-        window.addEventListener('mouseup', end); window.addEventListener('touchend', end);
-    };
-    slot.onmousedown = start; slot.ontouchstart = start;
-}
-
-function getMagnetIndex(x, y) {
-    const grid = document.getElementById('grid-container');
-    if (!grid) return -1;
-    const rect = grid.getBoundingClientRect();
-    const gap = 3;
-    const padding = 5; 
-    const cellSize = (rect.width - (state.gridSize - 1) * gap - (padding * 2)) / state.gridSize;
-    
-    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return -1;
-    
-    const lx = x - rect.left - padding;
-    const ly = y - rect.top - padding;
-    
-    const c = Math.floor(lx / (cellSize + gap));
-    const r = Math.floor(ly / (cellSize + gap));
-    
-    if(c >= 0 && c < state.gridSize && r >= 0 && r < state.gridSize) return r * state.gridSize + c;
-    return -1;
+    document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onMove, {passive: false});
+    document.addEventListener(isTouch ? 'touchend' : 'mouseup', onEnd);
 }
