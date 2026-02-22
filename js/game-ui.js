@@ -95,7 +95,10 @@ function createBlockPreview(block) {
     return wrapper;
 }
 
+// js/game-ui.js 의 updateUI 함수 부분
+
 export function updateUI() {
+    // 1. 점수판 업데이트
     const scoreEl = document.getElementById('ui-score');
     const bestEl = document.getElementById('ui-best');
     const starEl = document.getElementById('ui-stars');
@@ -106,14 +109,19 @@ export function updateUI() {
     if (starEl) starEl.textContent = state.stars;
     if (diffEl) diffEl.textContent = state.diff;
     
-    const rBtn = document.getElementById('btn-refresh');
-    const hBtn = document.getElementById('btn-hammer');
-    const uBtn = document.getElementById('btn-upgrade');
+    // 2. [핵심 수정] 아이템 개수 업데이트 (HTML의 span ID를 찾아서 넣기)
+    const cntRef = document.getElementById('cnt-refresh');
+    const cntHam = document.getElementById('cnt-hammer');
+    const cntUp = document.getElementById('cnt-upgrade');
 
-    if(rBtn) rBtn.innerHTML = `🔄 100<br>(${state.items.refresh})`;
-    if(hBtn) hBtn.innerHTML = `🔨 200<br>(${state.items.hammer})`;
-    if(uBtn) uBtn.innerHTML = `⬆️ 300<br>(${state.items.upgrade})`;
+    // state.items가 없으면 0으로 처리
+    const items = state.items || { refresh: 0, hammer: 0, upgrade: 0 };
 
+    if (cntRef) cntRef.textContent = items.refresh;
+    if (cntHam) cntHam.textContent = items.hammer;
+    if (cntUp) cntUp.textContent = items.upgrade;
+
+    // 3. 상점 광고 버튼 (기존 코드 유지)
     const shopAdBtn = document.getElementById('btn-shop-ad');
     if(shopAdBtn) {
         const status = AdManager.checkAdStatus();
