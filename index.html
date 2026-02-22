@@ -33,6 +33,28 @@
         .hidden { display: none !important; }
         .best-badge { background: #333; padding: 5px 15px; border-radius: 20px; color: #f1c40f; border: 1px solid #555; }
         
+        /* [수정됨] 버튼 크기 깜빡임 방지를 위한 고정 스타일 */
+        .btn {
+            width: 100%;              /* 너비 꽉 채우기 */
+            height: 55px;             /* 높이 고정 (중요) */
+            font-size: 1.1rem;        /* 글자 크기 고정 */
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            box-sizing: border-box;   /* 패딩 포함 크기 계산 */
+            display: flex;            /* 내용물 중앙 정렬 */
+            justify-content: center;
+            align-items: center;
+            color: #fff;              /* 기본 글자색 */
+            transition: transform 0.1s; /* 눌렀을 때 부드럽게 */
+        }
+
+        .btn-primary {
+            background-color: #f1c40f; /* 로딩 전 기본 노란색 */
+            color: #2c3e50;
+        }
+
         /* Intro Popup Styles */
         .intro-list { text-align: left; margin: 15px 0; font-size: 0.95rem; color: #ddd; line-height: 1.6; }
         .intro-list li { margin-bottom: 8px; }
@@ -45,16 +67,25 @@
 <body class="main-bg">
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then((registration) => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    }, (err) => {
-                        console.log('ServiceWorker registration failed: ', err);
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            window.location.reload();
+                        }
                     });
+                });
+            });
+            let refreshing;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                window.location.reload();
+                refreshing = true;
             });
         }
     </script>
+
     <div class="screen">
         <h1 style="font-size: 3.5rem; color: var(--accent); margin-bottom: 20px;">Alpha-Z</h1>
         <div style="font-size: 0.8rem; color: #555; margin-top: -15px; margin-bottom: 15px;">v1.6</div>
@@ -63,6 +94,7 @@
 
         <div id="start-screen">
             <div style="margin-bottom:20px; color:var(--accent);">MY STARS: <span id="idx-stars">0</span></div>
+            
             <div style="display: flex; flex-direction: column; gap: 15px; max-width: 300px; margin: 0 auto;">
                 <button class="btn btn-primary" onclick="startGame('EASY')">EASY</button>
                 <button class="btn btn-primary" onclick="startGame('NORMAL')">NORMAL</button>
@@ -157,7 +189,6 @@
             }
         }
         
-        // [버전 관리] 게임 페이지로 넘어갈 때 버전 쿼리 추가 (캐시 방지)
         window.startGame = function(diff) {
             playBtnSound();
             location.href = `game.html?diff=${diff}&v=1.0`; 
