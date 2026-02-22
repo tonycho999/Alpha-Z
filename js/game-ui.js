@@ -91,18 +91,17 @@ function createBlockPreview(block) {
     return wrapper;
 }
 
-// [핵심 수정: HTML ID와 일치시킴]
+// [UI 업데이트: ID를 안전하게 찾아서 값 넣기]
 export function updateUI() {
-    // HTML에 있는 ID: ui-score, ui-best, ui-stars, ui-diff
     const scoreEl = document.getElementById('ui-score');
     const bestEl = document.getElementById('ui-best');
     const starEl = document.getElementById('ui-stars');
-    const diffEl = document.getElementById('ui-diff'); // 난이도 표시 추가
+    const diffEl = document.getElementById('ui-diff');
 
     if (scoreEl) scoreEl.textContent = state.score;
     if (bestEl) bestEl.textContent = state.best;
     if (starEl) starEl.textContent = state.stars;
-    if (diffEl) diffEl.textContent = state.diff; // 난이도 업데이트
+    if (diffEl) diffEl.textContent = state.diff;
     
     const rBtn = document.getElementById('btn-refresh');
     const hBtn = document.getElementById('btn-hammer');
@@ -158,21 +157,27 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     state.dragIndex = idx;
     draggedBlock = blockEl.cloneNode(true);
     
+    // [확대 효과 강화]
     draggedBlock.style.position = 'fixed';
     draggedBlock.style.zIndex = '9999'; 
     draggedBlock.style.pointerEvents = 'none'; 
+    // 기존 1.1 -> 1.3으로 키우고, 그림자 추가
+    draggedBlock.style.transform = 'scale(1.3)'; 
     draggedBlock.style.opacity = '0.9';
-    draggedBlock.style.transform = 'scale(1.1)'; 
+    draggedBlock.style.boxShadow = '0 10px 20px rgba(0,0,0,0.3)'; // 붕 뜬 느낌 추가
     
     document.body.appendChild(draggedBlock);
 
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    
+    // 초기 위치 잡기
     moveAt(clientX, clientY);
 
     function moveAt(pageX, pageY) {
-        draggedBlock.style.left = pageX - draggedBlock.offsetWidth / 2 + 'px';
-        draggedBlock.style.top = pageY - draggedBlock.offsetHeight / 2 + 'px';
+        // 커서가 블록의 정중앙에 오도록 계산
+        draggedBlock.style.left = (pageX - draggedBlock.offsetWidth / 2) + 'px';
+        draggedBlock.style.top = (pageY - draggedBlock.offsetHeight / 2) + 'px';
     }
 
     function onMove(event) {
