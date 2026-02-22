@@ -217,18 +217,63 @@ export function useHammer() {
 }
 
 export function useUpgrade() {
-    if(state.items.upgrade > 0) {
-        state.items.upgrade--; saveGameState();
-        let upgraded = false;
-        state.grid.forEach((char, i) => {
-            if(char) {
-                state.grid[i] = ALPHABET[ALPHABET.indexOf(char)+1] || char;
-                upgraded = true;
+    // 아이템이 있는지 확인
+    if (state.items.upgrade > 0) {
+        
+        // 1. 현재 보드에서 가장 낮은 알파벳 순서(Index) 찾기
+        let minIdx = 999;
+        let hasBlock = false;
+
+        state.grid.forEach(char => {
+            if (char) {
+                const idx = ALPHABET.indexOf(char);
+                if (idx < minIdx) {
+                    minIdx = idx;
+                    hasBlock = true;
+                }
             }
         });
-        if(upgraded) { UI.renderGrid(); AudioMgr.play('merge'); }
+
+        // 보드에 블록이 하나도 없으면 아이템 사용 취소
+        if (!hasBlock) {
+            alert("No blocks to upgrade!");
+            return;
+        }
+
+        // 2. 아이템 사용 처리
+        state.items.upgrade--; 
+        saveGameState();
+
+        let upgraded = false;
+
+        // 3. 가장 낮은 단계의 블록만 업그레이드
+        state.grid.forEach((char, i) => {
+            if (char) {
+                const currentIdx = ALPHABET.indexOf(char);
+                // 현재 블록이 '가장 낮은 블록'인 경우에만 업그레이드
+                if (currentIdx === minIdx) {
+                    const nextChar = ALPHABET[currentIdx + 1];
+                    // Z 이상으로 넘어가지는 않도록 보호
+                    if (nextChar) {
+                        state.grid[i] = nextChar;
+                        upgraded = true;
+                    }
+                }
+            }
+        });
+
+        if (upgraded) {
+            UI.renderGrid();
+            AudioMgr.play('merge');
+            // (선택사항) 업그레이드 후 자동으로 합쳐지게 하려면 아래 주석 해제
+            // handleMerge([...Array(state.gridSize*state.gridSize).keys()]); 
+        }
+        
         UI.updateUI();
-    } else alert("No Upgrade item!");
+
+    } else {
+        alert("No Upgrade item!");
+    }
 }
 
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
