@@ -2,7 +2,7 @@ import { ALPHABET, state, SHAPES_1, SHAPES_2, SHAPES_3 } from "./game-data.js";
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, orderBy, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
-// [1. 난이도별 블록 삭제 규칙 & 한계점 적용]
+// [1. 수정된 블록 삭제 규칙: G까지는 1:1, 이후는 퐁당퐁당]
 export function getMinIdx() {
     const currentIdx = ALPHABET.indexOf(state.currentMax);
     let limitIdx = 0;
@@ -10,59 +10,76 @@ export function getMinIdx() {
     // 난이도별 삭제 한계점(Limit) 설정
     switch(state.diff) {
         case 'EASY':
-            limitIdx = 21; // V (V 이후로는 A가 삭제되지 않음)
+            limitIdx = 22; // W (W 이후로는 바닥 글자가 더 안 올라감)
             break;
         case 'NORMAL':
         case 'HARD':
-            limitIdx = 19; // T (T 이후로는 삭제 멈춤)
+            limitIdx = 20; // U
             break;
         case 'HELL':
-            limitIdx = 17; // R (R 이후로는 삭제 멈춤)
+            limitIdx = 18; // S
             break;
         default:
-            limitIdx = 19;
+            limitIdx = 20;
     }
 
     // 현재 단계와 한계점 중 낮은 것 선택
     const effectiveIdx = Math.min(currentIdx, limitIdx);
 
-    // 삭제 공식 적용: (단계 - 3) / 2
-    return Math.max(0, Math.floor((effectiveIdx - 3) / 2));
+    // [규칙 적용]
+    // 1. E(인덱스 4) 미만이면 삭제 없음 (A부터 나옴)
+    if (effectiveIdx < 4) return 0;
+
+    // 2. E(4) ~ G(6) 구간: 1단계 상승마다 1개씩 삭제 (선형)
+    // E(4) -> 1 (B부터)
+    // F(5) -> 2 (C부터)
+    // G(6) -> 3 (D부터)
+    if (effectiveIdx <= 6) {
+        return effectiveIdx - 3;
+    }
+
+    // 3. G(6) 이후 구간: 2단계 상승마다 1개씩 삭제 (퐁당퐁당)
+    // G(6)가 베이스(3)가 됨.
+    // H(7) -> 3 + 0 = 3
+    // I(8) -> 3 + 1 = 4 (E부터, D삭제)
+    // J(9) -> 3 + 1 = 4
+    // K(10)-> 3 + 2 = 5 (F부터, E삭제)
+    return 3 + Math.floor((effectiveIdx - 6) / 2);
 }
 
-// [2. 난이도별 블록 출현 확률 (요청하신 수치 정확 적용)]
+// [2. 블록 출현 확률 (요청하신 수치 유지)]
 export function createRandomBlock() {
     let pool;
     const r = Math.random();
     
     if (state.diff === 'EASY') {
-        // EASY: 1블록 20%, 2블록 55%, 3블록 25%
+        // EASY: 1블록 20%, 2블록 50%, 3블록 30%
         if (r < 0.20) pool = SHAPES_1; 
-        else if (r < 0.75) pool = SHAPES_2; // 0.20 + 0.55 = 0.75
+        else if (r < 0.70) pool = SHAPES_2; // 0.20 + 0.50 = 0.70
         else pool = SHAPES_3;
     } 
     else if (state.diff === 'NORMAL') {
-        // NORMAL: 1블록 15%, 2블록 60%, 3블록 25%
+        // NORMAL: 1블록 15%, 2블록 50%, 3블록 35%
         if (r < 0.15) pool = SHAPES_1; 
-        else if (r < 0.75) pool = SHAPES_2; // 0.15 + 0.60 = 0.75
+        else if (r < 0.65) pool = SHAPES_2; // 0.15 + 0.50 = 0.65
         else pool = SHAPES_3;
     }
     else if (state.diff === 'HARD') {
-        // HARD: 1블록 20%, 2블록 55%, 3블록 25% (Easy와 같지만 좁은 맵)
+        // HARD: 1블록 20%, 2블록 50%, 3블록 30%
         if (r < 0.20) pool = SHAPES_1; 
-        else if (r < 0.75) pool = SHAPES_2; 
+        else if (r < 0.70) pool = SHAPES_2; 
         else pool = SHAPES_3;
     }
     else if (state.diff === 'HELL') {
-        // HELL: 1블록 15%, 2블록 40%, 3블록 45%
-        if (r < 0.15) pool = SHAPES_1;
-        else if (r < 0.55) pool = SHAPES_2; // 0.15 + 0.40 = 0.55
+        // HELL: 1블록 10%, 2블록 40%, 3블록 50%
+        if (r < 0.10) pool = SHAPES_1;
+        else if (r < 0.50) pool = SHAPES_2; // 0.10 + 0.40 = 0.50
         else pool = SHAPES_3;
     } 
     else {
         // 기본값 (Normal과 동일)
         if (r < 0.15) pool = SHAPES_1; 
-        else if (r < 0.75) pool = SHAPES_2; 
+        else if (r < 0.65) pool = SHAPES_2; 
         else pool = SHAPES_3;
     }
     
@@ -73,6 +90,7 @@ export function createRandomBlock() {
     for(let i=0; i<shape.map.length; i++) {
         let char;
         do { 
+            // 블록 등급 결정 (+0 또는 +1)
             const offset = (Math.random() > 0.6 ? 1 : 0) + (Math.random() > 0.85 ? 1 : 0);
             char = ALPHABET[minIdx + offset] || 'A';
         } while (items.length > 0 && char === items[items.length - 1]);
@@ -115,13 +133,11 @@ export function getCluster(startIdx) {
     return cluster;
 }
 
-// [3. DB 저장 수정: 난이도 인자를 직접 받음 + 대문자 강제 변환]
-// 이 부분이 있어야 Lee_EASY, Lee_NORMAL 등으로 정확히 나뉘어 저장됩니다.
+// [DB 저장: 대문자 변환 및 난이도별 분리 저장]
 export async function saveScoreToDB(username, difficulty, isNewUser = false) {
     if (!db) return { success: false, msg: "DB Disconnected" };
     
     const cleanName = username.trim();
-    // difficulty 인자가 없으면 state.diff를 쓰되, 무조건 대문자로 변환
     const safeDiff = (difficulty || state.diff || 'NORMAL').toUpperCase();
     
     const docId = `${cleanName}_${safeDiff}`;
@@ -152,7 +168,6 @@ export async function saveScoreToDB(username, difficulty, isNewUser = false) {
     }
 }
 
-// [리더보드 로드 수정: 대문자 난이도로 조회]
 export async function getLeaderboardData(targetDiff) {
     if (!db) return [];
     try {
