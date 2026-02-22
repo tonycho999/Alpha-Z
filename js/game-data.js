@@ -29,11 +29,8 @@ export const state = {
     score: parseInt(localStorage.getItem('alpha_score')) || 0,
     stars: parseInt(localStorage.getItem('alpha_stars')) || 0,
     items: safeLoad('alpha_items', { refresh:0, hammer:0, upgrade:0 }),
-    
-    // [수정] 여기서 불러오지 않고 기본값 'A'로 설정 (main.js에서 난이도별로 로드함)
     best: 'A', 
     currentMax: 'A', 
-    
     isLocked: false, 
     isReviveTurn: false, 
     hasRevived: false,
@@ -52,26 +49,16 @@ export function checkAdmin(username) {
     return false;
 }
 
+// [AdManager: 10분 쿨타임 및 PWA 외부 브라우저 지원]
 export const AdManager = {
-    COOLDOWN: 10 * 60 * 1000, 
-    DAILY_LIMIT: 10,
+    COOLDOWN: 10 * 60 * 1000, // 10분
 
     checkAdStatus: function() {
         if (state.isAdmin) return { avail: true, msg: 'Admin' };
 
         const now = Date.now();
         const lastTime = parseInt(localStorage.getItem('alpha_ad_last') || 0);
-        const count = parseInt(localStorage.getItem('alpha_ad_cnt') || 0);
-        const lastDate = localStorage.getItem('alpha_ad_date') || '';
-        const today = new Date().toDateString();
-
-        if(lastDate !== today) {
-            localStorage.setItem('alpha_ad_cnt', 0);
-            localStorage.setItem('alpha_ad_date', today);
-            return { avail: true, msg: '' };
-        }
-
-        if(count >= this.DAILY_LIMIT) return { avail: false, msg: 'Daily Limit (10/10)' };
+        
         if(now - lastTime < this.COOLDOWN) {
             const leftMin = Math.ceil((this.COOLDOWN - (now - lastTime)) / 60000);
             return { avail: false, msg: `Wait ${leftMin}m` };
@@ -81,20 +68,35 @@ export const AdManager = {
 
     recordWatch: function() {
         if (state.isAdmin) return;
-        const count = parseInt(localStorage.getItem('alpha_ad_cnt') || 0);
         localStorage.setItem('alpha_ad_last', Date.now());
-        localStorage.setItem('alpha_ad_cnt', count + 1);
-        localStorage.setItem('alpha_ad_date', new Date().toDateString());
     },
 
     showRewardAd: function(onSuccess) {
         const status = this.checkAdStatus();
-        if (state.isAdmin) { alert("👑 Admin Pass"); onSuccess(); return; }
-        if (!status.avail) { alert(`🚫 ${status.msg}`); return; }
+        
+        // [핵심] 쿨타임 중이면 광고 없이 바로 성공 콜백 실행 (메뉴 이동 등 기능 유지)
+        if (!status.avail) {
+            onSuccess(); 
+            return;
+        }
 
-        if(confirm("📺 Watch Ad to get reward?")) {
-            window.open('https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb', '_blank');
-            setTimeout(() => { this.recordWatch(); onSuccess(); }, 3000);
+        if(confirm("📺 Watch Ad to support us?")) {
+            // PWA/모바일 환경 대응: 외부 브라우저로 강제 오픈
+            const adUrl = 'https://www.effectivegatecpm.com/erzanv6a5?key=78fb5625f558f9e3c9b37b431fe339cb';
+            
+            const link = document.createElement('a');
+            link.href = adUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // 광고 시청 간주 (3초 후 처리)
+            setTimeout(() => { 
+                this.recordWatch(); // 쿨타임 시작
+                onSuccess(); 
+            }, 3000);
         }
     }
 };
