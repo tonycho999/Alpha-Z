@@ -5,9 +5,19 @@ import * as Flow from "./game-flow.js";
 import * as Logic from "./game-logic.js";
 import { AudioMgr } from "./game-audio.js";
 
+// HTML에서 접근할 수 있도록 전역 객체에 연결
 window.gameLogic = {
     ...Flow, ...Logic, ...Core,
     
+    // [수정] 새로고침(Refresh): 기존 패를 강제로 비우고 다시 채움
+    useRefresh: () => Logic.useRefresh(() => {
+        state.hand = [null, null, null]; // 1. 강제 초기화
+        Flow.checkHandAndRefill();       // 2. 새 블록 채우기
+        UI.renderHand();                 // 3. 화면 다시 그리기
+    }),
+
+    useHammer: () => Logic.useHammer(),
+
     // [수정] 업그레이드 후 머지 로직이 실행되도록 async/await 적용
     useUpgrade: async () => {
         await Logic.useUpgrade();
@@ -21,9 +31,7 @@ window.gameLogic = {
         }
     },
 
-    useRefresh: () => Logic.useRefresh(() => Flow.checkHandAndRefill()),
-    useHammer: () => Logic.useHammer(),
-    
+    // 광고 보고 부활하기 기능
     tryReviveWithAd: () => {
         AdManager.showRewardAd(() => {
             state.hasRevived = true;
@@ -38,10 +46,11 @@ window.gameLogic = {
             Logic.saveGameState();
             UI.renderGrid();
             Flow.checkHandAndRefill();
-            UI.updateUI();
+            UI.updateUI(); // 부활 후 UI 갱신
         });
     },
 
+    // 점수 저장 (이름 입력)
     saveScore: async () => {
         const nameInput = document.getElementById('username-input');
         let name = '';
