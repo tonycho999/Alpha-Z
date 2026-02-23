@@ -16,6 +16,11 @@
     </style>
 </head>
 <body class="main-bg">
+    
+    <div style="display:none;">
+        <audio id="s-button" src="./assets/button.mp3"></audio>
+    </div>
+
     <div class="screen">
         <h2 style="color:var(--accent); margin-top: 20px;">ITEM SHOP</h2>
         <div style="margin-bottom:20px; font-size:1.2rem; font-weight:bold;">
@@ -28,7 +33,7 @@
                     <span class="item-name">🔨 HAMMER <span id="cnt-hammer" class="item-count">(0)</span></span>
                     <span class="item-desc">Remove 1 block</span>
                 </div>
-                <button class="btn btn-primary" onclick="playBtnSound(); buyItem('hammer', 1)">1 ⭐</button>
+                <button class="btn btn-primary" onclick="playBtnSound(); buyConfirm('hammer', 1)">1 ⭐</button>
             </div>
             
             <div class="item-card">
@@ -36,7 +41,7 @@
                     <span class="item-name">🔄 REFRESH <span id="cnt-refresh" class="item-count">(0)</span></span>
                     <span class="item-desc">New Hand blocks</span>
                 </div>
-                <button class="btn btn-primary" onclick="playBtnSound(); buyItem('refresh', 1)">1 ⭐</button>
+                <button class="btn btn-primary" onclick="playBtnSound(); buyConfirm('refresh', 1)">1 ⭐</button>
             </div>
             
             <div class="item-card">
@@ -44,7 +49,7 @@
                     <span class="item-name">🆙 UPGRADE <span id="cnt-upgrade" class="item-count">(0)</span></span>
                     <span class="item-desc">Upgrade lowest block</span>
                 </div>
-                <button class="btn btn-primary" onclick="playBtnSound(); buyItem('upgrade', 5)">5 ⭐</button>
+                <button class="btn btn-primary" onclick="playBtnSound(); buyConfirm('upgrade', 5)">5 ⭐</button>
             </div>
         </div>
 
@@ -61,8 +66,23 @@
         <button class="btn" style="background:#555; width:100%; max-width:350px;" onclick="playBtnSound(); location.href='/'">⬅ BACK TO GAME</button>
     </div>
 
-    <div style="display:none;">
-        <audio id="s-button" src="./assets/button.mp3"></audio>
+    <div id="popup-confirm" class="popup-overlay">
+        <div class="popup-box">
+            <h2 id="confirm-title" style="color:var(--accent);">CONFIRM</h2>
+            <p id="confirm-msg" style="color:#ccc; margin-bottom:20px; font-size:1.1rem;">-</p>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" style="flex:1; background:#555;" onclick="closePopup('popup-confirm')">Cancel</button>
+                <button id="btn-confirm-yes" class="btn btn-primary" style="flex:1;">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="popup-alert" class="popup-overlay">
+        <div class="popup-box">
+            <h2 id="alert-title" style="color:var(--accent);">NOTICE</h2>
+            <p id="alert-msg" style="color:#ccc; margin-bottom:20px; font-size:1.1rem;">-</p>
+            <button class="btn btn-primary" style="width:100%;" onclick="closePopup('popup-alert')">OK</button>
+        </div>
     </div>
     
     <script>
@@ -70,16 +90,27 @@
             var audio = document.getElementById('s-button');
             if(audio) { audio.currentTime = 0; audio.play().catch(e=>{}); }
         };
+
+        // 팝업 닫기 함수
+        window.closePopup = function(id) {
+            document.getElementById(id).style.display = 'none';
+        };
+
+        // 알림 팝업 띄우기 함수
+        window.showAlert = function(title, msg) {
+            document.getElementById('alert-title').textContent = title;
+            document.getElementById('alert-msg').textContent = msg;
+            document.getElementById('popup-alert').style.display = 'flex';
+        };
     </script>
 
     <script type="module">
         import { AdManager, checkAdmin } from "./js/game-data.js";
 
         const starEl = document.getElementById('shop-stars');
-        const btn = document.getElementById('btn-ad-reward');
+        const btnAd = document.getElementById('btn-ad-reward');
         const adSection = document.getElementById('ad-section');
         
-        // 아이템 보유량 표시 요소
         const cntEl = {
             hammer: document.getElementById('cnt-hammer'),
             refresh: document.getElementById('cnt-refresh'),
@@ -93,66 +124,100 @@
         if(savedName) checkAdmin(savedName);
         const isAdmin = localStorage.getItem('alpha_admin') === 'true';
 
-        // [UI 갱신 함수] 스타 및 아이템 보유량 업데이트
+        // UI 갱신
         function updateShopUI() { 
             if(starEl) starEl.textContent = currentStars;
             
-            // 로컬스토리지에서 최신 아이템 정보 가져오기
             let items = { refresh:0, hammer:0, upgrade:0 };
             try { 
                 items = JSON.parse(localStorage.getItem('alpha_items')) || items; 
             } catch(e){}
 
-            // 화면에 반영
             if(cntEl.hammer) cntEl.hammer.textContent = `(${items.hammer || 0})`;
             if(cntEl.refresh) cntEl.refresh.textContent = `(${items.refresh || 0})`;
             if(cntEl.upgrade) cntEl.upgrade.textContent = `(${items.upgrade || 0})`;
         }
         
-        // 초기 실행
         updateShopUI();
 
-        window.buyItem = function(type, cost) {
-            if(currentStars >= cost) {
-                if(confirm(`Buy ${type} for ${cost} Stars?`)) {
-                    currentStars -= cost;
-                    localStorage.setItem('alpha_stars', currentStars);
-                    
-                    let items = { refresh:0, hammer:0, upgrade:0 };
-                    try { items = JSON.parse(localStorage.getItem('alpha_items')) || items; } catch(e){}
-                    
-                    items[type] = (items[type] || 0) + 1;
-                    localStorage.setItem('alpha_items', JSON.stringify(items));
-                    
-                    updateShopUI(); // 즉시 UI 갱신
-                    alert(`Purchased ${type}!`);
-                }
-            } else { alert("Not enough stars!"); }
+        // [수정] 구매 확인 팝업 띄우기
+        window.buyConfirm = function(type, cost) {
+            const popup = document.getElementById('popup-confirm');
+            const title = document.getElementById('confirm-title');
+            const msg = document.getElementById('confirm-msg');
+            const btnYes = document.getElementById('btn-confirm-yes');
+
+            title.textContent = "BUY ITEM";
+            msg.innerHTML = `Buy <b>${type.toUpperCase()}</b><br>for <span style="color:gold;">${cost} Stars</span>?`;
+            
+            popup.style.display = 'flex';
+
+            // 'Yes' 버튼 클릭 시 실제 구매 로직 실행
+            btnYes.onclick = function() {
+                closePopup('popup-confirm');
+                processBuy(type, cost);
+            };
         };
 
-        // 광고 버튼 로직
-        if(btn) {
+        // 실제 구매 로직
+        function processBuy(type, cost) {
+            if(currentStars >= cost) {
+                currentStars -= cost;
+                localStorage.setItem('alpha_stars', currentStars);
+                
+                let items = { refresh:0, hammer:0, upgrade:0 };
+                try { items = JSON.parse(localStorage.getItem('alpha_items')) || items; } catch(e){}
+                
+                items[type] = (items[type] || 0) + 1;
+                localStorage.setItem('alpha_items', JSON.stringify(items));
+                
+                updateShopUI();
+                
+                // 알림 팝업으로 변경
+                window.showAlert("SUCCESS", `Purchased ${type}!`);
+            } else {
+                // 알림 팝업으로 변경
+                window.showAlert("FAILED", "Not enough stars!");
+            }
+        }
+
+        // 광고 로직
+        if(btnAd) {
             if(isAdmin) {
                 if(adSection) adSection.style.display = 'none';
             } else {
                 const status = AdManager.checkAdStatus();
                 
                 if (status.avail) {
-                    btn.textContent = "📺 Watch Ad (+2 ⭐)";
-                    btn.disabled = false;
-                    btn.onclick = () => {
+                    btnAd.textContent = "📺 Watch Ad (+2 ⭐)";
+                    btnAd.disabled = false;
+                    btnAd.onclick = () => {
                         playBtnSound();
-                        AdManager.showRewardAd(() => {
-                            currentStars += 2;
-                            localStorage.setItem('alpha_stars', currentStars);
-                            updateShopUI();
-                            alert("You got 2 Stars!");
-                            location.reload(); 
-                        });
+                        
+                        // 광고 시청 확인 팝업
+                        const popup = document.getElementById('popup-confirm');
+                        const title = document.getElementById('confirm-title');
+                        const msg = document.getElementById('confirm-msg');
+                        const btnYes = document.getElementById('btn-confirm-yes');
+                        
+                        title.textContent = "WATCH AD";
+                        msg.innerHTML = "Watch a short ad<br>to get <span style='color:gold;'>+2 Stars</span>?";
+                        popup.style.display = 'flex';
+
+                        btnYes.onclick = function() {
+                            closePopup('popup-confirm');
+                            AdManager.showRewardAd(() => {
+                                currentStars += 2;
+                                localStorage.setItem('alpha_stars', currentStars);
+                                updateShopUI();
+                                window.showAlert("REWARD", "You got 2 Stars!");
+                                location.reload(); 
+                            });
+                        };
                     };
                 } else {
-                    btn.textContent = `🚫 ${status.msg}`;
-                    btn.disabled = true;
+                    btnAd.textContent = `🚫 ${status.msg}`;
+                    btnAd.disabled = true;
                 }
             }
         }
