@@ -54,31 +54,54 @@
 
     <div id="popup-over" class="popup-overlay">
         <div class="popup-box">
-            <h2 style="color:#e74c3c;">GAME OVER</h2>
-            <p>Best Block: <strong id="over-best" style="color:var(--accent); font-size:1.5rem;">A</strong></p>
+            <h2 style="color:#e74c3c; margin-bottom: 5px;">GAME OVER</h2>
             
+            <div style="background: #333; border-radius: 10px; padding: 15px; margin: 15px 0;">
+                <p style="color:#aaa; font-size: 0.9rem; margin:0;">Best Block</p>
+                <div id="over-best" style="color:var(--accent); font-size: 2.5rem; font-weight:bold; margin: 5px 0;">A</div>
+            </div>
+
             <div id="save-error" style="display:none; color:#e74c3c; font-size:0.9rem; margin-bottom:10px; font-weight:bold;"></div>
 
             <div id="area-new-user" style="display:none;">
-                <input type="text" id="username-input" placeholder="Enter Name" maxlength="12" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:none; text-align:center;">
-                <button class="btn btn-primary" style="width:100%;" id="btn-check-save" onclick="playBtnSound(); window.gameLogic.saveScore()">Save Record</button>
+                <input type="text" id="username-input" class="popup-input" placeholder="Enter your name" maxlength="10" style="width: 100%; padding: 12px; background-color: #111; border: 1px solid #444; border-radius: 8px; color: #fff; font-size: 1rem; text-align: center; outline: none;">
+                <button class="btn btn-primary" style="width:100%; margin-top:10px;" id="btn-check-save" onclick="playBtnSound(); window.gameLogic.saveScore()">
+                    💾 Save Record
+                </button>
             </div>
             
             <div id="area-exist-user" style="display:none;">
                 <div style="margin-bottom:5px; color:#aaa; font-size:0.9rem;">Player</div>
-                <div id="user-badge" style="color:var(--accent); font-weight:bold; margin-bottom:10px; font-size:1.4rem;">User</div>
-                <button class="btn btn-primary" style="width:100%;" id="btn-just-save" onclick="playBtnSound(); window.gameLogic.saveScore()">Update Best Score</button>
+                <div id="user-badge" style="color:#fff; font-weight:bold; font-size:1.2rem; margin-bottom:15px;">User</div>
+                <button class="btn btn-primary" style="width:100%;" id="btn-just-save" onclick="playBtnSound(); window.gameLogic.saveScore()">
+                    💾 Update Score
+                </button>
             </div>
             
-            <div id="save-msg" style="display:none; color:#2ecc71; margin:15px 0; font-weight:bold;">✅ Saved Successfully!</div>
+            <div id="save-msg" style="display:none; color:#2ecc71; margin:15px 0; font-weight:bold; font-size:1.1rem;">
+                ✅ Saved!
+            </div>
 
-            <hr style="border:0; border-top:1px solid #444; margin:20px 0;">
+            <hr style="border:0; border-top:1px dashed #444; margin:20px 0;">
             
-            <button id="btn-revive-ad" class="btn" style="width:100%; background: linear-gradient(45deg, #e65100, #f57c00); border:none; color:white; margin-bottom:10px;" onclick="playBtnSound(); window.gameLogic.tryReviveWithAd()">
-                📺 Revive (Get Special 1x1 Block)
+            <button id="btn-revive-ad" class="btn" style="width:100%; background: linear-gradient(45deg, #e67e22, #f39c12); color:white; margin-bottom:10px; border:none;" onclick="playBtnSound(); window.gameLogic.tryReviveWithAd()">
+                📺 Revive (Continue)
             </button>
             
-            <button class="btn" style="width:100%; background:#222;" onclick="playBtnSound(); location.href='/'">Main Menu</button>
+            <button class="btn" style="width:100%; background:#555;" onclick="playBtnSound(); location.href='/'">
+                🏠 Main Menu
+            </button>
+        </div>
+    </div>
+
+    <div id="popup-exit" class="popup-overlay">
+        <div class="popup-box">
+            <h2 style="color:var(--accent);">EXIT GAME?</h2>
+            <p style="color:#ccc; margin-bottom:20px;">Current progress is saved.</p>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" style="flex:1; background:#555;" onclick="window.gameLogic.closeExitPopup()">Cancel</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="window.gameLogic.confirmExit()">Exit</button>
+            </div>
         </div>
     </div>
 
@@ -93,15 +116,5 @@
     </script>
 
     <script type="module" src="js/game-main.js"></script>
-    <div id="popup-exit" class="popup-overlay">
-    <div class="popup-box">
-        <h2 style="color:var(--accent);">EXIT GAME?</h2>
-        <p style="color:#ccc; margin-bottom:20px;">Current progress is saved.</p>
-        <div style="display:flex; gap:10px;">
-            <button class="btn" style="flex:1; background:#555;" onclick="window.gameLogic.closeExitPopup()">Cancel</button>
-            <button class="btn btn-primary" style="flex:1;" onclick="window.gameLogic.confirmExit()">Exit</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
