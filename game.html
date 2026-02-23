@@ -93,5 +93,15 @@
     </script>
 
     <script type="module" src="js/game-main.js"></script>
+    <div id="popup-exit" class="popup-overlay">
+    <div class="popup-box">
+        <h2 style="color:var(--accent);">EXIT GAME?</h2>
+        <p style="color:#ccc; margin-bottom:20px;">Current progress is saved.</p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn" style="flex:1; background:#555;" onclick="window.gameLogic.closeExitPopup()">Cancel</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="window.gameLogic.confirmExit()">Exit</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
