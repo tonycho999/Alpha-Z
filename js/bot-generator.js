@@ -1,9 +1,13 @@
+// [1] firebase-config.js에서 db를 가져옵니다.
 import { db } from "./firebase-config.js";
-// [버전 확인 완료] 10.12.2
-import { collection, addDoc, getDocs, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; 
+
+// [2] 중요: 사용 중인 10.8.0 버전으로 정확히 맞췄습니다!
+import { collection, addDoc, getDocs, deleteDoc, query, where, serverTimestamp } 
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; 
 
 const COLLECTION_NAME = "leaderboard"; 
 
+// 닉네임 재료
 const GAME_PREFIXES = ["Super", "Pro", "Dr", "Master", "King", "Captain", "The", "Real", "Big", "Lil", "Crazy", "Iron", "Dark", "Light", "Ultra", "Mega", "Hyper", "Cyber", "Neo", "Epic", "Toxic", "Ninja", "Ghost", "Shadow", "Speed", "Lazy", "Happy", "Angry", "Lucky"];
 const GLOBAL_NAMES = ["James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", "William", "Elizabeth", "David", "Barbara", "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah", "Charles", "Karen", "Alex", "Max", "Sam", "Tom", "Ben", "Dan", "Will", "Chris", "Steve", "Paul", "Antonio", "Jose", "Manuel", "Francisco", "David", "Juan", "Javier", "Luigi", "Mario", "Giovanni", "Pierre", "Sophie", "Lucas", "Lea", "Hans", "Julia", "Matteo", "Giulia", "Lukas", "Emma", "Haruto", "Yui", "Kenji", "Sakura", "Hiro", "Akira", "Yuki", "Ren", "Hina", "Rio", "Wei", "Li", "Zhang", "Chen", "Wang", "Liu", "Yang", "Huang", "Wu", "Zhou", "Ivan", "Anastasia", "Dmitry", "Olga", "Maxim", "Elena", "Alexei", "Katya", "Boris", "Luka"];
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -27,10 +31,9 @@ function generateName() {
     }
 }
 
-// 점수별 블록 추정 (12000점 = P, Q 수준)
+// 점수별 블록 알파벳 추정 (12000점 기준 P~Q)
 function getBestCharByScore(score) {
     let charIndex = 0;
-    // 점수가 높을수록 알파벳 뒤쪽 글자 부여
     if (score > 11000) charIndex = randomInt(15, 17); // P ~ R
     else if (score > 9000) charIndex = randomInt(13, 15); // N ~ P
     else if (score > 6000) charIndex = randomInt(11, 13); // L ~ N
@@ -44,15 +47,13 @@ function generateScoreData() {
     const rand = Math.random();
     let difficulty = 'NORMAL';
     
-    // 난이도 분포: 골고루 분포
+    // 난이도 분포 (골고루)
     if (rand > 0.75) difficulty = 'HELL';
     else if (rand > 0.5) difficulty = 'HARD';
     else if (rand > 0.25) difficulty = 'NORMAL';
     else difficulty = 'EASY';
 
-    // [수정] 난이도별 점수 차등 없이 비슷하게 설정 (1,000 ~ 12,000)
-    // 단, 너무 낮은 점수는 재미 없으니 최소 1000점 보장
-    // 아주 가끔 12000점 근처 고수 봇 등장
+    // [점수 로직] 1,000 ~ 12,000점 (난이도 무관)
     let score = 0;
     const scoreLuck = Math.random();
 
@@ -80,6 +81,8 @@ function generateScoreData() {
 // 기존 봇 삭제 함수
 async function clearOldBots() {
     console.log("🧹 기존 봇 데이터를 삭제하는 중...");
+    
+    // db 객체 사용 (이제 버전이 맞아서 오류 안 남)
     const q = query(collection(db, COLLECTION_NAME), where("isBot", "==", true));
     const snapshot = await getDocs(q);
     
@@ -94,12 +97,13 @@ async function clearOldBots() {
     console.log(`🗑️ ${deletePromises.length}개의 봇 삭제 완료.`);
 }
 
+// 메인 실행 함수
 export async function runBotGenerator() {
-    // 1. 청소 먼저
+    // 1. 기존 봇 청소
     await clearOldBots();
 
     const count = randomInt(90, 110); 
-    console.log(`🚀 모든 난이도 점수 평준화하여 ${count}명 생성 중...`);
+    console.log(`🚀 ${count}명의 봇을 생성 중 (버전 10.8.0)...`);
     
     let success = 0;
     const promises = [];
@@ -116,6 +120,6 @@ export async function runBotGenerator() {
     await Promise.all(promises);
     
     console.log(`✅ 성공!`);
-    alert(`완료! 기존 봇 삭제 후, 난이도별 점수 차이 없이 ${success}명을 새로 등록했습니다.`);
+    alert(`완료! 봇 ${success}명을 새로 등록했습니다.`);
     location.reload(); 
 }
