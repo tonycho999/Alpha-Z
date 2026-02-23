@@ -1,6 +1,6 @@
 import { db } from "./firebase-config.js";
 // [중요] firebase-config.js의 버전과 똑같이 맞춰주세요 (예: 10.12.2)
-import { collection, addDoc, getDocs, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; 
+import { collection, addDoc, getDocs, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; 
 
 const COLLECTION_NAME = "leaderboard"; 
 
