@@ -1,6 +1,6 @@
 import { db } from "./firebase-config.js";
 // [중요] firebase-config.js의 버전과 똑같이 맞춰주세요 (예: 10.12.2)
-import { collection, addDoc, getDocs, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; 
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; 
 
 const COLLECTION_NAME = "leaderboard"; 
 
@@ -31,7 +31,6 @@ function generateName() {
 // 점수에 따라 적절한 알파벳(bestChar) 추측
 function getBestCharByScore(score) {
     let charIndex = 0;
-    // 점수가 높을수록 알파벳 뒤쪽 글자 부여 (대략적인 로직)
     if (score > 50000) charIndex = randomInt(15, 20); // P ~ U
     else if (score > 20000) charIndex = randomInt(12, 16); // M ~ Q
     else if (score > 10000) charIndex = randomInt(10, 14); // K ~ O
@@ -42,60 +41,41 @@ function getBestCharByScore(score) {
 }
 
 function generateScoreData() {
-    const diffs = ['NORMAL', 'HARD', 'HELL'];
+    // [수정] EASY 난이도 추가 및 확률 조정
     const rand = Math.random();
     let difficulty = 'NORMAL';
-    if (rand > 0.8) difficulty = 'HELL';
-    else if (rand > 0.5) difficulty = 'HARD';
+    
+    if (rand > 0.9) difficulty = 'HELL';       // 10%
+    else if (rand > 0.7) difficulty = 'HARD';  // 20%
+    else if (rand > 0.4) difficulty = 'NORMAL';// 30%
+    else difficulty = 'EASY';                  // 40% (초보자 봇 많음)
 
     let score = 0;
-    if (difficulty === 'NORMAL') score = randomInt(500, 30000);
+    // 난이도별 점수 분포
+    if (difficulty === 'EASY') score = randomInt(10, 5000); // [추가] EASY 점수
+    else if (difficulty === 'NORMAL') score = randomInt(500, 30000);
     else if (difficulty === 'HARD') score = randomInt(100, 20000);
     else score = randomInt(50, 10000); 
 
     score = Math.floor(score / 10) * 10;
     const bestChar = getBestCharByScore(score);
 
-    // [핵심] 실제 DB 양식과 똑같이 필드명 맞춤
     return {
         username: generateName(),
         score: score,
-        difficulty: difficulty, // diff -> difficulty
-        timestamp: serverTimestamp(), // date -> timestamp
-        bestChar: bestChar, // 추가됨
+        difficulty: difficulty, 
+        timestamp: serverTimestamp(), 
+        bestChar: bestChar, 
         isBot: true 
     };
 }
 
-// [1] 기존 봇 데이터 삭제 함수
-async function clearOldBots() {
-    console.log("🧹 Cleaning up old bots...");
-    // isBot이 true인 데이터만 찾아서 삭제
-    const q = query(collection(db, COLLECTION_NAME), where("isBot", "==", true));
-    const snapshot = await getDocs(q);
-    
-    if (snapshot.empty) {
-        console.log("No bots to delete.");
-        return;
-    }
-
-    const deletePromises = [];
-    snapshot.forEach((doc) => {
-        deletePromises.push(deleteDoc(doc.ref));
-    });
-
-    await Promise.all(deletePromises);
-    console.log(`🗑️ Deleted ${deletePromises.length} old bot entries.`);
-}
-
-// [2] 실행 함수 (삭제 후 생성)
+// [수정] 삭제 기능 제거하고 오직 추가만 수행
 export async function runBotGenerator() {
-    // 먼저 기존 봇 삭제
-    await clearOldBots();
+    // await clearOldBots(); // <-- 삭제 기능 끔
 
-    // 새 봇 생성
     const count = randomInt(90, 110); 
-    console.log(`🚀 Generating ${count} correct bots...`);
+    console.log(`🚀 Adding ${count} new bots (including EASY mode)...`);
     
     let success = 0;
     const promises = [];
@@ -111,7 +91,7 @@ export async function runBotGenerator() {
 
     await Promise.all(promises);
     
-    console.log(`✅ Success! Added ${success} bots with correct format.`);
-    alert(`청소 완료! 올바른 형식의 봇 ${success}명을 새로 생성했습니다.`);
+    console.log(`✅ Success! Added ${success} new bots.`);
+    alert(`추가 완료! 새로운 봇 ${success}명(EASY 포함)을 리더보드에 등록했습니다.`);
     location.reload(); 
 }
