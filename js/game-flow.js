@@ -8,13 +8,16 @@ export function handleCellClick(idx) {
     if(state.isHammerMode && state.grid[idx]) {
         state.grid[idx] = null;
         state.isHammerMode = false;
-        document.getElementById('grid-container').classList.remove('hammer-mode');
-        UI.renderGrid(); UI.updateUI();
+        const gridContainer = document.getElementById('grid-container');
+        if(gridContainer) gridContainer.classList.remove('hammer-mode');
+        UI.renderGrid(); 
+        UI.updateUI();
+        
+        // 망치 사용 후 빈 공간이 생겼으므로 핸드 체크
         checkHandAndRefill();
     }
 }
 
-// [핵심 수정 함수]
 export function checkHandAndRefill() {
     const isEmpty = state.hand.every(b => b === null);
     
@@ -25,20 +28,27 @@ export function checkHandAndRefill() {
         Logic.saveGameState(); 
     }
     
-    // [중요] 핸드를 새로 채웠든(Refill), 하나만 썼든(Use)
-    // 화면(UI)은 새로 그려졌으므로, 드래그 이벤트를 반드시 다시 연결해야 합니다.
+    // 핸드 상태가 변했으므로 드래그 이벤트 재연결
     UI.setupDrag(handleDropAttempt); 
     
+    // 게임 오버 여부 확인
     checkGameOver();
 }
 
-function checkGameOver() {
+export function checkGameOver() {
     let canPlace = false;
+    
+    // 1. 핸드에 있는 블록 중 하나라도 놓을 곳이 있는지 확인
     for (let i = 0; i < 3; i++) {
         if (state.hand[i] !== null) {
-            if (Core.canPlaceAnywhere(state.hand[i])) { canPlace = true; break; }
+            if (Core.canPlaceAnywhere(state.hand[i])) { 
+                canPlace = true; 
+                break; 
+            }
         }
     }
+    
+    // 2. 핸드가 비어있지 않은데 놓을 곳이 없으면 게임 오버
     const isHandEmpty = state.hand.every(b => b === null);
     if (!canPlace && !isHandEmpty) {
         AudioMgr.play('over');
@@ -46,75 +56,65 @@ function checkGameOver() {
     }
 }
 
+// [핵심 수정된 팝업 함수]
 function showGameOverPopup() {
-    localStorage.removeItem('alpha_gamestate');
-    localStorage.removeItem('alpha_score');
+    // [수정 1] 여기서 localStorage 삭제 코드 제거함! (부활을 위해 데이터 보존)
+    // localStorage.removeItem('alpha_gamestate');  <-- 삭제됨
+    // localStorage.removeItem('alpha_score');      <-- 삭제됨
 
     const popup = document.getElementById('popup-over');
     if(popup) popup.style.display = 'flex';
-    document.getElementById('over-best').textContent = state.best;
+    
+    // [수정 2] 이번 판의 최고 블록 표시
+    const bestEl = document.getElementById('over-best');
+    if(bestEl) bestEl.textContent = state.currentMax; 
     
     const saveMsg = document.getElementById('save-msg');
     if(saveMsg) saveMsg.style.display = 'none';
 
-    // 1. 부활 버튼
+    // 유저 UI 처리 (신규/기존 유저 구분에 따라 입력창 표시)
+    const name = localStorage.getItem('alpha_username');
+    const existArea = document.getElementById('area-exist-user');
+    const newArea = document.getElementById('area-new-user');
+    const badge = document.getElementById('user-badge');
+
+    if(name) {
+         if(existArea) existArea.style.display = 'block';
+         if(newArea) newArea.style.display = 'none';
+         if(badge) badge.textContent = name;
+    } else {
+         if(existArea) existArea.style.display = 'none';
+         if(newArea) newArea.style.display = 'block';
+    }
+
+    // [수정 3] 부활 버튼 로직 정리
     const btnRevive = document.getElementById('btn-revive-ad');
     if(btnRevive) {
         const adStatus = AdManager.checkAdStatus();
+        
         if(state.hasRevived) {
+             // 이미 부활했으면 버튼 숨김
              btnRevive.style.display = 'none';
         } else if (!adStatus.avail && !state.isAdmin) {
+             // 광고 없음
              btnRevive.style.display = 'block';
              btnRevive.disabled = true;
              btnRevive.style.opacity = '0.5';
              btnRevive.textContent = `🚫 ${adStatus.msg}`;
         } else {
+            // 부활 가능
             btnRevive.style.display = 'block';
             btnRevive.disabled = false;
             btnRevive.style.opacity = '1';
             btnRevive.textContent = "📺 Revive (Get 1x1 Block)";
+            
+            // 클릭 시 메인 로직의 부활 함수 호출 (AdManager 중복 호출 방지)
             btnRevive.onclick = () => {
-                AdManager.showRewardAd(() => {
+                if(window.gameLogic && window.gameLogic.tryReviveWithAd) {
                     window.gameLogic.tryReviveWithAd();
-                });
+                }
             };
         }
-    }
-
-    // 2. 메인 메뉴 버튼 (광고 적용)
-    const btnMenu = document.getElementById('btn-go-home');
-    if(btnMenu) {
-        const newBtn = btnMenu.cloneNode(true);
-        btnMenu.parentNode.replaceChild(newBtn, btnMenu);
-        
-        newBtn.onclick = () => {
-            AdManager.showRewardAd(() => {
-                location.reload();
-            });
-        };
-    }
-    
-    // 유저 UI 처리
-    const name = localStorage.getItem('alpha_username');
-    const existArea = document.getElementById('area-exist-user');
-    const newArea = document.getElementById('area-new-user');
-    const btnExistSave = document.getElementById('btn-just-save');
-    if(btnExistSave) {
-        btnExistSave.style.display = 'block';
-        btnExistSave.textContent = "Save Score";
-    }
-    const btnNewSave = document.getElementById('btn-check-save');
-    if(btnNewSave) btnNewSave.style.display = 'block';
-
-    if(name) {
-         if(existArea) { 
-             existArea.style.display = 'block'; 
-             document.getElementById('user-badge').textContent = name; 
-         }
-         if(newArea) newArea.style.display = 'none';
-    } else {
-         if(existArea) existArea.style.display = 'none';
-         if(newArea) newArea.style.display = 'block';
     }
 }
 
@@ -132,11 +132,13 @@ export function handleDropAttempt(targetIdx, isPreview) {
     let finalIndices = [];
     let possible = true;
     
+    // 1. 배치 가능 여부 확인
     for (let i = 0; i < shape.map.length; i++) {
         const tr = r + shape.map[i][0];
         const tc = c + shape.map[i][1];
         const tidx = tr * size + tc;
 
+        // 범위를 벗어나거나 이미 블록이 있으면 불가능
         if (tr < 0 || tr >= size || tc < 0 || tc >= size || state.grid[tidx]) { 
             possible = false; break; 
         }
@@ -145,29 +147,12 @@ export function handleDropAttempt(targetIdx, isPreview) {
 
     if (!possible) return false;
 
+    // 2. 실제 배치 (isPreview는 현재 사용하지 않지만 호환성을 위해 유지)
     if(isPreview) {
-        finalIndices.forEach(i => {
-            const el = document.getElementById(`cell-${i}`);
-            if(el) el.classList.add('highlight-valid');
-        });
-
-        block.items.forEach((char, idx) => {
-            const myIdx = finalIndices[idx];
-            const neighbors = [myIdx-1, myIdx+1, myIdx-size, myIdx+size];
-            neighbors.forEach(n => {
-                if (n >= 0 && n < size*size) {
-                    if (Math.abs((n % size) - (myIdx % size)) > 1) return;
-                    if (state.grid[n] === char) {
-                        const neighborEl = document.getElementById(`cell-${n}`);
-                        const myEl = document.getElementById(`cell-${myIdx}`);
-                        if(neighborEl) neighborEl.classList.add('will-merge');
-                        if(myEl) myEl.classList.add('will-merge');
-                    }
-                }
-            });
-        });
+        // (game-ui.js에서 처리하므로 여기서는 true만 리턴해도 됨)
         return true;
     } else {
+        // 블록 배치 실행
         Logic.placeBlock(finalIndices, block, checkHandAndRefill);
         return true;
     }
