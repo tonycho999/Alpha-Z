@@ -1,98 +1,101 @@
 import { db } from "./firebase-config.js";
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; 
+// [중요] firebase-config.js의 버전과 똑같이 맞춰주세요 (예: 10.12.2)
+import { collection, addDoc, getDocs, deleteDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; 
 
-// [설정] 컬렉션 이름 (수정 필요시 변경)
-const COLLECTION_NAME = "leaderboard";
+const COLLECTION_NAME = "leaderboard"; 
 
-// 1. 게임 느낌 나는 접두사 (영어)
-const GAME_PREFIXES = [
-    "Super", "Pro", "Dr", "Master", "King", "Captain", "The", "Real", "Big", "Lil",
-    "Crazy", "Iron", "Dark", "Light", "Ultra", "Mega", "Hyper", "Cyber", "Neo", "Epic",
-    "Toxic", "Ninja", "Ghost", "Shadow", "Speed", "Lazy", "Happy", "Angry", "Lucky"
-];
+// 닉네임 재료
+const GAME_PREFIXES = ["Super", "Pro", "Dr", "Master", "King", "Captain", "The", "Real", "Big", "Lil", "Crazy", "Iron", "Dark", "Light", "Ultra", "Mega", "Hyper", "Cyber", "Neo", "Epic", "Toxic", "Ninja", "Ghost", "Shadow", "Speed", "Lazy", "Happy", "Angry", "Lucky"];
+const GLOBAL_NAMES = ["James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", "William", "Elizabeth", "David", "Barbara", "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah", "Charles", "Karen", "Alex", "Max", "Sam", "Tom", "Ben", "Dan", "Will", "Chris", "Steve", "Paul", "Antonio", "Jose", "Manuel", "Francisco", "David", "Juan", "Javier", "Luigi", "Mario", "Giovanni", "Pierre", "Sophie", "Lucas", "Lea", "Hans", "Julia", "Matteo", "Giulia", "Lukas", "Emma", "Haruto", "Yui", "Kenji", "Sakura", "Hiro", "Akira", "Yuki", "Ren", "Hina", "Rio", "Wei", "Li", "Zhang", "Chen", "Wang", "Liu", "Yang", "Huang", "Wu", "Zhou", "Ivan", "Anastasia", "Dmitry", "Olga", "Maxim", "Elena", "Alexei", "Katya", "Boris", "Luka"];
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-// 2. 글로벌 사람 이름 (10개국 이상 혼합 - 로마자 표기)
-const GLOBAL_NAMES = [
-    // English (영미권)
-    "James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", "William", "Elizabeth",
-    "David", "Barbara", "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah", "Charles", "Karen",
-    "Alex", "Max", "Sam", "Tom", "Ben", "Dan", "Will", "Chris", "Steve", "Paul",
-    
-    // European (스페인, 프랑스, 독일, 이탈리아 등)
-    "Antonio", "Jose", "Manuel", "Francisco", "David", "Juan", "Javier", "Luigi", "Mario", "Giovanni",
-    "Pierre", "Sophie", "Lucas", "Lea", "Hans", "Julia", "Matteo", "Giulia", "Lukas", "Emma",
-    "Gabriel", "Leo", "Raphael", "Arthur", "Louis", "Mila", "Liam", "Noah", "Elias", "Leon",
-    
-    // Asian (일본, 중국, 인도, 한국-로마자)
-    "Haruto", "Yui", "Kenji", "Sakura", "Hiro", "Akira", "Yuki", "Ren", "Hina", "Rio",
-    "Wei", "Li", "Zhang", "Chen", "Wang", "Liu", "Yang", "Huang", "Wu", "Zhou",
-    "Aarav", "Vihaan", "Aditi", "Sai", "Rohan", "Priya", "Arjun", "Reyansh", "Ishaan", "Vivaan",
-    "Minho", "Jisoo", "Hyun", "Jin", "Sumin", "Jun", "Min", "Seo", "Ji", "Soo",
-    
-    // Russian / Slavic (러시아, 동유럽)
-    "Ivan", "Anastasia", "Dmitry", "Olga", "Maxim", "Elena", "Alexei", "Katya", "Boris", "Luka",
-    "Nikolai", "Tatiana", "Vladimir", "Irina", "Sergei", "Natalia", "Mikhail", "Svetlana", "Yuri",
-    
-    // Arabic / Middle Eastern (아랍, 중동)
-    "Ali", "Omar", "Ahmed", "Fatima", "Mohamed", "Aisha", "Hassan", "Mariam", "Yusuf", "Zain"
-];
-
-// 랜덤 정수 생성
 function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// [핵심] 랜덤 닉네임 생성 로직 (3가지 패턴)
 function generateName() {
     const pattern = Math.random();
     const name = GLOBAL_NAMES[randomInt(0, GLOBAL_NAMES.length - 1)];
-    
     if (pattern < 0.6) {
-        // 패턴 1 (60%): 이름 + 숫자 (예: James23, Hans1999)
         const num = randomInt(1, 9999);
         return `${name}${num}`;
     } else if (pattern < 0.9) {
-        // 패턴 2 (30%): 접두사 + 이름 (예: ProMario, DrLee)
         const prefix = GAME_PREFIXES[randomInt(0, GAME_PREFIXES.length - 1)];
         return `${prefix}${name}`;
     } else {
-        // 패턴 3 (10%): 이름_이름 (예: Alex_Smith)
         const name2 = GLOBAL_NAMES[randomInt(0, GLOBAL_NAMES.length - 1)];
         return `${name}_${name2}`;
     }
 }
 
-// 랜덤 난이도 및 점수 생성
+// 점수에 따라 적절한 알파벳(bestChar) 추측
+function getBestCharByScore(score) {
+    let charIndex = 0;
+    // 점수가 높을수록 알파벳 뒤쪽 글자 부여 (대략적인 로직)
+    if (score > 50000) charIndex = randomInt(15, 20); // P ~ U
+    else if (score > 20000) charIndex = randomInt(12, 16); // M ~ Q
+    else if (score > 10000) charIndex = randomInt(10, 14); // K ~ O
+    else if (score > 5000) charIndex = randomInt(8, 11);  // I ~ L
+    else if (score > 1000) charIndex = randomInt(5, 8);   // F ~ I
+    else charIndex = randomInt(2, 5);                     // C ~ F
+    return ALPHABET[charIndex];
+}
+
 function generateScoreData() {
     const diffs = ['NORMAL', 'HARD', 'HELL'];
-    // 난이도 확률: NORMAL(50%), HARD(30%), HELL(20%)
     const rand = Math.random();
-    let diff = 'NORMAL';
-    if (rand > 0.8) diff = 'HELL';
-    else if (rand > 0.5) diff = 'HARD';
+    let difficulty = 'NORMAL';
+    if (rand > 0.8) difficulty = 'HELL';
+    else if (rand > 0.5) difficulty = 'HARD';
 
     let score = 0;
-    // 난이도별 점수 분포 (약간의 현실성 부여)
-    if (diff === 'NORMAL') score = randomInt(500, 30000);
-    else if (diff === 'HARD') score = randomInt(100, 20000);
+    if (difficulty === 'NORMAL') score = randomInt(500, 30000);
+    else if (difficulty === 'HARD') score = randomInt(100, 20000);
     else score = randomInt(50, 10000); 
 
-    // 점수는 10단위로 깔끔하게
     score = Math.floor(score / 10) * 10;
+    const bestChar = getBestCharByScore(score);
 
+    // [핵심] 실제 DB 양식과 똑같이 필드명 맞춤
     return {
         username: generateName(),
         score: score,
-        diff: diff,
-        date: serverTimestamp(), 
+        difficulty: difficulty, // diff -> difficulty
+        timestamp: serverTimestamp(), // date -> timestamp
+        bestChar: bestChar, // 추가됨
         isBot: true 
     };
 }
 
-// 봇 생성 실행 함수
+// [1] 기존 봇 데이터 삭제 함수
+async function clearOldBots() {
+    console.log("🧹 Cleaning up old bots...");
+    // isBot이 true인 데이터만 찾아서 삭제
+    const q = query(collection(db, COLLECTION_NAME), where("isBot", "==", true));
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+        console.log("No bots to delete.");
+        return;
+    }
+
+    const deletePromises = [];
+    snapshot.forEach((doc) => {
+        deletePromises.push(deleteDoc(doc.ref));
+    });
+
+    await Promise.all(deletePromises);
+    console.log(`🗑️ Deleted ${deletePromises.length} old bot entries.`);
+}
+
+// [2] 실행 함수 (삭제 후 생성)
 export async function runBotGenerator() {
+    // 먼저 기존 봇 삭제
+    await clearOldBots();
+
+    // 새 봇 생성
     const count = randomInt(90, 110); 
-    console.log(`🚀 Generating ${count} global user bots...`);
+    console.log(`🚀 Generating ${count} correct bots...`);
     
     let success = 0;
     const promises = [];
@@ -108,7 +111,7 @@ export async function runBotGenerator() {
 
     await Promise.all(promises);
     
-    console.log(`✅ Success! Added ${success} global bots.`);
-    alert(`완료! ${success}명의 글로벌 유저(봇) 데이터를 생성했습니다.`);
+    console.log(`✅ Success! Added ${success} bots with correct format.`);
+    alert(`청소 완료! 올바른 형식의 봇 ${success}명을 새로 생성했습니다.`);
     location.reload(); 
 }
