@@ -9,7 +9,7 @@ import { AudioMgr } from "./game-audio.js";
 window.gameLogic = {
     ...Flow, ...Logic, ...Core,
     
-    // [수정] 새로고침 후 드래그 이벤트 재연결 추가!
+    // [수정] 새로고침: 기존 패 비우기 + 드래그 이벤트 재연결
     useRefresh: () => Logic.useRefresh(() => {
         state.hand = [null, null, null]; // 1. 강제 초기화
         Flow.checkHandAndRefill();       // 2. 새 블록 채우기
@@ -21,17 +21,27 @@ window.gameLogic = {
 
     useHammer: () => Logic.useHammer(),
 
-    // [수정] 업그레이드 후 머지 로직이 실행되도록 async/await 적용
+    // [수정] 업그레이드 (async 적용)
     useUpgrade: async () => {
         await Logic.useUpgrade();
     },
 
-    // [신규] 메뉴 버튼용: 게임 상태 지우고 이동
+    // [수정] 메뉴 버튼용: 예쁜 팝업 띄우기
     quitGame: () => {
-        if(confirm("Exit game? Progress will be reset.")) {
-            localStorage.removeItem('alpha_gamestate'); // 게임 상태 삭제
-            location.href = '/';
-        }
+        const popup = document.getElementById('popup-exit');
+        if(popup) popup.style.display = 'flex';
+    },
+
+    // [신규] 팝업 닫기 (취소)
+    closeExitPopup: () => {
+        const popup = document.getElementById('popup-exit');
+        if(popup) popup.style.display = 'none';
+    },
+
+    // [신규] 진짜 종료 (메인으로 이동)
+    confirmExit: () => {
+        localStorage.removeItem('alpha_gamestate'); // 게임 상태 삭제
+        location.href = '/';
     },
 
     // 광고 보고 부활하기 기능
