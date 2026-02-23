@@ -59,9 +59,9 @@ export function checkGameOver() {
     }
 }
 
-// [게임 오버 팝업 표시 (테스트 모드 수정됨)]
+// [게임 오버 팝업 표시 (광고 로직 복구됨)]
 function showGameOverPopup() {
-    // [수정 1] 데이터 삭제 코드 제거 (부활 테스트를 위해 보존)
+    // [데이터 보존] 부활 기회를 위해 삭제 코드는 주석 처리 유지
     // localStorage.removeItem('alpha_gamestate'); 
     // localStorage.removeItem('alpha_score');
 
@@ -91,45 +91,32 @@ function showGameOverPopup() {
          if(newArea) newArea.style.display = 'block';
     }
 
-    // 4. [수정 2] 부활 버튼 (광고 제거 & 즉시 부활)
+    // 4. [복구] 부활 버튼 (광고 상태 체크 및 연동)
     const btnRevive = document.getElementById('btn-revive-ad');
     if(btnRevive) {
+        const adStatus = AdManager.checkAdStatus();
+        
         if(state.hasRevived) {
              // 이미 부활했으면 숨김
              btnRevive.style.display = 'none';
+        } else if (!adStatus.avail && !state.isAdmin) {
+             // 광고 없음 (비활성화)
+             btnRevive.style.display = 'block';
+             btnRevive.disabled = true;
+             btnRevive.style.opacity = '0.5';
+             btnRevive.textContent = `🚫 ${adStatus.msg}`;
         } else {
-            // [테스트 모드] 무조건 버튼 활성화
+            // 부활 가능 (광고 버튼 활성화)
             btnRevive.style.display = 'block';
             btnRevive.disabled = false;
             btnRevive.style.opacity = '1';
-            btnRevive.textContent = "⚡ Revive (TEST: No Ad)";
+            btnRevive.textContent = "📺 Revive (Get 1x1 Block)";
             
-            // [핵심] 광고 없이 즉시 부활 로직 실행
+            // 클릭 시 game-main.js의 광고 로직 호출
             btnRevive.onclick = () => {
-                // game-main.js의 tryReviveWithAd가 광고를 포함하고 있을 수 있으므로,
-                // 여기서 직접 부활 로직을 실행하여 확실하게 광고를 건너뜁니다.
-                
-                console.log("⚡ Test Mode: Reviving immediately...");
-                
-                state.hasRevived = true;
-                
-                // 중앙 3x3 비우기
-                const center = Math.floor(state.gridSize/2);
-                for(let r=center-1; r<=center+1; r++){
-                    for(let c=center-1; c<=center+1; c++){
-                        const idx = r*state.gridSize+c;
-                        if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
-                    }
+                if(window.gameLogic && window.gameLogic.tryReviveWithAd) {
+                    window.gameLogic.tryReviveWithAd();
                 }
-                
-                // 팝업 닫기 및 저장
-                document.getElementById('popup-over').style.display = 'none';
-                Logic.saveGameState();
-                UI.renderGrid();
-                checkHandAndRefill();
-                UI.updateUI();
-                
-                AudioMgr.play('merge'); // 부활 성공 효과음
             };
         }
     }
@@ -164,7 +151,7 @@ export function handleDropAttempt(targetIdx, isPreview) {
 
     if (!possible) return false;
 
-    // 2. 미리보기(Highlight)는 game-ui.js에서 처리하므로 여기서는 pass
+    // 2. 미리보기(Highlight)는 game-ui.js에서 처리하므로 pass
     if(isPreview) {
         return true;
     } else {
