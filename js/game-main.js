@@ -44,6 +44,25 @@ window.gameLogic = {
         location.href = '/';
     },
 
+    // [신규] 알림 팝업 띄우기 (alert 대체)
+    showNotice: (title, msg) => {
+        const popup = document.getElementById('popup-notice');
+        const t = document.getElementById('notice-title');
+        const m = document.getElementById('notice-msg');
+        
+        if(popup && t && m) {
+            t.textContent = title;
+            m.textContent = msg;
+            popup.style.display = 'flex';
+        }
+    },
+
+    // [신규] 알림 팝업 닫기
+    closeNoticePopup: () => {
+        const popup = document.getElementById('popup-notice');
+        if(popup) popup.style.display = 'none';
+    },
+
     // 광고 보고 부활하기 기능
     tryReviveWithAd: () => {
         AdManager.showRewardAd(() => {
