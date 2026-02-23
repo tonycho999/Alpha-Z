@@ -123,6 +123,16 @@
         };
     </script>
 
+    <script type="module">
+        // 방금 만든 봇 생성기 import
+        import { runBotGenerator } from "./js/bot-generator.js";
+    
+        // 전역 변수에 연결 (콘솔에서 실행할 수 있게)
+        window.fillBots = runBotGenerator;
+    
+        console.log("🤖 봇 생성 준비 완료: 콘솔창에 'window.fillBots()'를 입력하세요.");
+    </script>
+    
     <script type="module" src="js/game-main.js"></script>
 </body>
 </html>
