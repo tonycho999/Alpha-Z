@@ -24,6 +24,8 @@ export function saveGameState() {
     localStorage.setItem('alpha_stars', state.stars);
     localStorage.setItem('alpha_items', JSON.stringify(state.items));
 }
+
+// [망치 클릭 핸들러]
 export function handleCellClick(idx) {
     // 망치 모드가 켜져있을 때만 작동
     if (state.isHammerMode) {
@@ -39,8 +41,7 @@ export function handleCellClick(idx) {
             const gridContainer = document.getElementById('grid-container');
             if(gridContainer) gridContainer.classList.remove('hammer-mode');
             
-            // [핵심] 🔊 소리 재생! (기존 drop 소리를 재활용)
-            // 더 강력한 소리를 원하시면 HTML에 <audio id="s-break">를 추가하고 'break'로 바꾸세요.
+            // 소리 재생
             AudioMgr.play('drop'); 
             
             // 4. 저장 및 화면 갱신
@@ -50,10 +51,11 @@ export function handleCellClick(idx) {
             
         } else {
             // 빈 칸을 눌렀을 때
-            alert("Select a block to remove!");
+            if(window.gameLogic) window.gameLogic.showNotice("OOPS", "Select a block to remove!");
         }
     }
 }
+
 // [블록 배치]
 export async function placeBlock(indices, block, onComplete) {
     if(state.isLocked) return;
@@ -97,7 +99,7 @@ async function handleMerge(indices) {
             
             let targetIdx = idx;
             if (nextChar) {
-                // 합쳐질 위치 결정 (가능하면 다음 단계 블록 근처로)
+                // 합쳐질 위치 결정
                 for (let cIdx of cluster) {
                     const neighbors = [cIdx-1, cIdx+1, cIdx-state.gridSize, cIdx+state.gridSize];
                     for (let n of neighbors) {
@@ -107,17 +109,15 @@ async function handleMerge(indices) {
                     }
                 }
                 
-                // 현재 게임 최고 기록 갱신
+                // 최고 기록 갱신
                 if (ALPHABET.indexOf(nextChar) > ALPHABET.indexOf(state.currentMax)) {
                     state.currentMax = nextChar;
                 }
-                
-                // 역대 최고 기록 갱신
                 if (ALPHABET.indexOf(nextChar) > ALPHABET.indexOf(state.best)) {
                     state.best = nextChar;
                     localStorage.setItem(`alpha_best_${state.diff}`, state.best);
                 }
-            } else { scoreGained += 1000; } // Z 이상은 점수 보너스
+            } else { scoreGained += 1000; } 
             
             // 병합 애니메이션
             const centerEl = document.getElementById(`cell-${targetIdx}`);
@@ -146,7 +146,6 @@ async function handleMerge(indices) {
         UI.renderGrid(); UI.updateUI();
     }
     
-    // 연쇄 머지 또는 자동 업그레이드 체크
     if (merged && nextGroup.size > 0) {
         await wait(200);
         await handleMerge(Array.from(nextGroup.keys()));
@@ -155,7 +154,7 @@ async function handleMerge(indices) {
     }
 }
 
-// [자동 업그레이드 체크] (판에 너무 낮은 블록이 혼자 남았을 때)
+// [자동 업그레이드]
 async function checkAutoUpgrade() {
     const minIdx = Core.getMinIdx();
     let upgraded = false;
@@ -179,7 +178,6 @@ export function addScore(amount) {
     const oldScore = state.score;
     state.score += amount;
 
-    // 스타 계산: 5000점 달성 시 1개, 이후 1000점마다 1개
     const calcStars = (score) => {
         if (score < 5000) return 0;
         return 1 + Math.floor((score - 5000) / 1000);
@@ -198,7 +196,6 @@ export function addScore(amount) {
         }
     }
 
-    // 점수 갱신 시 최고 기록도 한 번 더 체크
     const currentIdx = ALPHABET.indexOf(state.currentMax);
     const bestIdx = ALPHABET.indexOf(state.best);
     if (currentIdx > bestIdx) {
@@ -223,7 +220,7 @@ export function buyItem(itemType, price) {
         AudioMgr.play('merge');
         return true;
     } else {
-        alert("Not enough stars!");
+        if(window.gameLogic) window.gameLogic.showNotice("FAILED", "Not enough stars!");
         return false;
     }
 }
@@ -235,7 +232,9 @@ export function useRefresh(onRefill) {
         saveGameState();
         onRefill(); 
         UI.updateUI();
-    } else alert("No Refresh item!");
+    } else {
+        if(window.gameLogic) window.gameLogic.showNotice("EMPTY", "No Refresh item!");
+    }
 }
 
 // [아이템 사용: 망치]
@@ -245,12 +244,17 @@ export function useHammer() {
         saveGameState();
         state.isHammerMode = true;
         document.getElementById('grid-container').classList.add('hammer-mode');
-        alert("Click a block to remove!"); 
+        
+        // [수정] 팝업 사용
+        if(window.gameLogic) window.gameLogic.showNotice("HAMMER MODE", "Tap a block to remove it!");
+        
         UI.updateUI();
-    } else alert("No Hammer item!");
+    } else {
+        if(window.gameLogic) window.gameLogic.showNotice("EMPTY", "No Hammer item!");
+    }
 }
 
-// [아이템 사용: 업그레이드 (수정됨)]
+// [아이템 사용: 업그레이드]
 export async function useUpgrade() {
     if (state.items.upgrade > 0) {
         
@@ -269,7 +273,7 @@ export async function useUpgrade() {
         });
 
         if (!hasBlock) {
-            alert("No blocks to upgrade!");
+            if(window.gameLogic) window.gameLogic.showNotice("FAILED", "No blocks to upgrade!");
             return;
         }
 
@@ -298,7 +302,6 @@ export async function useUpgrade() {
             UI.renderGrid();
             AudioMgr.play('merge');
             
-            // [핵심] 업그레이드된 블록들에 대해 머지 체크
             await wait(200);
             await handleMerge(upgradedIndices);
         }
@@ -306,7 +309,7 @@ export async function useUpgrade() {
         UI.updateUI();
 
     } else {
-        alert("No Upgrade item!");
+        if(window.gameLogic) window.gameLogic.showNotice("EMPTY", "No Upgrade item!");
     }
 }
 
