@@ -1,8 +1,8 @@
-// [1] firebase-config.js에서 db를 가져옵니다.
+// [1] firebase-config.js에서 db 가져오기
 import { db } from "./firebase-config.js";
 
-// [2] 중요: 사용 중인 10.8.0 버전으로 정확히 맞췄습니다!
-import { collection, addDoc, getDocs, deleteDoc, query, where, serverTimestamp } 
+// [2] 버전 10.8.0 유지 (오류 방지)
+import { collection, addDoc, serverTimestamp } 
 from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; 
 
 const COLLECTION_NAME = "leaderboard"; 
@@ -31,7 +31,7 @@ function generateName() {
     }
 }
 
-// 점수별 블록 알파벳 추정 (12000점 기준 P~Q)
+// 점수별 블록 알파벳 추정
 function getBestCharByScore(score) {
     let charIndex = 0;
     if (score > 11000) charIndex = randomInt(15, 17); // P ~ R
@@ -47,13 +47,13 @@ function generateScoreData() {
     const rand = Math.random();
     let difficulty = 'NORMAL';
     
-    // 난이도 분포 (골고루)
+    // 난이도 분포
     if (rand > 0.75) difficulty = 'HELL';
     else if (rand > 0.5) difficulty = 'HARD';
     else if (rand > 0.25) difficulty = 'NORMAL';
     else difficulty = 'EASY';
 
-    // [점수 로직] 1,000 ~ 12,000점 (난이도 무관)
+    // 점수: 1,000 ~ 12,000점
     let score = 0;
     const scoreLuck = Math.random();
 
@@ -78,32 +78,12 @@ function generateScoreData() {
     };
 }
 
-// 기존 봇 삭제 함수
-async function clearOldBots() {
-    console.log("🧹 기존 봇 데이터를 삭제하는 중...");
-    
-    // db 객체 사용 (이제 버전이 맞아서 오류 안 남)
-    const q = query(collection(db, COLLECTION_NAME), where("isBot", "==", true));
-    const snapshot = await getDocs(q);
-    
-    if (snapshot.empty) return;
-
-    const deletePromises = [];
-    snapshot.forEach((doc) => {
-        deletePromises.push(deleteDoc(doc.ref));
-    });
-
-    await Promise.all(deletePromises);
-    console.log(`🗑️ ${deletePromises.length}개의 봇 삭제 완료.`);
-}
-
-// 메인 실행 함수
+// [수정] 삭제 함수 제거됨. 추가만 수행.
 export async function runBotGenerator() {
-    // 1. 기존 봇 청소
-    await clearOldBots();
+    // await clearOldBots(); // <-- 삭제 기능 껐습니다.
 
     const count = randomInt(90, 110); 
-    console.log(`🚀 ${count}명의 봇을 생성 중 (버전 10.8.0)...`);
+    console.log(`🚀 ${count}명의 봇을 추가로 생성합니다... (기존 데이터 유지)`);
     
     let success = 0;
     const promises = [];
@@ -120,6 +100,6 @@ export async function runBotGenerator() {
     await Promise.all(promises);
     
     console.log(`✅ 성공!`);
-    alert(`완료! 봇 ${success}명을 새로 등록했습니다.`);
+    alert(`성공! 기존 데이터를 지우지 않고, 새로운 봇 ${success}명을 추가했습니다.`);
     location.reload(); 
 }
