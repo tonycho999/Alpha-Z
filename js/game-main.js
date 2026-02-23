@@ -9,11 +9,14 @@ import { AudioMgr } from "./game-audio.js";
 window.gameLogic = {
     ...Flow, ...Logic, ...Core,
     
-    // [수정] 새로고침(Refresh): 기존 패를 강제로 비우고 다시 채움
+    // [수정] 새로고침 후 드래그 이벤트 재연결 추가!
     useRefresh: () => Logic.useRefresh(() => {
         state.hand = [null, null, null]; // 1. 강제 초기화
         Flow.checkHandAndRefill();       // 2. 새 블록 채우기
         UI.renderHand();                 // 3. 화면 다시 그리기
+        
+        // [중요] 새로 그려진 블록에 드래그 기능 다시 연결
+        UI.setupDrag(Flow.handleDropAttempt); 
     }),
 
     useHammer: () => Logic.useHammer(),
