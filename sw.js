@@ -1,7 +1,7 @@
 // sw.js
 
 // [중요] 버전을 꼭 변경해야 업데이트가 됩니다! (v1 -> v1.5)
-const CACHE_NAME = 'alpha-z-v2.4'; 
+const CACHE_NAME = 'alpha-z-v2.5'; 
 
 // 캐싱할 파일 목록
 const CACHE_URLS = [
