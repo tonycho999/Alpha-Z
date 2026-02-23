@@ -3,6 +3,7 @@ import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js"; 
 import { AudioMgr } from "./game-audio.js";
 import { db } from "./firebase-config.js";
+import { AudioMgr } from "./game-audio.js";
 
 // [저장] 게임 상태 로컬스토리지 저장
 export function saveGameState() {
@@ -24,7 +25,36 @@ export function saveGameState() {
     localStorage.setItem('alpha_stars', state.stars);
     localStorage.setItem('alpha_items', JSON.stringify(state.items));
 }
-
+export function handleCellClick(idx) {
+    // 망치 모드가 켜져있을 때만 작동
+    if (state.isHammerMode) {
+        
+        // 1. 빈 칸이 아닌지 확인 (블록이 있어야 부술 수 있음)
+        if (state.grid[idx]) {
+            
+            // 2. 블록 삭제
+            state.grid[idx] = null;
+            
+            // 3. 망치 모드 종료 및 스타일 제거
+            state.isHammerMode = false;
+            const gridContainer = document.getElementById('grid-container');
+            if(gridContainer) gridContainer.classList.remove('hammer-mode');
+            
+            // [핵심] 🔊 소리 재생! (기존 drop 소리를 재활용)
+            // 더 강력한 소리를 원하시면 HTML에 <audio id="s-break">를 추가하고 'break'로 바꾸세요.
+            AudioMgr.play('drop'); 
+            
+            // 4. 저장 및 화면 갱신
+            saveGameState();
+            UI.renderGrid();
+            UI.updateUI();
+            
+        } else {
+            // 빈 칸을 눌렀을 때
+            alert("Select a block to remove!");
+        }
+    }
+}
 // [블록 배치]
 export async function placeBlock(indices, block, onComplete) {
     if(state.isLocked) return;
