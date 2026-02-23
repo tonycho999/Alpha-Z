@@ -111,3 +111,25 @@ body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--te
 .b-Z { background: #000000; box-shadow: 0 4px 0 #333333; border: 2px solid gold; color: gold; }
 
 @keyframes glow { from { box-shadow: 0 0 10px #FFD700; } to { box-shadow: 0 0 20px #FFD700; } }
+
+/* 팝업 내부 입력창 디자인 */
+.popup-input {
+    width: 100%;
+    padding: 12px;
+    background-color: #111;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.popup-input:focus {
+    border-color: var(--accent); /* 포커스 시 금색 테두리 */
+}
+
+.popup-input::placeholder {
+    color: #555;
+}
