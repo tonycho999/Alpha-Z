@@ -30,17 +30,17 @@ body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--te
 
 
 /* =========================================
-   [VISUAL EFFECTS - 최종 정리 (충돌 해결됨)]
+   [VISUAL EFFECTS - 가이드라인 복구됨]
    ========================================= */
 
-/* 1. 블록이 놓일 자리 (점선 테두리로 위치만 안내) */
+/* 1. 블록이 놓일 자리 (흰색 테두리 표시) */
 .highlight-valid {
-      box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.15); /* 안쪽으로 살짝 밝아지는 효과만 유지 */
-      box-shadow: none;
-      border: none !important; /* 흰색 테두리 제거! */
-      border-radius: 6px;
-      z-index: 5;
-    /* 배경색 변경 없음 - 블록 색상 유지 */
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    /* [수정됨] 흰색 표시선 복구 (깔끔한 실선) */
+    border: 2px solid rgba(255, 255, 255, 0.6) !important; 
+    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    z-index: 5;
 }
 
 /* 2. 머지 대상 블록 (블록 색 유지 + 금빛 테두리 호흡 효과) */
@@ -50,9 +50,9 @@ body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--te
         border-color: #ffd700; 
     }
     50% { 
-        box-shadow: 0 0 15px 2px rgba(255, 215, 0, 0.8); /* 금빛이 밖으로 퍼짐 */
-        border-color: #fff; /* 테두리가 하얗게 빛남 */
-        transform: scale(1.02); /* 아주 살짝만 커짐 */
+        box-shadow: 0 0 15px 2px rgba(255, 215, 0, 0.8);
+        border-color: #fff;
+        transform: scale(1.02);
     }
     100% { 
         box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); 
@@ -65,12 +65,11 @@ body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--te
     border: 2px solid #ffd700 !important;
     z-index: 50;
     position: relative;
-    /* 중요: background-color를 설정하지 않아서 블록 원래 색(빨강, 파랑 등)이 유지됨 */
 }
 
-/* 3. 드래그 중인 블록 (머지 가능할 때 밝아짐) */
+/* 3. 드래그 중인 블록 (밝기 증가) */
 .dragging-merge-active {
-    filter: brightness(1.3) !important; /* 단순히 밝기만 올림 */
+    filter: brightness(1.3) !important;
     box-shadow: 0 15px 30px rgba(255, 215, 0, 0.4) !important;
     border: 1px solid #fff !important;
 }
