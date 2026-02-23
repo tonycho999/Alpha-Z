@@ -95,8 +95,6 @@ function createBlockPreview(block) {
     return wrapper;
 }
 
-// js/game-ui.js 의 updateUI 함수
-
 export function updateUI() {
     const scoreEl = document.getElementById('ui-score');
     const bestEl = document.getElementById('ui-best');
@@ -104,10 +102,7 @@ export function updateUI() {
     const diffEl = document.getElementById('ui-diff');
 
     if (scoreEl) scoreEl.textContent = state.score;
-    
-    // [수정] BEST 자리에 '현재 게임의 최고 알파벳' 표시
-    if (bestEl) bestEl.textContent = state.currentMax; 
-    
+    if (bestEl) bestEl.textContent = state.currentMax; // Current Max 표시
     if (starEl) starEl.textContent = state.stars;
     if (diffEl) diffEl.textContent = state.diff;
     
@@ -121,7 +116,26 @@ export function updateUI() {
     if (cntHam) cntHam.textContent = items.hammer;
     if (cntUp) cntUp.textContent = items.upgrade;
 
-    // ... (광고 버튼 로직 유지) ...
+    const shopAdBtn = document.getElementById('btn-shop-ad');
+    if(shopAdBtn) {
+        const status = AdManager.checkAdStatus();
+        if(!status.avail && !state.isAdmin) {
+            shopAdBtn.disabled = true;
+            shopAdBtn.style.opacity = '0.5';
+            shopAdBtn.innerHTML = `📺 Free 50★<br><span style="font-size:0.7em">${status.msg}</span>`;
+        } else {
+            shopAdBtn.disabled = false;
+            shopAdBtn.style.opacity = '1';
+            shopAdBtn.innerHTML = `📺 Free 50★`;
+            shopAdBtn.onclick = () => {
+                AdManager.showRewardAd(() => {
+                    state.stars += 50;
+                    Logic.saveGameState();
+                    updateUI();
+                });
+            };
+        }
+    }
 }
 
 export function setupDrag(onDrop) {
@@ -134,6 +148,9 @@ export function setupDrag(onDrop) {
         block.onmousedown = e => startDrag(e, block, false, onDrop);
         block.ontouchstart = e => startDrag(e, block, true, onDrop);
     });
+    
+    // [추가] 초기화 시 한번 UI 갱신 (아이템 개수 표시용)
+    setTimeout(() => updateUI(), 100);
 }
 
 function startDrag(e, blockEl, isTouch, onDrop) {
@@ -148,11 +165,13 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     state.dragIndex = idx;
     draggedBlock = blockEl.cloneNode(true);
     
-    // [크기 계산]
+    // 현재 잡고 있는 블록 정보 가져오기
+    const handBlock = state.hand[idx];
+
+    // 크기 계산
     const boardCell = document.querySelector('.cell');
     let targetScale = 1.0;
     
-    // 그리드 전체 영역 정보 가져오기 (좌표 계산용)
     const gridContainer = document.getElementById('grid-container');
     const gridRect = gridContainer ? gridContainer.getBoundingClientRect() : null;
 
@@ -178,41 +197,99 @@ function startDrag(e, blockEl, isTouch, onDrop) {
     moveAt(clientX, clientY);
 
     function moveAt(pageX, pageY) {
-        // 블록의 정중앙이 손가락 위에 오도록 배치
         draggedBlock.style.left = (pageX - draggedBlock.offsetWidth / 2) + 'px';
         draggedBlock.style.top = (pageY - draggedBlock.offsetHeight / 2 - TOUCH_OFFSET_Y) + 'px'; 
     }
 
-    // [핵심 로직: 첫 번째 칸(Top-Left) 중심 기준 자석]
+    // 자석 인덱스 계산 (첫번째 칸 중심 기준)
     function getMagnetIndex() {
         if (!gridRect || !boardCell) return -1;
 
-        // 1. 현재 떠 있는 블록의 실제 위치 가져오기
         const blockRect = draggedBlock.getBoundingClientRect();
-        
-        // 2. 화면상 1칸의 크기 계산
         const cellSize = gridRect.width / state.gridSize;
-
-        // 3. "첫 번째 칸(0,0)"의 중심점 좌표 구하기
-        // blockRect.left는 블록의 왼쪽 끝입니다.
-        // 여기에 cellSize 절반을 더하면 첫 번째 칸의 중심 X좌표가 됩니다.
         const firstCellCenterX = blockRect.left + (cellSize / 2);
         const firstCellCenterY = blockRect.top + (cellSize / 2);
 
-        // 4. 이 점이 보드판의 몇 번째 칸에 있는지 계산
         const relativeX = firstCellCenterX - gridRect.left;
         const relativeY = firstCellCenterY - gridRect.top;
 
         const col = Math.floor(relativeX / cellSize);
         const row = Math.floor(relativeY / cellSize);
 
-        // 5. 범위 체크
         if (col < 0 || col >= state.gridSize || row < 0 || row >= state.gridSize) {
             return -1;
         }
-
-        // 6. 결과 반환 (이 위치가 곧 블록의 시작점)
         return row * state.gridSize + col;
+    }
+
+    // [핵심] 머지 가능 여부 및 위치 하이라이트 함수
+    function highlightMergeCandidates(targetIdx) {
+        // 1. 기존 하이라이트 제거
+        document.querySelectorAll('.will-merge-target').forEach(el => el.classList.remove('will-merge-target'));
+        draggedBlock.classList.remove('dragging-merge-active');
+
+        if (targetIdx === -1) return;
+
+        // 2. 블록이 놓일 위치 계산
+        const cellsToCheck = [];
+        const shape = handBlock.shape.map;
+        
+        // 현재 위치에 블록을 놓을 수 있는지, 그리고 어떤 칸들을 차지하는지 확인
+        let isValid = true;
+        for (let i = 0; i < shape.length; i++) {
+            const [r, c] = shape[i];
+            const gridIdx = targetIdx + (r * state.gridSize) + c;
+            
+            // 범위를 벗어나거나 이미 블록이 있으면 배치 불가
+            const currentRow = Math.floor(targetIdx / state.gridSize) + r;
+            const checkRow = Math.floor(gridIdx / state.gridSize);
+            
+            if (gridIdx < 0 || gridIdx >= state.grid.length || 
+                currentRow !== checkRow || state.grid[gridIdx]) {
+                isValid = false;
+                break;
+            }
+            cellsToCheck.push({ idx: gridIdx, char: handBlock.items[i] });
+        }
+
+        if (!isValid) return;
+
+        // 3. 머지될 주변 블록 찾기
+        let mergeFound = false;
+        
+        cellsToCheck.forEach(item => {
+            const centerIdx = item.idx;
+            const char = item.char;
+            
+            // 상하좌우 이웃 확인
+            const neighbors = [
+                centerIdx - 1, centerIdx + 1, 
+                centerIdx - state.gridSize, centerIdx + state.gridSize
+            ];
+
+            neighbors.forEach(nIdx => {
+                // 이웃이 유효한 범위인지 확인
+                if (nIdx >= 0 && nIdx < state.grid.length) {
+                    // 좌우 경계 체크 (줄바꿈 방지)
+                    if (Math.abs((centerIdx % state.gridSize) - (nIdx % state.gridSize)) > 1) return;
+                    
+                    // 이웃에 같은 알파벳이 있는지 확인
+                    if (state.grid[nIdx] === char) {
+                        // [하이라이트 적용] 보드판 위의 해당 블록
+                        const el = document.getElementById(`cell-${nIdx}`);
+                        if (el) {
+                            el.classList.add('will-merge-target');
+                            mergeFound = true;
+                        }
+                    }
+                }
+            });
+        });
+
+        // 4. 머지가 발견되면 드래그 중인 블록도 반짝이게
+        if (mergeFound) {
+            draggedBlock.classList.add('dragging-merge-active');
+        }
     }
 
     function onMove(event) {
@@ -223,28 +300,25 @@ function startDrag(e, blockEl, isTouch, onDrop) {
         
         moveAt(cx, cy);
 
-        // 하이라이트 초기화
-        document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
-        document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
-
-        draggedBlock.style.visibility = 'hidden';
-
-        // 새로운 자석 좌표 계산
+        // 자석 좌표 계산
         const targetIdx = getMagnetIndex();
 
+        // [추가] 하이라이트 실행
+        highlightMergeCandidates(targetIdx);
+        
+        // 유효성 시각적 표시 (반투명 처리 등)
+        draggedBlock.style.visibility = 'hidden';
+        const elemBelow = document.elementFromPoint(cx, cy); // 여기서는 단순 확인용
         draggedBlock.style.visibility = 'visible';
-
-        if(targetIdx >= 0 && targetIdx < state.gridSize * state.gridSize) {
-            onDrop(targetIdx, true); 
-        }
     }
 
     function onEnd(event) {
         document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onMove);
         document.removeEventListener(isTouch ? 'touchend' : 'mouseup', onEnd);
         
-        document.querySelectorAll('.highlight-valid').forEach(el => el.classList.remove('highlight-valid'));
-        document.querySelectorAll('.will-merge').forEach(el => el.classList.remove('will-merge'));
+        // 종료 시 하이라이트 모두 제거
+        document.querySelectorAll('.will-merge-target').forEach(el => el.classList.remove('will-merge-target'));
+        if (draggedBlock) draggedBlock.classList.remove('dragging-merge-active');
 
         let dropped = false;
         
