@@ -2,7 +2,7 @@ import { db } from "./firebase-config.js";
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"; 
 
 // [설정] 컬렉션 이름 (수정 필요시 변경)
-const COLLECTION_NAME = "scores"; 
+const COLLECTION_NAME = "leaderboard";
 
 // 1. 게임 느낌 나는 접두사 (영어)
 const GAME_PREFIXES = [
