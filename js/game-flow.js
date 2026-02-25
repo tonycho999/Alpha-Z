@@ -90,7 +90,7 @@ function showGameOverPopup() {
          if(existArea) existArea.style.display = 'none';
          if(newArea) newArea.style.display = 'block';
     }
-
+}
  
 
 export function nextTurn() { checkHandAndRefill(); }
