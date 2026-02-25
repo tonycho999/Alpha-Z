@@ -63,24 +63,6 @@ window.gameLogic = {
         if(popup) popup.style.display = 'none';
     },
 
-    // 광고 보고 부활하기 기능
-    tryReviveWithAd: () => {
-        AdManager.showRewardAd(() => {
-            state.hasRevived = true;
-            const center = Math.floor(state.gridSize/2);
-            for(let r=center-1; r<=center+1; r++){
-                for(let c=center-1; c<=center+1; c++){
-                    const idx = r*state.gridSize+c;
-                    if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
-                }
-            }
-            document.getElementById('popup-over').style.display = 'none';
-            Logic.saveGameState();
-            UI.renderGrid();
-            Flow.checkHandAndRefill();
-            UI.updateUI(); // 부활 후 UI 갱신
-        });
-    },
 
     // 점수 저장 (이름 입력)
     saveScore: async () => {
