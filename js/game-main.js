@@ -1,4 +1,4 @@
-import { state, initGridSize, checkAdmin, AdManager } from "./game-data.js";
+import { state, initGridSize, checkAdmin } from "./game-data.js";
 import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
 import * as Flow from "./game-flow.js";
