@@ -41,8 +41,6 @@ export const state = {
     best: localStorage.getItem('alpha_best') || 'A', 
     currentMax: 'A', 
     isLocked: false, 
-    isReviveTurn: false, 
-    hasRevived: false,
     isAdmin: localStorage.getItem('alpha_admin') === 'true',
     diff: 'NORMAL', 
     isHammerMode: false
