@@ -1,4 +1,4 @@
-import { state, ALPHABET, AdManager } from "./game-data.js";
+import { state, ALPHABET } from "./game-data.js";
 import * as Logic from "./game-logic.js";
 import { AudioMgr } from "./game-audio.js";
 
