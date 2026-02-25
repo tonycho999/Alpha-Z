@@ -1,4 +1,4 @@
-import { state, ALPHABET, AdManager } from "./game-data.js";
+import { state, ALPHABET } from "./game-data.js";
 import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
 import * as Logic from "./game-logic.js";
@@ -91,36 +91,7 @@ function showGameOverPopup() {
          if(newArea) newArea.style.display = 'block';
     }
 
-    // 4. [복구] 부활 버튼 (광고 상태 체크 및 연동)
-    const btnRevive = document.getElementById('btn-revive-ad');
-    if(btnRevive) {
-        const adStatus = AdManager.checkAdStatus();
-        
-        if(state.hasRevived) {
-             // 이미 부활했으면 숨김
-             btnRevive.style.display = 'none';
-        } else if (!adStatus.avail && !state.isAdmin) {
-             // 광고 없음 (비활성화)
-             btnRevive.style.display = 'block';
-             btnRevive.disabled = true;
-             btnRevive.style.opacity = '0.5';
-             btnRevive.textContent = `🚫 ${adStatus.msg}`;
-        } else {
-            // 부활 가능 (광고 버튼 활성화)
-            btnRevive.style.display = 'block';
-            btnRevive.disabled = false;
-            btnRevive.style.opacity = '1';
-            btnRevive.textContent = "📺 Revive (Get 1x1 Block)";
-            
-            // 클릭 시 game-main.js의 광고 로직 호출
-            btnRevive.onclick = () => {
-                if(window.gameLogic && window.gameLogic.tryReviveWithAd) {
-                    window.gameLogic.tryReviveWithAd();
-                }
-            };
-        }
-    }
-}
+ 
 
 export function nextTurn() { checkHandAndRefill(); }
 
