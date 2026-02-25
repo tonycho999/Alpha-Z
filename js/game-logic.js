@@ -1,4 +1,4 @@
-import { state, ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, AdManager } from "./game-data.js";
+import { state, ALPHABET, SHAPES_1, SHAPES_2, SHAPES_3, } from "./game-data.js";
 import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js"; 
 import { AudioMgr } from "./game-audio.js";
