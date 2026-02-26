@@ -1,4 +1,4 @@
-import { state, initGridSize, checkAdmin } from "./game-data.js";
+import { state, initGridSize, checkAdmin, AdManager } from "./game-data.js";
 import * as Core from "./game-core.js";
 import * as UI from "./game-ui.js";
 import * as Flow from "./game-flow.js";
@@ -63,6 +63,27 @@ window.gameLogic = {
         if(popup) popup.style.display = 'none';
     },
 
+    // [복구됨] 광고 보고 부활하기
+    tryReviveWithAd: () => {
+        AdManager.showRewardAd(() => {
+            // 부활 로직
+            state.hasRevived = true;
+            const center = Math.floor(state.gridSize/2);
+            // 중앙 3x3 영역 비우기
+            for(let r=center-1; r<=center+1; r++){
+                for(let c=center-1; c<=center+1; c++){
+                    const idx = r*state.gridSize+c;
+                    if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
+                }
+            }
+            // 팝업 닫고 저장 및 갱신
+            document.getElementById('popup-over').style.display = 'none';
+            Logic.saveGameState();
+            UI.renderGrid();
+            Flow.checkHandAndRefill();
+            UI.updateUI();
+        });
+    },
 
     // 점수 저장 (이름 입력)
     saveScore: async () => {
@@ -87,9 +108,13 @@ window.gameLogic = {
     }
 };
 
-window.onload = () => {
+// [수정됨] async 추가 (AdManager 초기화를 위해)
+window.onload = async () => {
     try {
         console.log("🚀 Game Start");
+
+        // [추가] 광고 매니저 초기화 (플랫폼 감지)
+        await AdManager.init(); 
 
         const params = new URLSearchParams(window.location.search);
         let diffParam = params.get('diff') || 'NORMAL';
@@ -142,6 +167,7 @@ window.onload = () => {
 
     } catch (e) {
         console.error("Init Fail:", e);
+        // 에러 발생 시 기본값으로 초기화하여 게임이 멈추지 않게 함
         state.diff = 'NORMAL';
         initGridSize('NORMAL');
         UI.renderGrid();
