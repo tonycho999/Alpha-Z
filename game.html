@@ -84,6 +84,9 @@
 
             <hr style="border:0; border-top:1px dashed #444; margin:20px 0;">
             
+            <button id="btn-revive-ad" class="btn" style="width:100%; background: linear-gradient(45deg, #e67e22, #f39c12); color:white; margin-bottom:10px; border:none;" onclick="playBtnSound(); window.gameLogic.tryReviveWithAd()">
+                📺 Revive (Continue)
+            </button>
             
             <button class="btn" style="width:100%; background:#555;" onclick="playBtnSound(); location.href='/'">
                 🏠 Main Menu
@@ -123,13 +126,13 @@
     <script type="module">
         // 방금 만든 봇 생성기 import
         import { runBotGenerator } from "./js/bot-generator.js";
-    
+     
         // 전역 변수에 연결 (콘솔에서 실행할 수 있게)
         window.fillBots = runBotGenerator;
-    
+     
         console.log("🤖 봇 생성 준비 완료: 콘솔창에 'window.fillBots()'를 입력하세요.");
     </script>
-    
+     
     <script type="module" src="js/game-main.js"></script>
 </body>
 </html>
