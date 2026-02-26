@@ -9,42 +9,40 @@ import { AudioMgr } from "./game-audio.js";
 window.gameLogic = {
     ...Flow, ...Logic, ...Core,
     
-    // [수정] 새로고침: 기존 패 비우기 + 드래그 이벤트 재연결
+    // [수정] 새로고침
     useRefresh: () => Logic.useRefresh(() => {
-        state.hand = [null, null, null]; // 1. 강제 초기화
-        Flow.checkHandAndRefill();       // 2. 새 블록 채우기
-        UI.renderHand();                 // 3. 화면 다시 그리기
-        
-        // [중요] 새로 그려진 블록에 드래그 기능 다시 연결
+        state.hand = [null, null, null];
+        Flow.checkHandAndRefill();
+        UI.renderHand();
         UI.setupDrag(Flow.handleDropAttempt); 
     }),
 
     useHammer: () => Logic.useHammer(),
 
-    // [수정] 업그레이드 (async 적용)
+    // [수정] 업그레이드
     useUpgrade: async () => {
         await Logic.useUpgrade();
     },
 
-    // [수정] 메뉴 버튼용: 예쁜 팝업 띄우기
+    // [수정] 메뉴 버튼
     quitGame: () => {
         const popup = document.getElementById('popup-exit');
         if(popup) popup.style.display = 'flex';
     },
 
-    // [신규] 팝업 닫기 (취소)
+    // [신규] 팝업 닫기
     closeExitPopup: () => {
         const popup = document.getElementById('popup-exit');
         if(popup) popup.style.display = 'none';
     },
 
-    // [신규] 진짜 종료 (메인으로 이동)
+    // [신규] 진짜 종료
     confirmExit: () => {
-        localStorage.removeItem('alpha_gamestate'); // 게임 상태 삭제
+        localStorage.removeItem('alpha_gamestate'); 
         location.href = '/';
     },
 
-    // [신규] 알림 팝업 띄우기 (alert 대체)
+    // [신규] 알림 팝업
     showNotice: (title, msg) => {
         const popup = document.getElementById('popup-notice');
         const t = document.getElementById('notice-title');
@@ -57,7 +55,6 @@ window.gameLogic = {
         }
     },
 
-    // [신규] 알림 팝업 닫기
     closeNoticePopup: () => {
         const popup = document.getElementById('popup-notice');
         if(popup) popup.style.display = 'none';
@@ -66,17 +63,14 @@ window.gameLogic = {
     // [복구됨] 광고 보고 부활하기
     tryReviveWithAd: () => {
         AdManager.showRewardAd(() => {
-            // 부활 로직
             state.hasRevived = true;
             const center = Math.floor(state.gridSize/2);
-            // 중앙 3x3 영역 비우기
             for(let r=center-1; r<=center+1; r++){
                 for(let c=center-1; c<=center+1; c++){
                     const idx = r*state.gridSize+c;
                     if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
                 }
             }
-            // 팝업 닫고 저장 및 갱신
             document.getElementById('popup-over').style.display = 'none';
             Logic.saveGameState();
             UI.renderGrid();
@@ -85,7 +79,7 @@ window.gameLogic = {
         });
     },
 
-    // 점수 저장 (이름 입력)
+    // 점수 저장
     saveScore: async () => {
         const nameInput = document.getElementById('username-input');
         let name = '';
@@ -108,14 +102,26 @@ window.gameLogic = {
     }
 };
 
-// [수정됨] async 추가 (AdManager 초기화를 위해)
+// [수정됨] window.onload (PWA 버튼 로직 추가)
 window.onload = async () => {
     try {
         console.log("🚀 Game Start");
 
-        // [추가] 광고 매니저 초기화 (플랫폼 감지)
+        // 1. 광고 매니저 초기화
         await AdManager.init(); 
 
+        // 2. [중요] 플랫폼이 'GENERIC'(일반 웹)일 때만 설치 버튼 표시 시도
+        if (AdManager.platform === 'GENERIC') {
+            setTimeout(() => {
+                const btn = document.getElementById('btn-install');
+                // 이미 앱으로 실행 중이 아니면 버튼 표시
+                if (btn && !window.matchMedia('(display-mode: standalone)').matches) {
+                    btn.classList.remove('hidden');
+                }
+            }, 1000);
+        }
+
+        // ... 기존 초기화 로직 ...
         const params = new URLSearchParams(window.location.search);
         let diffParam = params.get('diff') || 'NORMAL';
         state.diff = diffParam.toUpperCase(); 
@@ -138,9 +144,7 @@ window.onload = async () => {
                     state.best = loaded.best;
                     state.stars = loaded.stars;
                     state.currentMax = loaded.currentMax || 'A'; 
-                    
                     if(loaded.items) state.items = loaded.items;
-                    
                     console.log("Resume Game");
                     resumed = true;
                 }
@@ -167,7 +171,6 @@ window.onload = async () => {
 
     } catch (e) {
         console.error("Init Fail:", e);
-        // 에러 발생 시 기본값으로 초기화하여 게임이 멈추지 않게 함
         state.diff = 'NORMAL';
         initGridSize('NORMAL');
         UI.renderGrid();
