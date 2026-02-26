@@ -1,6 +1,4 @@
-// sw.js
-
-// [중요] 버전을 꼭 변경해야 업데이트가 됩니다! (v1 -> v1.5)
+// [중요] 버전을 꼭 변경해야 업데이트가 됩니다!
 const CACHE_NAME = 'alpha-z-v9.2'; 
 
 // 캐싱할 파일 목록
@@ -21,7 +19,7 @@ const CACHE_URLS = [
     './js/game-audio.js',
     './js/firebase-config.js',
 
-    // 라이브러리
+    // 라이브러리 (Firebase는 캐싱해도 되지만, Poki/Crazy SDK는 캐싱하지 않음)
     'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js',
     'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js',
     
@@ -34,8 +32,7 @@ const CACHE_URLS = [
     './icon-512.png'
 ];
 
-// 나머지 install, fetch, activate 코드는 그대로 두셔도 됩니다.
-// (생략... 위에서 작성해주신 코드 그대로 사용)
+// 설치 (Install)
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -46,16 +43,19 @@ self.addEventListener('install', (event) => {
     );
 });
 
+// 요청 (Fetch)
 self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(event.request)
             .then((response) => {
+                // 캐시에 있으면 반환, 없으면 네트워크 요청
                 if (response) return response;
                 return fetch(event.request).catch(() => {});
             })
     );
 });
 
+// 활성화 (Activate) - 구버전 캐시 삭제
 self.addEventListener('activate', (event) => {
     const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
