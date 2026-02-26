@@ -102,7 +102,6 @@ window.gameLogic = {
     }
 };
 
-// [수정됨] window.onload (PWA 버튼 로직 추가)
 window.onload = async () => {
     try {
         console.log("🚀 Game Start");
@@ -110,18 +109,50 @@ window.onload = async () => {
         // 1. 광고 매니저 초기화
         await AdManager.init(); 
 
-        // 2. [중요] 플랫폼이 'GENERIC'(일반 웹)일 때만 설치 버튼 표시 시도
+        // [추가] 시작 화면 스타(Stars) 표시 업데이트 (index.html에서 가져옴)
+        const savedStars = localStorage.getItem('alpha_stars') || 0;
+        const starEl = document.getElementById('idx-stars');
+        if(starEl) starEl.textContent = savedStars;
+
+        // 2. [설치 버튼] 플랫폼이 'GENERIC'(일반 웹)일 때만 표시
         if (AdManager.platform === 'GENERIC') {
             setTimeout(() => {
                 const btn = document.getElementById('btn-install');
-                // 이미 앱으로 실행 중이 아니면 버튼 표시
                 if (btn && !window.matchMedia('(display-mode: standalone)').matches) {
                     btn.classList.remove('hidden');
                 }
             }, 1000);
         }
 
-        // ... 기존 초기화 로직 ...
+        // 3. [QR 코드 & 인트로] 조건부 표시 로직
+        const introPopup = document.getElementById('intro-popup');
+        if (introPopup) {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const dontShow = localStorage.getItem('alpha_intro_done');
+            const pcContent = document.getElementById('intro-pc');
+            const mobileContent = document.getElementById('intro-mobile');
+
+            if (!dontShow) {
+                if (isMobile) {
+                    if(mobileContent) mobileContent.style.display = 'block';
+                    if(pcContent) pcContent.style.display = 'none';
+                    introPopup.style.display = 'flex';
+                } else {
+                    if(mobileContent) mobileContent.style.display = 'none';
+                    
+                    // [핵심] 플랫폼이 'GENERIC'일 때만 QR 코드(intro-pc) 표시!
+                    if (AdManager.platform === 'GENERIC') {
+                        if(pcContent) pcContent.style.display = 'block';
+                    } else {
+                        // Poki, CrazyGames 등에서는 QR 숨김
+                        if(pcContent) pcContent.style.display = 'none';
+                    }
+                    introPopup.style.display = 'flex';
+                }
+            }
+        }
+
+        // ... 기존 게임 초기화 로직 ...
         const params = new URLSearchParams(window.location.search);
         let diffParam = params.get('diff') || 'NORMAL';
         state.diff = diffParam.toUpperCase(); 
