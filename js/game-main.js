@@ -51,7 +51,7 @@ window.gameLogic = {
         localStorage.removeItem('alpha_gamestate'); 
         
         // 3. 메인으로 이동
-        location.href = 'index.html';
+        location.href = '/';
     },
 
     // [중요] 게임 오버 화면에서 홈으로 이동 - Main Menu 버튼
