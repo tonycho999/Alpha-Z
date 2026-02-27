@@ -314,3 +314,37 @@ export async function useUpgrade() {
 }
 
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ==========================================
+// [추가 기능] 게임 종료/메뉴 이동 시 초기화 저장
+// ==========================================
+export function resetAndSave() {
+    // 1. 유지해야 할 중요 데이터(별, 최고기록, 아이템)는 현재 상태로 저장
+    localStorage.setItem('alpha_stars', state.stars);
+    localStorage.setItem(`alpha_best_${state.diff}`, state.best);
+    localStorage.setItem('alpha_items', JSON.stringify(state.items));
+
+    // 2. 게임 진행 데이터(그리드, 점수, 손패) 메모리 상에서 초기화
+    state.grid = Array(state.grid.length).fill(null);
+    state.score = 0;
+    state.hand = [null, null, null];
+    state.currentMax = ALPHABET[0]; // 'A'로 초기화
+    state.dragIndex = -1;
+    state.isHammerMode = false;
+
+    // 3. 초기화된 상태를 로컬스토리지에 덮어쓰기
+    // (이렇게 해야 재접속 시 빈 화면으로 시작됨)
+    const resetData = {
+        grid: state.grid,
+        hand: state.hand,
+        score: state.score,
+        best: state.best,       // 최고 기록 유지
+        currentMax: state.currentMax, 
+        items: state.items,     // 아이템 유지
+        stars: state.stars,     // 별 유지
+        diff: state.diff
+    };
+
+    localStorage.setItem('alpha_gamestate', JSON.stringify(resetData));
+    localStorage.setItem('alpha_score', 0);
+}
