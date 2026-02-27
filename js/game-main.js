@@ -63,7 +63,7 @@ window.gameLogic = {
         localStorage.removeItem('alpha_gamestate');
         
         // 3. 메인으로 이동
-        location.href = 'index.html';
+        location.href = '/';
     },
 
     // [신규] 알림 팝업 표시
