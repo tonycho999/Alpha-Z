@@ -46,7 +46,7 @@
         </div>
 
         <div style="display:flex; width:100%; max-width:500px; gap:8px;">
-            <button class="btn" style="flex:1; background:#444;" onclick="playBtnSound(); window.gameLogic.quitGame()">🏠 Menu</button>
+            <button class="btn" style="flex:1; background:#444;" onclick="playBtnSound(); window.gameLogic.showExitPopup()">🏠 Menu</button>
         </div>
     </div>
 
@@ -88,7 +88,7 @@
                 📺 Revive (Continue)
             </button>
             
-            <button class="btn" style="width:100%; background:#555;" onclick="playBtnSound(); location.href='/'">
+            <button class="btn" style="width:100%; background:#555;" onclick="playBtnSound(); window.gameLogic.goHome()">
                 🏠 Main Menu
             </button>
         </div>
@@ -126,13 +126,13 @@
     <script type="module">
         // 방금 만든 봇 생성기 import
         import { runBotGenerator } from "./js/bot-generator.js";
-     
+      
         // 전역 변수에 연결 (콘솔에서 실행할 수 있게)
         window.fillBots = runBotGenerator;
-     
+      
         console.log("🤖 봇 생성 준비 완료: 콘솔창에 'window.fillBots()'를 입력하세요.");
     </script>
-     
+      
     <script type="module" src="js/game-main.js"></script>
 </body>
 </html>
