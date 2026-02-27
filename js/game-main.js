@@ -24,7 +24,13 @@ window.gameLogic = {
         await Logic.useUpgrade();
     },
 
-    // [수정] 메뉴 버튼
+    // [수정] 메뉴 버튼 (팝업 열기)
+    showExitPopup: () => {
+        const popup = document.getElementById('popup-exit');
+        if(popup) popup.style.display = 'flex';
+    },
+    
+    // (구버전 호환용 함수 이름 매핑)
     quitGame: () => {
         const popup = document.getElementById('popup-exit');
         if(popup) popup.style.display = 'flex';
@@ -36,9 +42,23 @@ window.gameLogic = {
         if(popup) popup.style.display = 'none';
     },
 
-    // [신규] 진짜 종료
+    // [중요] 진짜 종료 (메인 메뉴로 이동)
     confirmExit: () => {
+        // 1. 별, 아이템 등 중요 재화 저장
+        Logic.resetAndSave(); 
+        // 2. 진행 중인 게임 상태(Grid)는 삭제 (다음 실행 시 새 게임 시작)
         localStorage.removeItem('alpha_gamestate'); 
+        // 3. 메인 페이지로 이동
+        location.href = 'index.html';
+    },
+
+    // [중요] 게임 오버 화면에서 홈으로 이동
+    goHome: () => {
+        // 1. 별, 아이템 등 중요 재화 저장
+        Logic.resetAndSave();
+        // 2. 게임 오버 상태를 지우기 위해 진행 데이터 삭제
+        localStorage.removeItem('alpha_gamestate');
+        // 3. 메인 페이지로 이동
         location.href = '/';
     },
 
@@ -95,8 +115,11 @@ window.gameLogic = {
         
         if(res.success) {
             document.getElementById('save-msg').style.display = 'block';
-            document.getElementById('btn-check-save').style.display = 'none';
-            document.getElementById('btn-just-save').style.display = 'none';
+            const btnCheck = document.getElementById('btn-check-save');
+            const btnJust = document.getElementById('btn-just-save');
+            if(btnCheck) btnCheck.style.display = 'none';
+            if(btnJust) btnJust.style.display = 'none';
+            
             localStorage.setItem('alpha_username', name);
         } else alert(res.msg);
     }
@@ -109,7 +132,7 @@ window.onload = async () => {
         // 1. 광고 매니저 초기화
         await AdManager.init(); 
 
-        // [추가] 시작 화면 스타(Stars) 표시 업데이트 (index.html에서 가져옴)
+        // [추가] 시작 화면 스타(Stars) 표시 업데이트
         const savedStars = localStorage.getItem('alpha_stars') || 0;
         const starEl = document.getElementById('idx-stars');
         if(starEl) starEl.textContent = savedStars;
@@ -182,6 +205,7 @@ window.onload = async () => {
             } catch(e) { console.error(e); }
         }
         
+        // 재개할 게임이 없으면(resumed === false), 새 게임 시작
         if (!resumed) {
             console.log(`New Game: ${state.diff}`);
             state.score = 0;
