@@ -9,7 +9,7 @@ import { AudioMgr } from "./game-audio.js";
 window.gameLogic = {
     ...Flow, ...Logic, ...Core,
     
-    // [수정] 새로고침
+    // [수정] 새로고침 아이템 사용
     useRefresh: () => Logic.useRefresh(() => {
         state.hand = [null, null, null];
         Flow.checkHandAndRefill();
@@ -19,50 +19,54 @@ window.gameLogic = {
 
     useHammer: () => Logic.useHammer(),
 
-    // [수정] 업그레이드
+    // [수정] 업그레이드 아이템 사용
     useUpgrade: async () => {
         await Logic.useUpgrade();
     },
 
-    // [수정] 메뉴 버튼 (팝업 열기)
+    // [수정] 메뉴 버튼 (나가기 팝업 열기)
     showExitPopup: () => {
         const popup = document.getElementById('popup-exit');
         if(popup) popup.style.display = 'flex';
     },
     
-    // (구버전 호환용 함수 이름 매핑)
+    // (구버전 호환용)
     quitGame: () => {
         const popup = document.getElementById('popup-exit');
         if(popup) popup.style.display = 'flex';
     },
 
-    // [신규] 팝업 닫기
+    // [신규] 나가기 팝업 닫기
     closeExitPopup: () => {
         const popup = document.getElementById('popup-exit');
         if(popup) popup.style.display = 'none';
     },
 
-    // [중요] 진짜 종료 (메인 메뉴로 이동)
+    // [중요] 진짜 종료 (메인 메뉴로 이동) - 팝업 내 Exit 버튼
     confirmExit: () => {
-        // 1. 별, 아이템 등 중요 재화 저장
-        Logic.resetAndSave(); 
-        // 2. 진행 중인 게임 상태(Grid)는 삭제 (다음 실행 시 새 게임 시작)
+        // 1. 별, 아이템 등 재화 저장 (resetAndSave 내부에서 처리)
+        if(Logic.resetAndSave) Logic.resetAndSave(); 
+        
+        // 2. 게임 진행 상태 삭제 (다음 실행 시 새 게임)
         localStorage.removeItem('alpha_gamestate'); 
-        // 3. 메인 페이지로 이동
-        location.href = '/';
+        
+        // 3. 메인으로 이동
+        location.href = 'index.html';
     },
 
-    // [중요] 게임 오버 화면에서 홈으로 이동
+    // [중요] 게임 오버 화면에서 홈으로 이동 - Main Menu 버튼
     goHome: () => {
-        // 1. 별, 아이템 등 중요 재화 저장
-        Logic.resetAndSave();
-        // 2. 게임 오버 상태를 지우기 위해 진행 데이터 삭제
+        // 1. 재화 저장 및 상태 초기화
+        if(Logic.resetAndSave) Logic.resetAndSave();
+        
+        // 2. 진행 상태 삭제
         localStorage.removeItem('alpha_gamestate');
-        // 3. 메인 페이지로 이동
-        location.href = '/';
+        
+        // 3. 메인으로 이동
+        location.href = 'index.html';
     },
 
-    // [신규] 알림 팝업
+    // [신규] 알림 팝업 표시
     showNotice: (title, msg) => {
         const popup = document.getElementById('popup-notice');
         const t = document.getElementById('notice-title');
@@ -80,26 +84,35 @@ window.gameLogic = {
         if(popup) popup.style.display = 'none';
     },
 
-    // [복구됨] 광고 보고 부활하기
+    // [광고] 광고 보고 부활하기
     tryReviveWithAd: () => {
-        AdManager.showRewardAd(() => {
-            state.hasRevived = true;
-            const center = Math.floor(state.gridSize/2);
-            for(let r=center-1; r<=center+1; r++){
-                for(let c=center-1; c<=center+1; c++){
-                    const idx = r*state.gridSize+c;
-                    if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
+        // AdManager가 존재하는지 확인 후 실행
+        if (AdManager && typeof AdManager.showRewardAd === 'function') {
+            AdManager.showRewardAd(() => {
+                state.hasRevived = true;
+                
+                // 중앙 3x3 영역 비우기
+                const center = Math.floor(state.gridSize/2);
+                for(let r=center-1; r<=center+1; r++){
+                    for(let c=center-1; c<=center+1; c++){
+                        const idx = r*state.gridSize+c;
+                        if(idx>=0 && idx<state.grid.length) state.grid[idx] = null;
+                    }
                 }
-            }
-            document.getElementById('popup-over').style.display = 'none';
-            Logic.saveGameState();
-            UI.renderGrid();
-            Flow.checkHandAndRefill();
-            UI.updateUI();
-        });
+                
+                // 팝업 닫기 및 상태 갱신
+                document.getElementById('popup-over').style.display = 'none';
+                Logic.saveGameState();
+                UI.renderGrid();
+                Flow.checkHandAndRefill();
+                UI.updateUI();
+            });
+        } else {
+            alert("Ad functionality is not available.");
+        }
     },
 
-    // 점수 저장
+    // 점수 저장 (랭킹)
     saveScore: async () => {
         const nameInput = document.getElementById('username-input');
         let name = '';
@@ -130,15 +143,17 @@ window.onload = async () => {
         console.log("🚀 Game Start");
 
         // 1. 광고 매니저 초기화
-        await AdManager.init(); 
+        if (AdManager && AdManager.init) {
+            await AdManager.init();
+        }
 
         // [추가] 시작 화면 스타(Stars) 표시 업데이트
         const savedStars = localStorage.getItem('alpha_stars') || 0;
         const starEl = document.getElementById('idx-stars');
         if(starEl) starEl.textContent = savedStars;
 
-        // 2. [설치 버튼] 플랫폼이 'GENERIC'(일반 웹)일 때만 표시
-        if (AdManager.platform === 'GENERIC') {
+        // 2. [설치 버튼] 플랫폼 확인
+        if (AdManager && AdManager.platform === 'GENERIC') {
             setTimeout(() => {
                 const btn = document.getElementById('btn-install');
                 if (btn && !window.matchMedia('(display-mode: standalone)').matches) {
@@ -147,7 +162,7 @@ window.onload = async () => {
             }, 1000);
         }
 
-        // 3. [QR 코드 & 인트로] 조건부 표시 로직
+        // 3. [QR 코드 & 인트로] 로직
         const introPopup = document.getElementById('intro-popup');
         if (introPopup) {
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -163,11 +178,10 @@ window.onload = async () => {
                 } else {
                     if(mobileContent) mobileContent.style.display = 'none';
                     
-                    // [핵심] 플랫폼이 'GENERIC'일 때만 QR 코드(intro-pc) 표시!
-                    if (AdManager.platform === 'GENERIC') {
+                    // 플랫폼이 일반 웹(GENERIC)일 때만 QR 코드 표시
+                    if (AdManager && AdManager.platform === 'GENERIC') {
                         if(pcContent) pcContent.style.display = 'block';
                     } else {
-                        // Poki, CrazyGames 등에서는 QR 숨김
                         if(pcContent) pcContent.style.display = 'none';
                     }
                     introPopup.style.display = 'flex';
@@ -175,7 +189,7 @@ window.onload = async () => {
             }
         }
 
-        // ... 기존 게임 초기화 로직 ...
+        // ... 게임 초기화 로직 ...
         const params = new URLSearchParams(window.location.search);
         let diffParam = params.get('diff') || 'NORMAL';
         state.diff = diffParam.toUpperCase(); 
@@ -205,7 +219,7 @@ window.onload = async () => {
             } catch(e) { console.error(e); }
         }
         
-        // 재개할 게임이 없으면(resumed === false), 새 게임 시작
+        // 재개할 게임이 없으면 새 게임 시작
         if (!resumed) {
             console.log(`New Game: ${state.diff}`);
             state.score = 0;
@@ -226,6 +240,7 @@ window.onload = async () => {
 
     } catch (e) {
         console.error("Init Fail:", e);
+        // 에러 시 안전하게 초기화
         state.diff = 'NORMAL';
         initGridSize('NORMAL');
         UI.renderGrid();
