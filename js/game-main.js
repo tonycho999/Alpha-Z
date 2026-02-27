@@ -49,7 +49,7 @@ window.gameLogic = {
         // 2. 진행 중인 게임 상태(Grid)는 삭제 (다음 실행 시 새 게임 시작)
         localStorage.removeItem('alpha_gamestate'); 
         // 3. 메인 페이지로 이동
-        location.href = 'index.html';
+        location.href = '/';
     },
 
     // [중요] 게임 오버 화면에서 홈으로 이동
